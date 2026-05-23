@@ -124,7 +124,9 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
     return (
         <Dialog>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="hover:bg-accent"><ChevronDown className="w-4 h-4" /></DropdownMenuTrigger>
+                <DropdownMenuTrigger className="hover:bg-accent">
+                    <ChevronDown className="w-4 h-4" />
+                </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuLabel>Class</DropdownMenuLabel>
                     <DropdownMenuSeparator />
@@ -141,7 +143,7 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                 <DialogHeader>
                     <DialogTitle>Apply {characterClass.toUpperCase()} core traits?</DialogTitle>
                     <DialogDescription></DialogDescription>
-                    {!!coreTraits ? (
+                    {coreTraits ? (
                         // TODOdin: Make this Dialog pretty
                         <div>
                             <p className="text-muted-foreground text-md my-2">Skill: {coreTraits.skill.toUpperCase()}</p>
@@ -153,7 +155,7 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                             </p>
 
                             <p>Equipment:</p>
-                            {!!coreTraits.equipment ? (
+                            {coreTraits.equipment ? (
                                 <>
                                     <p>{coreTraits.equipment}</p>
                                     <p>AND</p>
@@ -202,7 +204,9 @@ const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) =>
     return (
         <Dialog>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="hover:bg-accent"><ChevronDown className="w-4 h-4" /></DropdownMenuTrigger>
+                <DropdownMenuTrigger className="hover:bg-accent">
+                    <ChevronDown className="w-4 h-4" />
+                </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuLabel>Calling</DropdownMenuLabel>
                     <DropdownMenuSeparator />

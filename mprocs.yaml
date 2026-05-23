@@ -1,0 +1,3 @@
+procs:
+  frontend:
+    cmd: ["cmd", "/c", "pnpm run dev"]

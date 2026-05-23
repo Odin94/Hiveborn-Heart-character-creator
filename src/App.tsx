@@ -18,7 +18,7 @@ function App() {
         }
     }, [userUuid, setUserUuid])
 
-    if (!!userUuid) {
+    if (userUuid) {
         posthog.identify(userUuid)
         posthog.capture("Pageview: Hiveborn", { userUuid })
     }

@@ -10,6 +10,6 @@ export const useUserUuid = create<{ userUuid: string | undefined; setUserUuid: (
         }),
         {
             name: "userUuid",
-        }
-    )
+        },
+    ),
 )

@@ -28,7 +28,10 @@ const Abilities = () => {
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog onOpenChange={(_open) => setPickingFromAbility(undefined)}>
                     <h2 className="font-bold py-2 bg-red-900 text-white pl-3">
-                        ABILITIES <DialogTrigger className="absolute right-7 hover:bg-red-800"><ChevronDown className="inline w-4 h-4" /></DialogTrigger>
+                        ABILITIES{" "}
+                        <DialogTrigger className="absolute right-7 hover:bg-red-800">
+                            <ChevronDown className="inline w-4 h-4" />
+                        </DialogTrigger>
                     </h2>
                     <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 </Dialog>
@@ -66,7 +69,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     const filteredAbilityOptions =
         abilityType === "major"
             ? abilityOptions.filter(
-                  (ability) => ability.type === "major" || (ability.type === "minor" && !!ability.parentName && !isAbilityPickedAlready(ability)),
+                  (ability) => ability.type === "major" || (ability.type === "minor" && ability.parentName && !isAbilityPickedAlready(ability)),
               )
             : abilityOptions
                   .filter((ability) => ability.type === abilityType)
@@ -138,11 +141,11 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     return (
         <DialogContent className="w-88 sm:w-112 h-200">
             <DialogHeader>
-                <DialogTitle>{!!pickingFromAbility ? pickingFromAbility.name.toUpperCase() : `${characterClass.toUpperCase()} ABILITIES`}</DialogTitle>
+                <DialogTitle>{pickingFromAbility ? pickingFromAbility.name.toUpperCase() : `${characterClass.toUpperCase()} ABILITIES`}</DialogTitle>
                 <DialogDescription></DialogDescription>
                 {abilityOptions.length === 0 ? (
                     <p>Pick a pre-defined class to select abilities</p>
-                ) : !!pickingFromAbility ? (
+                ) : pickingFromAbility ? (
                     <PickFrom pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 ) : (
                     <Tabs defaultValue="minor" className="w-[300px] sm:w-[400px] p-2" value={abilityType} onValueChange={setAbilityType}>

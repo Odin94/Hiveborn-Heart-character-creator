@@ -208,7 +208,7 @@ export const JSONUploadButton = () => {
 
         const character = characterSchema.safeParse(jsonObject)
         if (!character.success) {
-            const errorSummary = character.error.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("\n")
+            const errorSummary = character.error.issues.map((err) => `${err.path.join(".")}: ${err.message}`).join("\n")
             toast.error("Invalid character data", {
                 description: errorSummary,
                 duration: 8000,
