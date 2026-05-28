@@ -13,9 +13,6 @@ import { useCharacterStore } from "../character_states"
 import { usePostHog } from "posthog-js/react"
 
 export const downloadJson = async (character: Character) => {
-    const { userUuid } = useUserUuid()
-    const posthog = usePostHog()
-
     try {
         const blob = new Blob([JSON.stringify(character, null, 2)], { type: "application/json" })
         const link = document.createElement("a")
@@ -25,8 +22,6 @@ export const downloadJson = async (character: Character) => {
         link.click()
     } catch (error) {
         console.error(error)
-    } finally {
-        posthog.capture("JSON Download", { userUuid })
     }
 }
 
@@ -42,11 +37,20 @@ export const getUploadFile = async (file: File): Promise<string> => {
 const growDownClass = "transition-all duration-200 ease-in-out hover:h-[calc(2rem+15px)]"
 
 export const JSONDownloadButton = ({ className }: { className?: string }) => {
+    const posthog = usePostHog()
     const getCharacterData = useCharacterStore.use.getCharacterData()
-    const character = getCharacterData()
+    const { userUuid } = useUserUuid()
+
+    const handleDownload = async () => {
+        try {
+            await downloadJson(getCharacterData())
+        } finally {
+            posthog.capture("JSON Download", { userUuid })
+        }
+    }
 
     return (
-        <Button className={cn("rounded-t-none", growDownClass, className)} onClick={() => downloadJson(character)}>
+        <Button className={cn("rounded-t-none", growDownClass, className)} onClick={handleDownload}>
             Download JSON
         </Button>
     )
@@ -273,10 +277,11 @@ export const JSONUploadButton = () => {
 export const PDFDownloadButton = ({ className }: { className?: string }) => {
     const posthog = usePostHog()
     const getCharacterData = useCharacterStore.use.getCharacterData()
-    const character = getCharacterData()
     const { userUuid } = useUserUuid()
 
     const handleDownload = async () => {
+        const character = getCharacterData()
+
         try {
             const pdfBytes = await generateCharacterPDF(character)
 

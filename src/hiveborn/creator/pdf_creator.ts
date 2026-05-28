@@ -53,6 +53,8 @@ export async function generateCharacterPDF(character: Character): Promise<Uint8A
         addResistanceTracks(page, form, character)
         addAbilities(page, form, character)
 
+        form.updateFieldAppearances(font)
+
         return await pdfDoc.save()
     } catch (error) {
         console.error("Error in PDF generation:", { error })

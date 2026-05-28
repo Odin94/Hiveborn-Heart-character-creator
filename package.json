@@ -8,6 +8,7 @@
         "build": "tsc -b && vite build",
         "typecheck": "tsc -b",
         "lint": "oxlint .",
+        "lint:fix": "oxlint . --fix",
         "fmt": "oxfmt --write .",
         "fmt:check": "oxfmt --check .",
         "check": "pnpm run typecheck && pnpm run lint && pnpm run fmt:check",

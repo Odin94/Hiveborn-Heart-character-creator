@@ -1,13 +1,17 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
-    "plugins": ["react", "typescript", "unicorn", "oxc"],
+    "plugins": ["eslint", "react", "typescript", "unicorn", "oxc"],
     "categories": {
         "correctness": "error"
     },
-    "rules": {},
+    "rules": {
+        "react/jsx-no-target-blank": "off",
+        "react/react-in-jsx-scope": "off"
+    },
     "env": {
         "browser": true,
         "builtin": true,
+        "es2020": true,
         "node": true
     },
     "ignorePatterns": ["dist"],

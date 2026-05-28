@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Cookie } from "lucide-react"
-import posthog from "posthog-js"
+import { usePostHog } from "posthog-js/react"
 import * as React from "react"
 
 type CookieConsentProps = {
@@ -29,6 +29,7 @@ const CookieBody = () => (
 
 const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     ({ variant = "small", demo = false, onAcceptCallback = () => {}, onDeclineCallback = () => {}, className, ...props }, ref) => {
+        const posthog = usePostHog()
         const [isOpen, setIsOpen] = React.useState(false)
         const [hide, setHide] = React.useState(false)
 
@@ -43,7 +44,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
                 console.warn("PostHog opt_in_capturing failed:", error)
             }
             onAcceptCallback()
-        }, [onAcceptCallback])
+        }, [onAcceptCallback, posthog])
 
         const handleDecline = React.useCallback(() => {
             setIsOpen(false)
@@ -56,7 +57,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
                 console.warn("PostHog opt_out_capturing failed:", error)
             }
             onDeclineCallback()
-        }, [onDeclineCallback])
+        }, [onDeclineCallback, posthog])
 
         React.useEffect(() => {
             try {
@@ -77,7 +78,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
             } catch (error) {
                 console.warn("Cookie consent error:", error)
             }
-        }, [demo])
+        }, [demo, posthog])
 
         if (hide) return null
 

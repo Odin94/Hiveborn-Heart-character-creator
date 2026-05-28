@@ -11,6 +11,7 @@ If you want, you can [buy me a coffee here ☕](https://ko-fi.com/odin_dev)
 - `pnpm install`
 - `pnpm run dev` to run locally
 - `pnpm run build` to generate a production build
+- `pnpm run check` to run typecheck, linting, and formatting checks
 
 ## Credits:
 
