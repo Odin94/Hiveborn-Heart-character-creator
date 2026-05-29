@@ -1,10 +1,11 @@
 import { useIsLargeScreen } from "@/hooks/useIsLargeScreen"
 import { useCharacterStore } from "../character_states"
 import { Character } from "../../game_data/character"
-import { ChevronDown, Plus, X } from "lucide-react"
+import { ChevronDown, Dices, Plus, X } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { useDiceRollerStore } from "../dice_roller_state"
 
 interface CharacterTabsProps {
     onDeleteCharacter: (index: number) => void
@@ -12,6 +13,7 @@ interface CharacterTabsProps {
 
 const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
     const { characters, currentCharacterIndex, setCurrentCharacter, addCharacter } = useCharacterStore()
+    const setDiceRollerOpen = useDiceRollerStore.use.setOpen()
     const isLargeScreen = useIsLargeScreen()
     const [isMobileTabsVisible, setIsMobileTabsVisible] = useState(false)
     const [deletingIndex, setDeletingIndex] = useState<number | null>(null)
@@ -98,6 +100,24 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
         )
     }
 
+    const renderDiceRollerButton = () => {
+        return (
+            <div className="flex justify-center mt-3 transition-all duration-500 w-40">
+                <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    className="h-10 w-10 rounded-full shadow-lg hover:scale-110"
+                    title="Open dice roller"
+                    aria-label="Open dice roller"
+                    onClick={() => setDiceRollerOpen(true)}
+                >
+                    <Dices size={18} />
+                </Button>
+            </div>
+        )
+    }
+
     return (
         <>
             {/* Desktop version - Left side (screens >= 2100px) */}
@@ -106,6 +126,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                     {characters.map(renderCharacterTab)}
 
                     {renderAddCharacterButton()}
+                    {renderDiceRollerButton()}
                 </div>
             )}
 
@@ -133,6 +154,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                                 <div className="flex flex-wrap items-center justify-center gap-2">{characters.map(renderCharacterTab)}</div>
 
                                 {renderAddCharacterButton()}
+                                {renderDiceRollerButton()}
                             </div>
                         </div>
                     </div>

@@ -8,6 +8,7 @@ import { useUserUuid } from "@/lib/analytics"
 import { useEffect } from "react"
 import { usePostHog } from "posthog-js/react"
 import CookieConsent from "./components/cookie-consent"
+import DiceRoller from "./hiveborn/character_sheet/components/dice_roller"
 
 function App() {
     const posthog = usePostHog()
@@ -46,6 +47,7 @@ function App() {
                 <div className="container mx-auto max-w-screen-xl text-red-900">
                     <CharacterSheet />
                 </div>
+                <DiceRoller />
 
                 <DialogContent>
                     <DialogHeader>

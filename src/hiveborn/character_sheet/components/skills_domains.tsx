@@ -5,12 +5,18 @@ import { skills } from "@/hiveborn/game_data/skills"
 import { Fragment } from "react/jsx-runtime"
 import { useCharacterStore } from "../character_states"
 import { Domain, Skill } from "../../game_data/character"
+import { useDiceRollerStore } from "../dice_roller_state"
+import { cn } from "@/lib/utils"
 
 const SkillsDomains = () => {
     const existingSkills = useCharacterStore.use.skills()
     const setSkills = useCharacterStore.use.setSkills()
     const existingDomains = useCharacterStore.use.domains()
     const setDomains = useCharacterStore.use.setDomains()
+    const selectedSkill = useDiceRollerStore.use.selectedSkill()
+    const selectedDomain = useDiceRollerStore.use.selectedDomain()
+    const pickSkill = useDiceRollerStore.use.pickSkill()
+    const pickDomain = useDiceRollerStore.use.pickDomain()
 
     const rowCount = Math.max(skills.length, domains.length)
 
@@ -49,7 +55,16 @@ const SkillsDomains = () => {
                                             }}
                                             className="mr-3"
                                         />
-                                        {skill.toUpperCase()}
+                                        <button
+                                            type="button"
+                                            className={cn(
+                                                "rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
+                                                selectedSkill === skill && "bg-red-900 text-white hover:bg-red-900",
+                                            )}
+                                            onClick={() => pickSkill(skill)}
+                                        >
+                                            {skill.toUpperCase()}
+                                        </button>
                                     </div>
                                     <div className={`ml-4 ${colClass}`}>
                                         <Input
@@ -83,7 +98,16 @@ const SkillsDomains = () => {
                                             }}
                                             className="mr-3"
                                         />
-                                        {domain.toUpperCase()}
+                                        <button
+                                            type="button"
+                                            className={cn(
+                                                "rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
+                                                selectedDomain === domain && "bg-red-900 text-white hover:bg-red-900",
+                                            )}
+                                            onClick={() => pickDomain(domain)}
+                                        >
+                                            {domain.toUpperCase()}
+                                        </button>
                                     </div>
                                     <div className={`ml-4 ${colClass}`}>
                                         <Input
