@@ -5,11 +5,11 @@ export type ProtectionsRowProps = NumberBy<["s"]>["s"]
 
 const ProtectionsRow = ({ n, setN }: ProtectionsRowProps) => {
     return (
-        <div>
+        <div className="flex min-w-0 flex-wrap gap-1 sm:block">
             {[1, 2, 3, 4, 5].map((i) => (
                 <Checkbox
                     key={i}
-                    className="mx-0.5 p-0"
+                    className="p-0 sm:mx-0.5"
                     checked={i <= n}
                     onCheckedChange={() => {
                         if (n === i) setN(0)

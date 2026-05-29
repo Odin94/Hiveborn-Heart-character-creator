@@ -71,17 +71,17 @@ const NameClassCalling = () => {
     }
 
     return (
-        <div className="grid grid-cols-[1fr_6fr] gap-1 grid-rows-3 size-full">
+        <div className="grid grid-cols-1 gap-1 size-full sm:grid-cols-[1fr_6fr] sm:grid-rows-3">
             {/* Name */}
             <div className="flex items-center font-bold text-left">Name</div>
             <div className="flex items-center">
-                <Input value={name} onChange={(e) => setName(e.target.value)} style={{ width: "90%" }} />
+                <Input value={name} onChange={(e) => setName(e.target.value)} className="sm:w-[90%]" />
             </div>
 
             {/* Class */}
             <div className="flex items-center font-bold text-left">Class</div>
             <div className="flex items-center">
-                <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} style={{ width: "90%" }} />
+                <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="sm:w-[90%]" />
                 <ClassDropdown
                     onSelect={(characterClass: CharacterClass) => {
                         setCharacterClass(characterClass)
@@ -93,7 +93,7 @@ const NameClassCalling = () => {
             {/* Calling */}
             <div className="flex items-center font-bold text-left">Calling</div>
             <div className="flex items-center">
-                <Input value={calling} onChange={(e) => setCalling(e.target.value)} style={{ width: "90%" }} />
+                <Input value={calling} onChange={(e) => setCalling(e.target.value)} className="sm:w-[90%]" />
                 <CallingDropdown
                     onSelect={(calling: Calling) => {
                         setCalling(calling)

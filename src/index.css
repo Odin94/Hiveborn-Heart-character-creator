@@ -244,6 +244,10 @@ button:hover {
         width: 100%;
     }
 
+    .hiveborn-dice-roller {
+        transform: translate(calc(-50% + var(--dice-drag-x, 0px)), calc(-50% + var(--dice-drag-y, 0px)));
+    }
+
     .heart-dice-row {
         align-items: center;
         display: flex;
@@ -433,5 +437,37 @@ button:hover {
 
     .scrollbar::-webkit-scrollbar-thumb:hover {
         background: oklch(48% 0.18 25.723);
+    }
+}
+
+@media (max-width: 640px) {
+    .hiveborn-dice-roller {
+        bottom: 0.5rem;
+        max-height: calc(100dvh - 1rem);
+        overflow-y: auto;
+        padding: 1rem;
+        top: 0.5rem;
+        transform: translateX(-50%);
+    }
+
+    .heart-dice-stage {
+        height: 170px;
+    }
+
+    .heart-dice-row {
+        gap: 24px;
+        min-height: 112px;
+    }
+
+    .heart-dice-row-compact {
+        gap: 18px;
+    }
+
+    .heart-d10-shell {
+        --die-size: 96px;
+    }
+
+    .heart-dice-row-compact .heart-d10-shell {
+        --die-size: 78px;
     }
 }

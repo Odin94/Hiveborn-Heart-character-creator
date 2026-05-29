@@ -25,25 +25,27 @@ function App() {
     }
 
     return (
-        <div className="relative min-h-screen">
+        <div className="relative min-h-screen pb-28 sm:pb-0">
             <CookieConsent variant="small" />
             <Toaster closeButton />
             <Dialog>
-                <a href="https://odin-matthias.de/" target="_blank" className="absolute top-2 left-8 text-sm underline">
-                    /Odin's Site/
-                </a>
-                <a href="https://github.com/Odin94/Hiveborn-Heart-character-creator" target="_blank" className="absolute top-2 left-31 text-sm underline">
-                    /Source Code/
-                </a>
-                <a
-                    href="https://rowanrookanddecard.com/product-category/game-systems/resistance/heart/"
-                    target="_blank"
-                    className="absolute top-2 left-57 text-sm underline"
-                >
-                    /Heart/
-                </a>
+                <nav className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm sm:contents sm:px-0">
+                    <a href="https://odin-matthias.de/" target="_blank" className="underline sm:absolute sm:top-2 sm:left-8">
+                        /Odin's Site/
+                    </a>
+                    <a href="https://github.com/Odin94/Hiveborn-Heart-character-creator" target="_blank" className="underline sm:absolute sm:top-2 sm:left-31">
+                        /Source Code/
+                    </a>
+                    <a
+                        href="https://rowanrookanddecard.com/product-category/game-systems/resistance/heart/"
+                        target="_blank"
+                        className="underline sm:absolute sm:top-2 sm:left-57"
+                    >
+                        /Heart/
+                    </a>
 
-                <DialogTrigger className="link-like absolute top-2 left-72 text-sm underline">/Copyright/</DialogTrigger>
+                    <DialogTrigger className="link-like underline sm:absolute sm:top-2 sm:left-72">/Copyright/</DialogTrigger>
+                </nav>
                 <div className="container mx-auto max-w-screen-xl text-red-900">
                     <CharacterSheet />
                 </div>
@@ -68,7 +70,7 @@ function App() {
                 </DialogContent>
             </Dialog>
 
-            <div className={"h-10 items-start absolute left-0 flex gap-8 ml-4"}>
+            <div className="mt-4 flex flex-wrap justify-center gap-2 px-2 pb-4 sm:absolute sm:left-0 sm:mt-0 sm:ml-4 sm:h-10 sm:items-start sm:gap-8 sm:p-0">
                 <PDFDownloadButton />
                 <JSONDownloadButton />
                 <JSONUploadButton />

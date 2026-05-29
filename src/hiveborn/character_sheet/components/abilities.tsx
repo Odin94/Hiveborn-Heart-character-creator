@@ -27,16 +27,16 @@ const Abilities = () => {
         <div>
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog onOpenChange={(_open) => setPickingFromAbility(undefined)}>
-                    <h2 className="font-bold py-2 bg-red-900 text-white pl-3">
+                    <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
                         ABILITIES{" "}
-                        <DialogTrigger className="absolute right-7 hover:bg-red-800">
+                        <DialogTrigger className="absolute top-1/2 right-3 -translate-y-1/2 hover:bg-red-800 sm:right-7">
                             <ChevronDown className="inline w-4 h-4" />
                         </DialogTrigger>
                     </h2>
                     <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 </Dialog>
 
-                <Textarea value={abilities} onChange={(e) => setAbilities(e.target.value)} className="h-142" />
+                <Textarea value={abilities} onChange={(e) => setAbilities(e.target.value)} className="h-80 sm:h-142" />
             </div>
         </div>
     )
@@ -100,7 +100,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     }
 
     const renderAbilities = () => (
-        <ScrollArea className="h-170" style={{ borderColor: "red" }}>
+        <ScrollArea className="h-[calc(100dvh-14rem)] sm:h-170" style={{ borderColor: "red" }}>
             {filteredAbilityOptions.map((ability) => {
                 const isAlreadyPickedMajor = ability.type === "major" && abilities.includes(`${ability.name} - `)
                 return (
@@ -139,8 +139,10 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     )
 
     return (
-        <DialogContent className="w-88 sm:w-112 h-200">
-            <DialogHeader>
+        <DialogContent
+            className={`${abilityOptions.length === 0 ? "max-sm:h-auto" : "h-[calc(100dvh-1rem)]"} w-[calc(100vw-1rem)] max-sm:overflow-hidden sm:h-200 sm:w-112`}
+        >
+            <DialogHeader className="min-h-0">
                 <DialogTitle>{pickingFromAbility ? pickingFromAbility.name.toUpperCase() : `${characterClass.toUpperCase()} ABILITIES`}</DialogTitle>
                 <DialogDescription></DialogDescription>
                 {abilityOptions.length === 0 ? (
@@ -148,7 +150,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                 ) : pickingFromAbility ? (
                     <PickFrom pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 ) : (
-                    <Tabs defaultValue="minor" className="w-[300px] sm:w-[400px] p-2" value={abilityType} onValueChange={setAbilityType}>
+                    <Tabs defaultValue="minor" className="w-full p-1 sm:w-[400px] sm:p-2" value={abilityType} onValueChange={setAbilityType}>
                         <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="minor" className={`border-1 ${abilityType === "minor" ? selectedClassName : ""}`}>
                                 Minor
@@ -161,9 +163,15 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                             </TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="minor">{renderAbilities()}</TabsContent>
-                        <TabsContent value="major">{renderAbilities()}</TabsContent>
-                        <TabsContent value="zenith">{renderAbilities()}</TabsContent>
+                        <TabsContent value="minor" className="min-h-0">
+                            {renderAbilities()}
+                        </TabsContent>
+                        <TabsContent value="major" className="min-h-0">
+                            {renderAbilities()}
+                        </TabsContent>
+                        <TabsContent value="zenith" className="min-h-0">
+                            {renderAbilities()}
+                        </TabsContent>
                     </Tabs>
                 )}
             </DialogHeader>
@@ -189,8 +197,8 @@ const PickFrom = ({ pickingFromState }: { pickingFromState: PickingFromState }) 
     }
 
     return (
-        <div className="flex flex-col w-full h-[500px] justify-center items-center">
-            <div className="grid grid-cols-2 gap-4">
+        <div className="flex min-h-[min(500px,calc(100dvh-12rem))] w-full flex-col items-center justify-center">
+            <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 sm:gap-4">
                 {pickingFromAbility.pickFrom.domains.map((domain) => (
                     <Button variant={selection === domain ? "default" : "secondary"} onClick={() => setSelection(domain)} key={domain}>
                         {domain.toUpperCase()}

@@ -13,11 +13,10 @@ import { useCharacterStore } from "./character_states"
 const CharacterSheet = () => {
     const { removeCharacter } = useCharacterStore()
 
-    // TODOdin: Make this all mobile friendly
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 grid-rows-[110px_300px_200px_330px] lg:grid-rows-[170px_90px_500px_330px] gap-6 w-full p-5 border-1 rounded-sm">
+        <div className="grid grid-cols-1 grid-rows-none gap-4 w-full p-3 border-1 rounded-sm sm:grid-rows-[110px_300px_200px_330px] sm:gap-6 sm:p-5 lg:grid-cols-2 lg:grid-rows-[170px_90px_500px_330px]">
             <div className="">
-                <img src={Logo} alt="Decorative" className="w-[350px] lg:w-full object-contain max-w-[600px]" />
+                <img src={Logo} alt="Decorative" className="mx-auto w-full max-w-[350px] object-contain sm:w-[350px] lg:w-full lg:max-w-[600px]" />
             </div>
 
             <div className="">

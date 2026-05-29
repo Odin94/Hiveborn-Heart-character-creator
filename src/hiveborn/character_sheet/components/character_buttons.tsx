@@ -34,7 +34,7 @@ export const getUploadFile = async (file: File): Promise<string> => {
     })
 }
 
-const growDownClass = "transition-all duration-200 ease-in-out hover:h-[calc(2rem+15px)]"
+const growDownClass = "transition-all duration-200 ease-in-out sm:hover:h-[calc(2rem+15px)]"
 
 export const JSONDownloadButton = ({ className }: { className?: string }) => {
     const posthog = usePostHog()
@@ -250,7 +250,7 @@ export const JSONUploadButton = () => {
                 <div>
                     <div
                         {...getRootProps()}
-                        className={`text-sm w-[70%] border-2 border-dashed rounded-md p-2 cursor-pointer transition-colors ${getDropzoneClassName()}`}
+                        className={`text-sm w-full sm:w-[70%] border-2 border-dashed rounded-md p-2 cursor-pointer transition-colors ${getDropzoneClassName()}`}
                     >
                         <input {...getInputProps()} accept=".json" />
                         {getDropzoneText()}

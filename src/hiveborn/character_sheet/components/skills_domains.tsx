@@ -20,16 +20,19 @@ const SkillsDomains = () => {
 
     const rowCount = Math.max(skills.length, domains.length)
 
-    const gridClass = "grid grid-cols-4 gap-2 text-left"
+    const gridClass = "grid grid-cols-[minmax(0,1fr)_7rem] gap-2 text-left sm:grid-cols-4"
     return (
         <div className="space-y-2">
             <div className={gridClass}>
-                <h2 className="text-lg font-bold">SKILLS</h2>
+                <h2 className="text-lg font-bold">
+                    <span className="sm:hidden">SKILLS / DOMAINS</span>
+                    <span className="hidden sm:inline">SKILLS</span>
+                </h2>
                 <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
-                <h2 className="text-lg font-bold">DOMAINS</h2>
-                <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
+                <h2 className="hidden text-lg font-bold sm:block">DOMAINS</h2>
+                <h2 className="hidden text-lg font-bold text-red-900/60 ml-4 sm:block">KNACKS</h2>
             </div>
-            <div className={`text-black grid grid-cols-4 gap-1 gap-y-0 grid-rows-${rowCount} size-full`}>
+            <div className={`text-black grid grid-cols-[minmax(0,1fr)_7rem] gap-1 gap-y-2 sm:grid-cols-4 sm:gap-y-0 grid-rows-${rowCount} size-full`}>
                 {Array.from({ length: rowCount }).map((_, i) => {
                     const skill = skills[i]
                     const { hasSkill, knacks: skillKnacks } = existingSkills[skill] ?? { hasSkill: false, knacks: [] }
@@ -44,7 +47,7 @@ const SkillsDomains = () => {
                             {/* Skill + Knack */}
                             {skill ? (
                                 <>
-                                    <div className={`font-bold text-md text-left ${colClass}`}>
+                                    <div className={`min-w-0 font-bold text-md text-left ${colClass}`}>
                                         <Checkbox
                                             checked={hasSkill}
                                             onCheckedChange={(checked) => {
@@ -58,7 +61,7 @@ const SkillsDomains = () => {
                                         <button
                                             type="button"
                                             className={cn(
-                                                "rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
+                                                "min-w-0 rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
                                                 selectedSkill === skill && "bg-red-900 text-white hover:bg-red-900",
                                             )}
                                             onClick={() => pickSkill(skill)}
@@ -66,9 +69,9 @@ const SkillsDomains = () => {
                                             {skill.toUpperCase()}
                                         </button>
                                     </div>
-                                    <div className={`ml-4 ${colClass}`}>
+                                    <div className={`ml-2 sm:ml-4 ${colClass}`}>
                                         <Input
-                                            className="w-28 text-sm h-8"
+                                            className="h-8 w-full text-sm sm:w-28"
                                             value={skillKnacks}
                                             onChange={(e) => {
                                                 const newKnacks = e.target.value
@@ -87,7 +90,7 @@ const SkillsDomains = () => {
                             {/* Domain + Knack */}
                             {domain ? (
                                 <>
-                                    <div className={`font-bold text-md text-left ${colClass}`}>
+                                    <div className={`min-w-0 font-bold text-md text-left ${colClass}`}>
                                         <Checkbox
                                             checked={hasDomain}
                                             onCheckedChange={(checked) => {
@@ -101,7 +104,7 @@ const SkillsDomains = () => {
                                         <button
                                             type="button"
                                             className={cn(
-                                                "rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
+                                                "min-w-0 rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
                                                 selectedDomain === domain && "bg-red-900 text-white hover:bg-red-900",
                                             )}
                                             onClick={() => pickDomain(domain)}
@@ -109,9 +112,9 @@ const SkillsDomains = () => {
                                             {domain.toUpperCase()}
                                         </button>
                                     </div>
-                                    <div className={`ml-4 ${colClass}`}>
+                                    <div className={`ml-2 sm:ml-4 ${colClass}`}>
                                         <Input
-                                            className="w-28 text-sm h-8"
+                                            className="h-8 w-full text-sm sm:w-28"
                                             value={domainKnacks}
                                             onChange={(e) => {
                                                 const newKnacks = e.target.value

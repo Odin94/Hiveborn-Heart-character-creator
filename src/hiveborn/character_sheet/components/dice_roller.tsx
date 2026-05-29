@@ -235,8 +235,13 @@ const DiceRoller = () => {
             role="dialog"
             aria-modal="false"
             aria-labelledby="dice-roller-title"
-            className="fixed left-1/2 top-1/2 z-[70] w-[min(720px,calc(100vw-2rem))] rounded-lg border border-red-900/25 bg-background p-5 text-left text-red-950 shadow-2xl"
-            style={{ transform: `translate(calc(-50% + ${dragOffset.x}px), calc(-50% + ${dragOffset.y}px))` }}
+            className="hiveborn-dice-roller fixed left-1/2 top-1/2 z-[70] w-[min(720px,calc(100vw-2rem))] rounded-lg border border-red-900/25 bg-background p-5 text-left text-red-950 shadow-2xl"
+            style={
+                {
+                    "--dice-drag-x": `${dragOffset.x}px`,
+                    "--dice-drag-y": `${dragOffset.y}px`,
+                } as CSSProperties
+            }
         >
             <div
                 className="mb-4 flex cursor-move touch-none items-start justify-between gap-4 border-b border-red-900/10 pb-3"

@@ -44,9 +44,9 @@ const Fallout = () => {
         <div>
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-                    <h2 className="font-bold py-2 bg-red-900 text-white pl-3">
+                    <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
                         FALLOUT{" "}
-                        <DialogTrigger className="absolute right-7 hover:bg-red-800">
+                        <DialogTrigger className="absolute top-1/2 right-3 -translate-y-1/2 hover:bg-red-800 sm:right-7">
                             <ChevronDown className="inline w-4 h-4" />
                         </DialogTrigger>
                     </h2>
@@ -92,7 +92,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
         .filter((falloutOption) => !isFalloutPickedAlready(falloutOption))
 
     const renderFalloutOptions = () => (
-        <ScrollArea className="h-150" style={{ borderColor: "red" }}>
+        <ScrollArea className="h-[calc(100dvh-17rem)] sm:h-150" style={{ borderColor: "red" }}>
             {filteredFalloutOptions.length === 0 ? (
                 <p className="p-4 text-muted-foreground text-sm">No available fallout in this section.</p>
             ) : (
@@ -115,13 +115,13 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     )
 
     return (
-        <DialogContent className="w-[calc(100%-2rem)] sm:w-[44rem] sm:max-w-[44rem] h-200">
-            <DialogHeader>
+        <DialogContent className="h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-sm:overflow-hidden sm:h-200 sm:w-[44rem] sm:max-w-[44rem]">
+            <DialogHeader className="min-h-0">
                 <DialogTitle>FALLOUT</DialogTitle>
                 <DialogDescription></DialogDescription>
                 <Tabs
                     defaultValue="minor"
-                    className="w-full p-2"
+                    className="w-full p-1 sm:p-2"
                     value={falloutSeverity}
                     onValueChange={(newSeverity) => setFalloutSeverity(newSeverity as FalloutSeverity)}
                 >
@@ -140,7 +140,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
                     {falloutSeverities.map((severity) => (
                         <TabsContent key={severity} value={severity}>
                             <Tabs value={resistance} onValueChange={(newResistance) => setResistance(newResistance as Resistance)}>
-                                <TabsList className="grid w-full grid-cols-5 mt-2">
+                                <TabsList className="grid w-full grid-cols-2 mt-2 sm:grid-cols-5">
                                     {resistances.map((resistanceOption) => (
                                         <TabsTrigger
                                             key={resistanceOption}
