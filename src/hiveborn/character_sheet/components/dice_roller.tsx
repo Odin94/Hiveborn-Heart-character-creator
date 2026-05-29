@@ -273,8 +273,9 @@ const DiceRoller = () => {
                 <label className="grid gap-1 text-sm font-semibold">
                     Skill
                     <select
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs"
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
                         value={selectedSkill}
+                        disabled={rolling}
                         onChange={(event) => setSelectedSkill(event.target.value as typeof selectedSkill)}
                     >
                         <option value="">No relevant skill</option>
@@ -289,8 +290,9 @@ const DiceRoller = () => {
                 <label className="grid gap-1 text-sm font-semibold">
                     Domain
                     <select
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs"
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
                         value={selectedDomain}
+                        disabled={rolling}
                         onChange={(event) => setSelectedDomain(event.target.value as typeof selectedDomain)}
                     >
                         <option value="">No relevant domain</option>
@@ -303,7 +305,7 @@ const DiceRoller = () => {
                 </label>
 
                 <label className="flex items-end gap-2 pb-2 text-sm font-semibold">
-                    <Checkbox checked={hasMastery} onCheckedChange={(checked) => setHasMastery(checked === true)} />
+                    <Checkbox checked={hasMastery} disabled={rolling} onCheckedChange={(checked) => setHasMastery(checked === true)} />
                     Mastery
                 </label>
             </div>
@@ -314,9 +316,10 @@ const DiceRoller = () => {
                         key={riskOption.value}
                         type="button"
                         className={cn(
-                            "h-10 border-r border-red-900/15 text-sm font-semibold last:border-r-0",
+                            "h-10 border-r border-red-900/15 text-sm font-semibold last:border-r-0 disabled:cursor-not-allowed disabled:opacity-60",
                             risk === riskOption.value ? "bg-red-900 text-white" : "bg-background text-red-900 hover:bg-red-50",
                         )}
+                        disabled={rolling}
                         onClick={() => setRisk(riskOption.value)}
                     >
                         {riskOption.label}
