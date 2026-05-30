@@ -8,7 +8,7 @@ import { useUserUuid } from "@/lib/analytics"
 import { useEffect } from "react"
 import { usePostHog } from "posthog-js/react"
 import CookieConsent from "./components/cookie-consent"
-import DiceRoller from "./hiveborn/character_sheet/components/dice_roller"
+import DiceRoller from "./hiveborn/character_sheet/components/dice_roller/dice_roller"
 
 function App() {
     const posthog = usePostHog()

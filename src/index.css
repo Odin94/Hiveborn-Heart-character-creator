@@ -357,7 +357,7 @@ button:hover {
         height: 100%;
         position: absolute;
         transform: var(--target-transform, rotateX(0deg) rotateY(0deg) rotateZ(0deg));
-        transform-origin: var(--d4-origin-x, center) center;
+        transform-origin: var(--d4-origin-x, center) var(--d4-origin-y, center);
         transform-style: preserve-3d;
         transition: transform 0.5s ease-out;
         width: 100%;
