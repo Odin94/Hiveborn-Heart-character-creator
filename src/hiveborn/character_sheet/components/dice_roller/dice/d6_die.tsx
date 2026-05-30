@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { type CSSProperties } from "react"
 import { DieRoll } from "../types"
-import { d6Transforms } from "./transforms"
+import { getD6DieTransform, getD6RollTransform } from "./transforms"
 
 const D6Die = ({ die, rolling, index }: { die: DieRoll; rolling: boolean; index: number }) => {
     const isRemoved = !rolling && die.removed
@@ -12,8 +12,8 @@ const D6Die = ({ die, rolling, index }: { die: DieRoll; rolling: boolean; index:
                 className={cn("heart-d6", rolling && "heart-d6-rolling")}
                 style={
                     {
-                        "--target-transform": d6Transforms[die.value],
-                        "--roll-transform": `rotateX(${720 + die.value * 91}deg) rotateY(${900 + die.value * 67}deg) rotateZ(720deg)`,
+                        "--target-transform": getD6DieTransform(die.value),
+                        "--roll-transform": getD6RollTransform(die.value),
                     } as CSSProperties
                 }
             >

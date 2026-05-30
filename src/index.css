@@ -536,6 +536,12 @@ button:hover {
 
     .heart-d8-shell {
         --die-size: 136px;
+        --d8-width: calc(var(--die-size) * 0.5);
+        --d8-height: calc(0.8660254 * var(--d8-width));
+        --d8-center: 0.288675;
+        --d8-co-center: calc((0.5 - var(--d8-center)) * var(--d8-height));
+        --d8-extrude: calc(var(--d8-width) * 0.33);
+        --d8-co-dihedral: 36deg;
         filter: drop-shadow(0 12px 7px rgb(69 10 10 / 35%));
         height: var(--die-size);
         opacity: 1;
@@ -560,9 +566,11 @@ button:hover {
     }
 
     .heart-d8 {
-        height: 100%;
+        height: calc(2 * var(--d8-height));
+        left: 0;
         position: absolute;
-        transform: var(--target-transform, rotateX(-34deg) rotateY(45deg));
+        top: calc((var(--die-size) - (2 * var(--d8-height))) * 0.5);
+        transform: var(--target-transform, rotateX(-36deg));
         transform-style: preserve-3d;
         transition: transform 0.5s ease-out;
         width: 100%;
@@ -578,12 +586,12 @@ button:hover {
         background: rgb(153 27 27 / 86%);
         clip-path: polygon(50% 0, 0 100%, 100% 100%);
         display: flex;
-        height: calc(var(--die-size) * 0.74);
+        height: calc(2 * var(--d8-height));
         justify-content: center;
         left: 0;
         position: absolute;
-        top: calc(var(--die-size) * 0.14);
-        transform-origin: 50% 100%;
+        top: 0;
+        transform-origin: 50% 28.8675%;
         transform-style: preserve-3d;
         width: var(--die-size);
     }
@@ -593,35 +601,38 @@ button:hover {
         display: block;
         font-size: calc(var(--die-size) * 0.3);
         font-weight: 900;
-        margin-top: calc(var(--die-size) * 0.2);
+        margin-top: calc(var(--die-size) * 0.18);
         text-shadow:
             1px 1px 1px #000,
             2px 3px 4px rgb(0 0 0 / 70%);
     }
 
     .heart-d8-face-1 {
-        transform: rotateY(0deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(35deg);
+        transform: rotateY(90deg) rotateX(var(--d8-co-dihedral)) translateZ(var(--d8-extrude));
     }
     .heart-d8-face-2 {
-        transform: rotateY(90deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(35deg);
+        transform: rotateX(var(--d8-co-dihedral)) translateZ(var(--d8-extrude));
     }
     .heart-d8-face-3 {
-        transform: rotateY(180deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(35deg);
+        transform: rotateY(180deg) rotateX(var(--d8-co-dihedral)) translateZ(var(--d8-extrude));
     }
     .heart-d8-face-4 {
-        transform: rotateY(270deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(35deg);
+        transform: rotateY(270deg) rotateX(var(--d8-co-dihedral)) translateZ(var(--d8-extrude));
     }
     .heart-d8-face-5 {
-        transform: rotateY(0deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(145deg) rotateZ(180deg);
+        transform: rotateX(180deg) translateY(calc(var(--d8-co-center) - (2 * var(--d8-height)))) rotateX(var(--d8-co-dihedral)) translateZ(var(--d8-extrude));
     }
     .heart-d8-face-6 {
-        transform: rotateY(90deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(145deg) rotateZ(180deg);
+        transform: rotateX(180deg) rotateY(90deg) translateY(calc(var(--d8-co-center) - (2 * var(--d8-height)))) rotateX(var(--d8-co-dihedral))
+            translateZ(var(--d8-extrude));
     }
     .heart-d8-face-7 {
-        transform: rotateY(180deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(145deg) rotateZ(180deg);
+        transform: rotateX(180deg) rotateY(180deg) translateY(calc(var(--d8-co-center) - (2 * var(--d8-height)))) rotateX(var(--d8-co-dihedral))
+            translateZ(var(--d8-extrude));
     }
     .heart-d8-face-8 {
-        transform: rotateY(270deg) translateZ(calc(var(--die-size) * 0.29)) rotateX(145deg) rotateZ(180deg);
+        transform: rotateX(180deg) rotateY(270deg) translateY(calc(var(--d8-co-center) - (2 * var(--d8-height)))) rotateX(var(--d8-co-dihedral))
+            translateZ(var(--d8-extrude));
     }
 
     .heart-d10-shell {
@@ -785,6 +796,9 @@ button:hover {
 
     .heart-d12-shell {
         --die-size: 138px;
+        --d12-face-size: calc(var(--die-size) * 0.72);
+        --d12-extrude: calc(var(--d12-face-size) * 0.69);
+        --d12-co-dihedral: -26.57deg;
         filter: drop-shadow(0 12px 7px rgb(69 10 10 / 35%));
         height: var(--die-size);
         opacity: 1;
@@ -811,7 +825,7 @@ button:hover {
     .heart-d12 {
         height: 100%;
         position: absolute;
-        transform: var(--target-transform, rotateX(-16deg));
+        transform: var(--target-transform, rotateX(-90deg));
         transform-style: preserve-3d;
         transition: transform 0.5s ease-out;
         width: 100%;
@@ -823,17 +837,18 @@ button:hover {
 
     .heart-d12-face {
         align-items: center;
-        backface-visibility: hidden;
+        backface-visibility: visible;
         background: rgb(153 27 27 / 86%);
-        clip-path: polygon(50% 0, 96% 35%, 79% 100%, 21% 100%, 4% 35%);
+        clip-path: polygon(50% 0.5102040816%, 99.53165272% 36.49705629%, 80.6122449% 94.72500629%, 19.3877551% 94.72500629%, 0.4683472789% 36.49705629%);
         display: flex;
-        height: calc(var(--die-size) * 0.62);
+        height: var(--d12-face-size);
         justify-content: center;
-        left: calc(var(--die-size) * 0.16);
+        left: calc((var(--die-size) - var(--d12-face-size)) * 0.5);
         position: absolute;
-        top: calc(var(--die-size) * 0.18);
+        top: calc((var(--die-size) - var(--d12-face-size)) * 0.5);
+        transform-origin: 50% 50%;
         transform-style: preserve-3d;
-        width: calc(var(--die-size) * 0.68);
+        width: var(--d12-face-size);
     }
 
     .heart-d12-face span {
@@ -846,41 +861,46 @@ button:hover {
             2px 3px 4px rgb(0 0 0 / 70%);
     }
 
+    .heart-d12-face-1 span,
+    .heart-d12-face-7 span {
+        transform: rotate(180deg) rotateY(180deg);
+    }
+
     .heart-d12-face-1 {
-        transform: rotateY(0deg) translateZ(calc(var(--die-size) * 0.38)) rotateX(18deg);
+        transform: rotateX(90deg) translateZ(calc(0px - var(--d12-extrude))) translateY(calc(var(--die-size) * -0.014));
     }
     .heart-d12-face-2 {
-        transform: rotateY(72deg) translateZ(calc(var(--die-size) * 0.38)) rotateX(18deg);
+        transform: rotateY(72deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-3 {
-        transform: rotateY(144deg) translateZ(calc(var(--die-size) * 0.38)) rotateX(18deg);
+        transform: rotateY(144deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-4 {
-        transform: rotateY(216deg) translateZ(calc(var(--die-size) * 0.38)) rotateX(18deg);
+        transform: rotateY(216deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-5 {
-        transform: rotateY(288deg) translateZ(calc(var(--die-size) * 0.38)) rotateX(18deg);
+        transform: rotateY(288deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-6 {
-        transform: rotateY(36deg) translateZ(calc(var(--die-size) * 0.26)) translateY(calc(var(--die-size) * -0.28)) rotateX(74deg);
+        transform: rotateY(360deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-7 {
-        transform: rotateY(108deg) translateZ(calc(var(--die-size) * 0.26)) translateY(calc(var(--die-size) * -0.28)) rotateX(74deg);
+        transform: rotateX(270deg) translateZ(calc((var(--die-size) * 0.014) - var(--d12-extrude))) translateY(calc(var(--die-size) * -0.014));
     }
     .heart-d12-face-8 {
-        transform: rotateY(180deg) translateZ(calc(var(--die-size) * 0.26)) translateY(calc(var(--die-size) * -0.28)) rotateX(74deg);
+        transform: rotateX(180deg) translateY(calc(var(--die-size) * -0.029)) rotateY(72deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-9 {
-        transform: rotateY(252deg) translateZ(calc(var(--die-size) * 0.26)) translateY(calc(var(--die-size) * -0.28)) rotateX(74deg);
+        transform: rotateX(180deg) translateY(calc(var(--die-size) * -0.029)) rotateY(144deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-10 {
-        transform: rotateY(324deg) translateZ(calc(var(--die-size) * 0.26)) translateY(calc(var(--die-size) * -0.28)) rotateX(74deg);
+        transform: rotateX(180deg) translateY(calc(var(--die-size) * -0.029)) rotateY(216deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-11 {
-        transform: translateY(calc(var(--die-size) * -0.42)) rotateX(90deg);
+        transform: rotateX(180deg) translateY(calc(var(--die-size) * -0.029)) rotateY(288deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
     .heart-d12-face-12 {
-        transform: translateY(calc(var(--die-size) * 0.42)) rotateX(-90deg) rotateZ(36deg);
+        transform: rotateX(180deg) translateY(calc(var(--die-size) * -0.029)) rotateY(360deg) rotateX(var(--d12-co-dihedral)) translateZ(var(--d12-extrude));
     }
 
     .scrollbar::-webkit-scrollbar {

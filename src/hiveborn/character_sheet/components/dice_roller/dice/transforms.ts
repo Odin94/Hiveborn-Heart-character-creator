@@ -5,37 +5,103 @@ export const d4Transforms: Record<number, string> = {
     4: "rotateX(0deg) rotateY(60deg) rotateZ(0deg)",
 }
 
-export const d6Transforms: Record<number, string> = {
-    1: "rotateX(-18deg) rotateY(-24deg)",
-    2: "rotateX(-18deg) rotateY(-114deg)",
-    3: "rotateX(-108deg) rotateY(-24deg)",
-    4: "rotateX(72deg) rotateY(-24deg)",
-    5: "rotateX(-18deg) rotateY(66deg)",
-    6: "rotateX(-18deg) rotateY(156deg)",
+const d6FaceAngles: Record<number, { x: number; y: number }> = {
+    1: { x: 0, y: 0 },
+    2: { x: 0, y: -90 },
+    3: { x: -90, y: 0 },
+    4: { x: 90, y: 0 },
+    5: { x: 0, y: 90 },
+    6: { x: 0, y: 180 },
 }
 
-export const d8Transforms: Record<number, string> = {
-    1: "rotateX(-34deg) rotateY(45deg)",
-    2: "rotateX(-34deg) rotateY(135deg)",
-    3: "rotateX(-34deg) rotateY(225deg)",
-    4: "rotateX(-34deg) rotateY(315deg)",
-    5: "rotateX(-146deg) rotateY(45deg)",
-    6: "rotateX(-146deg) rotateY(135deg)",
-    7: "rotateX(-146deg) rotateY(225deg)",
-    8: "rotateX(-146deg) rotateY(315deg)",
+export const getD6DieTransform = (face: number) => {
+    const angles = d6FaceAngles[face] ?? d6FaceAngles[1]
+
+    return `rotateX(${angles.x}deg) rotateY(${angles.y}deg)`
 }
 
-export const d12Transforms: Record<number, string> = {
-    1: "rotateX(-16deg) rotateY(0deg)",
-    2: "rotateX(-16deg) rotateY(72deg)",
-    3: "rotateX(-16deg) rotateY(144deg)",
-    4: "rotateX(-16deg) rotateY(216deg)",
-    5: "rotateX(-16deg) rotateY(288deg)",
-    6: "rotateX(-86deg) rotateY(36deg)",
-    7: "rotateX(-86deg) rotateY(108deg)",
-    8: "rotateX(-86deg) rotateY(180deg)",
-    9: "rotateX(-86deg) rotateY(252deg)",
-    10: "rotateX(-86deg) rotateY(324deg)",
-    11: "rotateX(-156deg) rotateY(0deg)",
-    12: "rotateX(24deg) rotateY(0deg)",
+export const getD6RollTransform = (face: number) => {
+    const angles = d6FaceAngles[face] ?? d6FaceAngles[1]
+    const extraXTurns = face % 2 === 0 ? 1080 : 720
+    const extraYTurns = face % 3 === 0 ? 1440 : 1080
+
+    return `rotateX(${angles.x + extraXTurns}deg) rotateY(${angles.y + extraYTurns}deg) rotateZ(720deg)`
+}
+
+const d8CoDihedral = 36
+const d8TopFaceYaw: Record<number, number> = {
+    1: 90,
+    2: 0,
+    3: 180,
+    4: 270,
+}
+
+const d8BottomFaceYaw: Record<number, number> = {
+    5: 0,
+    6: 90,
+    7: 180,
+    8: 270,
+}
+
+export const getD8DieTransform = (face: number) => {
+    if (face in d8TopFaceYaw) {
+        return `rotateX(${-d8CoDihedral}deg) rotateY(${-d8TopFaceYaw[face]}deg)`
+    }
+
+    const yaw = d8BottomFaceYaw[face] ?? d8BottomFaceYaw[5]
+
+    return `rotateX(${-d8CoDihedral}deg) rotateY(${-yaw}deg) rotateX(180deg)`
+}
+
+export const getD8RollTransform = (face: number) => {
+    if (face in d8TopFaceYaw) {
+        return `rotateX(${720 - d8CoDihedral}deg) rotateY(${1080 - d8TopFaceYaw[face]}deg) rotateZ(720deg)`
+    }
+
+    const yaw = d8BottomFaceYaw[face] ?? d8BottomFaceYaw[5]
+
+    return `rotateX(${720 - d8CoDihedral}deg) rotateY(${1080 - yaw}deg) rotateX(900deg) rotateZ(720deg)`
+}
+
+const d12CoDihedral = -26.57
+const d12UpperFaceYaw: Record<number, number> = {
+    2: 72,
+    3: 144,
+    4: 216,
+    5: 288,
+    6: 360,
+}
+
+const d12LowerFaceYaw: Record<number, number> = {
+    8: 72,
+    9: 144,
+    10: 216,
+    11: 288,
+    12: 360,
+}
+
+export const getD12DieTransform = (face: number) => {
+    if (face === 1) return "rotateX(-90deg)"
+    if (face === 7) return "rotateX(90deg)"
+
+    if (face in d12UpperFaceYaw) {
+        return `rotateX(${-d12CoDihedral}deg) rotateY(${-d12UpperFaceYaw[face]}deg)`
+    }
+
+    const yaw = d12LowerFaceYaw[face] ?? d12LowerFaceYaw[8]
+
+    return `rotateX(${-d12CoDihedral}deg) rotateY(${-yaw}deg) rotateX(180deg)`
+}
+
+export const getD12RollTransform = (face: number) => {
+    if (face === 1) return "rotateX(630deg) rotateY(720deg) rotateZ(720deg)"
+    if (face === 7) return "rotateX(810deg) rotateY(720deg) rotateZ(720deg)"
+
+    if (face in d12UpperFaceYaw) {
+        return `rotateX(${720 - d12CoDihedral}deg) rotateY(${1080 - d12UpperFaceYaw[face]}deg) rotateZ(720deg)`
+    }
+
+    const yaw = d12LowerFaceYaw[face] ?? d12LowerFaceYaw[8]
+
+    return `rotateX(${720 - d12CoDihedral}deg) rotateY(${1080 - yaw}deg) rotateX(900deg) rotateZ(720deg)`
 }
