@@ -1,12 +1,12 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { beatTypes, beatsByCalling, type Beat, type BeatType } from "@/hiveborn/game_data/beats"
 import { isCalling } from "@/hiveborn/game_data/callings"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
-import { ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { useCharacterStore } from "../character_states"
+import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
 
 const ActiveBeats = () => {
     const activeBeats = useCharacterStore.use.activeBeats()
@@ -20,10 +20,7 @@ const ActiveBeats = () => {
         <div className="row-span-3 col-span-2 text-left mt-5">
             <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
                 <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
-                    ACTIVE BEATS{" "}
-                    <DialogTrigger className="absolute top-1/2 right-3 -translate-y-1/2 hover:bg-red-800 sm:right-7" aria-label="Pick active beat">
-                        <ChevronDown className="inline w-4 h-4" />
-                    </DialogTrigger>
+                    ACTIVE BEATS <DialogTriggerWrapper />
                 </h2>
                 {pickerOpen ? (
                     <BeatsDialog

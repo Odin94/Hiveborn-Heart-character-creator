@@ -1,7 +1,7 @@
 import { useIsLargeScreen } from "@/hooks/useIsLargeScreen"
 import { useCharacterStore } from "../character_states"
 import { Character } from "../../game_data/character"
-import { ChevronDown, Dices, Plus, X } from "lucide-react"
+import { Book, Dices, Plus, X } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -139,7 +139,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                             onClick={() => setIsMobileTabsVisible(!isMobileTabsVisible)}
                             className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:scale-110 shadow-lg"
                         >
-                            <ChevronDown size={16} className={`transition-transform duration-200 ${isMobileTabsVisible ? "rotate-180" : ""}`} />
+                            <Book size={16} className={`transition-transform duration-200 ${isMobileTabsVisible ? "rotate-180" : ""}`} />
                         </button>
                     </div>
 

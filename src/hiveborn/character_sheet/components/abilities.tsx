@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { abilitiesByClassOrCalling, Ability, comesWithPick, PickFromOption } from "@/hiveborn/game_data/abilities"
@@ -8,11 +8,11 @@ import { iconByDomain } from "@/hiveborn/game_data/domains"
 import { iconBySkill } from "@/hiveborn/game_data/skills"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { Dispatch, SetStateAction, useState } from "react"
-import { ChevronDown } from "lucide-react"
 import { MdOutlineShield } from "react-icons/md"
 import { useCharacterStore } from "../character_states"
 import { useApplyPickedBonus } from "../hooks/useApplyPickedBonus"
 import { useApplyStaticBonuses } from "../hooks/useApplyStaticBonuses"
+import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
 
 type PickingFromState = [Ability | undefined, Dispatch<SetStateAction<Ability | undefined>>]
 
@@ -28,10 +28,7 @@ const Abilities = () => {
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog onOpenChange={(_open) => setPickingFromAbility(undefined)}>
                     <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
-                        ABILITIES{" "}
-                        <DialogTrigger className="absolute top-1/2 right-3 -translate-y-1/2 hover:bg-red-800 sm:right-7">
-                            <ChevronDown className="inline w-4 h-4" />
-                        </DialogTrigger>
+                        ABILITIES <DialogTriggerWrapper />
                     </h2>
                     <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 </Dialog>
@@ -106,8 +103,8 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                 return (
                     <div
                         key={ability.name}
-                        className={`border-1 p-2 border-t-0 
-                            ${ability.parentName ? "ml-6" : ""} 
+                        className={`border-1 p-2 border-t-0
+                            ${ability.parentName ? "ml-6" : ""}
                             ${isAlreadyPickedMajor ? "border border-[#999999] bg-[#eee] text-[#888] hover:bg-[#eee]" : "cursor-pointer hover:bg-accent"}
                         `}
                         onClick={() => {

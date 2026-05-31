@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { falloutSeverities, falloutOptions, type Fallout as FalloutOption, type FalloutSeverity } from "@/hiveborn/game_data/fallout"
+import { falloutOptions, falloutSeverities, type Fallout as FalloutOption, type FalloutSeverity } from "@/hiveborn/game_data/fallout"
 import { resistances, type Resistance } from "@/hiveborn/game_data/resistances"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
-import { ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { useCharacterStore } from "../character_states"
+import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
 
 const Fallout = () => {
     const fallout = useCharacterStore.use.fallout()
@@ -45,10 +45,7 @@ const Fallout = () => {
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
                     <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
-                        FALLOUT{" "}
-                        <DialogTrigger className="absolute top-1/2 right-3 -translate-y-1/2 hover:bg-red-800 sm:right-7">
-                            <ChevronDown className="inline w-4 h-4" />
-                        </DialogTrigger>
+                        FALLOUT <DialogTriggerWrapper />
                     </h2>
                     {pickerOpen ? (
                         <FalloutDialog
