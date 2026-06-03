@@ -284,6 +284,16 @@ button:hover {
         transform: translate(calc(-50% + var(--dice-drag-x, 0px)), calc(-50% + var(--dice-drag-y, 0px)));
     }
 
+    .heart-number-input {
+        appearance: textfield;
+    }
+
+    .heart-number-input::-webkit-inner-spin-button,
+    .heart-number-input::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+
     .heart-dice-row {
         align-items: center;
         display: flex;
@@ -351,6 +361,15 @@ button:hover {
     .heart-d4-shell-removed {
         filter: grayscale(0.45) drop-shadow(0 5px 3px rgb(69 10 10 / 22%));
         opacity: 0.48;
+    }
+
+    .heart-d4-positioner {
+        height: 100%;
+        left: calc(var(--die-size) * -0.5);
+        position: absolute;
+        top: 0;
+        transform-style: preserve-3d;
+        width: 100%;
     }
 
     .heart-d4 {

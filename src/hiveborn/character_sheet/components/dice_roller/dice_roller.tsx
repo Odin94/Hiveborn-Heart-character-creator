@@ -28,7 +28,7 @@ const DiceRoller = () => {
     const characterDomains = useCharacterStore.use.domains()
     const [activeTab, setActiveTab] = useState<RollerTab>("skill-domain")
     const [dice, setDice] = useState<DieRoll[]>([{ id: 0, value: 10, sides: 10, removed: false }])
-    const [freeDiceCount, setFreeDiceCount] = useState(3)
+    const [freeDiceCount, setFreeDiceCount] = useState(1)
     const [freeDieSize, setFreeDieSize] = useState<DieSize>(6)
     const [rolling, setRolling] = useState(false)
     const [result, setResult] = useState<RollResult | null>(null)

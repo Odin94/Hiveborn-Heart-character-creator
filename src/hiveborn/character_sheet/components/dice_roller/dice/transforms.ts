@@ -2,7 +2,7 @@ export const d4Transforms: Record<number, string> = {
     1: "rotateX(0deg) rotateY(0deg) rotateZ(0deg)",
     2: "rotateX(0deg) rotateY(120deg) rotateZ(0deg)",
     3: "rotateX(0deg) rotateY(240deg) rotateZ(0deg)",
-    4: "rotateX(0deg) rotateY(60deg) rotateZ(0deg)",
+    4: "rotateX(0deg) rotateY(0deg) rotateZ(0deg)",
 }
 
 const d6FaceAngles: Record<number, { x: number; y: number }> = {
