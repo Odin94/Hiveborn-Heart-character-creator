@@ -15,9 +15,16 @@ const FreeRollControls = ({
     setFreeDiceCount: (count: number) => void
     setFreeDieSize: (size: DieSize) => void
 }) => {
+    const currentDieSizeIndex = dieSizes.indexOf(freeDieSize)
+
     const updateDiceCount = (count: number) => {
         const nextCount = Math.min(maxFreeDiceCount, Math.max(1, count))
         setFreeDiceCount(nextCount)
+    }
+
+    const updateDieSize = (step: number) => {
+        const nextIndex = Math.min(dieSizes.length - 1, Math.max(0, currentDieSizeIndex + step))
+        setFreeDieSize(dieSizes[nextIndex])
     }
 
     return (
@@ -57,18 +64,29 @@ const FreeRollControls = ({
 
             <label className="grid gap-1 text-sm font-semibold">
                 Size
-                <select
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
-                    value={freeDieSize}
-                    disabled={rolling}
-                    onChange={(event) => setFreeDieSize(Number(event.target.value) as DieSize)}
-                >
-                    {dieSizes.map((dieSize) => (
-                        <option key={dieSize} value={dieSize}>
-                            d{dieSize}
-                        </option>
-                    ))}
-                </select>
+                <div className="grid h-10 grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-md border border-input bg-background text-foreground shadow-xs">
+                    <button
+                        type="button"
+                        className="flex h-full items-center justify-center border-r border-red-900/20 bg-red-900 text-red-50 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-900/35 disabled:text-red-950/45"
+                        aria-label="Decrease dice size"
+                        disabled={rolling || currentDieSizeIndex <= 0}
+                        onClick={() => updateDieSize(-1)}
+                    >
+                        <Minus size={16} strokeWidth={3} />
+                    </button>
+                    <span className="flex h-full items-center justify-center bg-background px-3 text-sm text-foreground" aria-live="polite">
+                        d{freeDieSize}
+                    </span>
+                    <button
+                        type="button"
+                        className="flex h-full items-center justify-center border-l border-red-900/20 bg-red-900 text-red-50 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-900/35 disabled:text-red-950/45"
+                        aria-label="Increase dice size"
+                        disabled={rolling || currentDieSizeIndex >= dieSizes.length - 1}
+                        onClick={() => updateDieSize(1)}
+                    >
+                        <Plus size={16} strokeWidth={3} />
+                    </button>
+                </div>
             </label>
         </div>
     )
