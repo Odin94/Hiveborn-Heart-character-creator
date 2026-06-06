@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
+import { formatEquipmentEntry, formatRulesText, hasTitledEntry, insertAbilityIntoText } from "@/hiveborn/character_sheet/markdown_formatting"
 import { CharacterClass, characterClasses, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
 import { useCharacterStore } from "../character_states"
 import { Calling, callings, isCalling } from "@/hiveborn/game_data/callings"
@@ -44,9 +45,9 @@ const NameClassCalling = () => {
             const coreTraits = coreTraitsByCharacter[characterClass]
 
             let newAbilities = abilities
-            for (const coreAbility of [...coreTraits.abilities].reverse()) {
-                if (!abilities.includes(`${coreAbility.name} - `)) {
-                    newAbilities = `${coreAbility.name} - ${coreAbility.description}\n\n${newAbilities}`
+            for (const coreAbility of coreTraits.abilities) {
+                if (!hasTitledEntry(abilities, coreAbility.name)) {
+                    newAbilities = insertAbilityIntoText(newAbilities, coreAbility)
                 }
                 applyStaticBonuses(coreAbility.staticBonuses)
             }
@@ -54,8 +55,11 @@ const NameClassCalling = () => {
 
             let newEquipment = equipment
             for (const coreEquipment of [pickedEquipment, coreTraits.equipment]) {
-                if (!equipment.includes(coreEquipment)) {
-                    newEquipment = `${coreEquipment}\n\n${newEquipment}`
+                if (!coreEquipment) continue
+
+                const formattedEquipment = formatEquipmentEntry(coreEquipment)
+                if (!equipment.includes(coreEquipment) && !equipment.includes(formattedEquipment)) {
+                    newEquipment = `${formattedEquipment}\n\n${newEquipment}`
                 }
             }
             setEquipment(newEquipment)
@@ -65,7 +69,7 @@ const NameClassCalling = () => {
             existingDomains[coreTraits.domain].hasDomain = true
             setDomains({ ...existingDomains })
 
-            setResources(`${coreTraits.resource}\n\n${resources}`)
+            setResources(`${formatRulesText(coreTraits.resource)}\n\n${resources}`)
         } else {
             console.log(`Not a correct character class: '${characterClass}'`)
         }
@@ -103,8 +107,8 @@ const NameClassCalling = () => {
                         // TODOdin: Deal with people putting their ancestry in this field somehow
                         if (isCalling(calling)) {
                             const callingAbility = abilitiesByClassOrCalling[calling][0]
-                            if (!abilities.includes(`${callingAbility.name} - `)) {
-                                setAbilities(`${callingAbility.name} - ${callingAbility.description}\n\n${abilities}`)
+                            if (!hasTitledEntry(abilities, callingAbility.name)) {
+                                setAbilities(insertAbilityIntoText(abilities, callingAbility))
                             }
                             applyStaticBonuses(callingAbility.staticBonuses)
                         } else {
@@ -150,17 +154,17 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                             <p className="text-muted-foreground text-md my-2">Skill: {coreTraits.skill.toUpperCase()}</p>
                             <p className="text-muted-foreground text-md my-2">Domain: {coreTraits.domain.toUpperCase()}</p>
                             <div className="text-muted-foreground text-md my-2">
-                                Resource: <Markdown inline>{coreTraits.resource}</Markdown>
+                                Resource: <Markdown inline>{formatRulesText(coreTraits.resource)}</Markdown>
                             </div>
 
                             <p className="text-muted-foreground text-md my-2">
-                                Abilities: {coreTraits.abilities.map((ability) => `'${ability.name}'`).join(", ")}
+                                Abilities: <Markdown inline>{coreTraits.abilities.map((ability) => `\`${ability.name}\``).join(", ")}</Markdown>
                             </p>
 
                             <p>Equipment:</p>
                             {coreTraits.equipment ? (
                                 <>
-                                    <Markdown>{coreTraits.equipment}</Markdown>
+                                    <Markdown>{formatEquipmentEntry(coreTraits.equipment)}</Markdown>
                                     <p>AND</p>
                                 </>
                             ) : null}
@@ -169,7 +173,7 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                                     <div className="flex items-center space-x-2" key={pickEquipment}>
                                         <RadioGroupItem value={`${i}`} id={`${i}`} />
                                         <Label htmlFor={`${i}`}>
-                                            <Markdown inline>{pickEquipment}</Markdown>
+                                            <Markdown inline>{formatEquipmentEntry(pickEquipment)}</Markdown>
                                         </Label>
                                     </div>
                                 ))}
@@ -230,7 +234,7 @@ const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) =>
                     <DialogDescription></DialogDescription>
                     <div>
                         <div className="text-muted-foreground text-md my-2">
-                            '{callingAbility?.name}': {callingAbility?.description ? <Markdown inline>{callingAbility.description}</Markdown> : null}
+                            {callingAbility ? <Markdown inline>{`\`${callingAbility.name}\`: ${formatRulesText(callingAbility.description)}`}</Markdown> : null}
                         </div>
                         <div className="mt-2 flex justify-end">
                             <DialogClose asChild>
