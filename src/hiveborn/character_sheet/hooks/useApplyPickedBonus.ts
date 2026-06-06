@@ -1,4 +1,5 @@
 import { Ability, PickFromOption } from "@/hiveborn/game_data/abilities"
+import { markAbilityPicked } from "@/hiveborn/character_sheet/markdown_formatting"
 import { isDomain } from "@/hiveborn/game_data/domains"
 import { isResistance } from "@/hiveborn/game_data/resistances"
 import { isSkill } from "@/hiveborn/game_data/skills"
@@ -26,8 +27,7 @@ export const useApplyPickedBonus = () => {
             setProtections({ ...zustandProtections })
         }
 
-        const updatedAbilities = abilities.replace(pickingFromAbility.description, `${pickingFromAbility.description} (Picked ${selection})`)
-        setAbilities(updatedAbilities)
+        setAbilities(markAbilityPicked(abilities, pickingFromAbility, selection))
     }
     return applyPickedBonus
 }

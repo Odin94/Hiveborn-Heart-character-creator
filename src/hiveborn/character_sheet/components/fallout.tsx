@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Markdown } from "@/components/ui/markdown"
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Textarea } from "@/components/ui/textarea"
+import { formatFalloutEntry, formatRulesText, hasTitledEntry } from "@/hiveborn/character_sheet/markdown_formatting"
 import { falloutOptions, falloutSeverities, type Fallout as FalloutOption, type FalloutSeverity } from "@/hiveborn/game_data/fallout"
 import { resistances, type Resistance } from "@/hiveborn/game_data/resistances"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
@@ -50,7 +52,7 @@ const Fallout = () => {
                     {pickerOpen ? (
                         <FalloutDialog
                             onSelect={(selectedFallout) => {
-                                const newFallout = `${selectedFallout.name} - ${selectedFallout.description}`
+                                const newFallout = formatFalloutEntry(selectedFallout)
                                 if (fallout.trim() === "") setFallout(newFallout)
                                 else setFallout(`${fallout}\n\n${newFallout}`)
 
@@ -70,7 +72,7 @@ const Fallout = () => {
                     }}
                 />
 
-                <Textarea value={fallout} onChange={(e) => setFallout(e.target.value)} className="h-70" />
+                <MarkdownTextarea value={fallout} onChange={(e) => setFallout(e.target.value)} className="h-70" />
             </div>
         </div>
     )
@@ -82,7 +84,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     const [resistance, setResistance] = useState<Resistance>("blood")
     const selectedSeverityClassName = "border-b-0"
     const selectedResistanceClassName = "border-y-0"
-    const isFalloutPickedAlready = (falloutOption: FalloutOption) => fallout.toLowerCase().includes(`${falloutOption.name.toLowerCase()} - `)
+    const isFalloutPickedAlready = (falloutOption: FalloutOption) => hasTitledEntry(fallout, falloutOption.name)
     const filteredFalloutOptions = falloutOptions
         .filter((falloutOption) => falloutOption.severity === falloutSeverity)
         .filter((falloutOption) => falloutOption.resistance === resistance)
@@ -104,7 +106,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
                             <span>{falloutOption.name}</span>
                             <span className="text-xs text-muted-foreground">{falloutOption.effects.join(", ")}</span>
                         </h2>
-                        <p className="text-muted-foreground text-sm">{falloutOption.description}</p>
+                        <Markdown className="text-muted-foreground text-sm">{formatRulesText(falloutOption.description)}</Markdown>
                     </button>
                 ))
             )}

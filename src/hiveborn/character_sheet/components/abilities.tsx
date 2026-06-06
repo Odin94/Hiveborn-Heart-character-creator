@@ -7,6 +7,7 @@ import { abilitiesByClassOrCalling, Ability, comesWithPick, PickFromOption } fro
 import { CharacterClass } from "@/hiveborn/game_data/classes"
 import { iconByDomain } from "@/hiveborn/game_data/domains"
 import { iconBySkill } from "@/hiveborn/game_data/skills"
+import { formatRulesText, hasTitledEntry, insertAbilityIntoText } from "@/hiveborn/character_sheet/markdown_formatting"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { Dispatch, SetStateAction, useState } from "react"
 import { MdOutlineShield } from "react-icons/md"
@@ -39,20 +40,6 @@ const Abilities = () => {
     )
 }
 
-const putAfterParentAbility = (fullAbilityText: string, parentNameWithDash: string, newAbilityText: string): string => {
-    const splitBySearchText = fullAbilityText.split(parentNameWithDash)
-    const textBeforeParentName = splitBySearchText[0]
-    if (splitBySearchText.length > 1) {
-        const splitByNewline = splitBySearchText[1].split("\n\n")
-        const parentDescription = splitByNewline[0]
-        const textAfterParent = splitByNewline.slice(1).join("\n\n")
-
-        return `${textBeforeParentName}${parentNameWithDash}${parentDescription} \n  - ${newAbilityText}\n\n${textAfterParent}`
-    } else {
-        return `${fullAbilityText}\n\n${newAbilityText}`
-    }
-}
-
 const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass: CharacterClass | string; pickingFromState: PickingFromState }) => {
     const [pickingFromAbility, setPickingFromAbility] = pickingFromState
     const [abilityType, setAbilityType] = useState("minor")
@@ -60,7 +47,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     const setAbilities = useCharacterStore.use.setAbilities()
     const applyStaticBonuses = useApplyStaticBonuses()
 
-    const isAbilityPickedAlready = (ability: Ability) => abilities.includes(`${ability.name} - `)
+    const isAbilityPickedAlready = (ability: Ability) => hasTitledEntry(abilities, ability.name)
     // TODOdin: Consider just expecting characterClass.trim().lowercase() to include a CharacterClass instead of a match
     const abilityOptions = abilitiesByClassOrCalling[characterClass.trim() as unknown as CharacterClass] ?? []
     const filteredAbilityOptions =
@@ -99,7 +86,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     const renderAbilities = () => (
         <ScrollArea className="h-[calc(100dvh-14rem)] sm:h-170" style={{ borderColor: "red" }}>
             {filteredAbilityOptions.map((ability) => {
-                const isAlreadyPickedMajor = ability.type === "major" && abilities.includes(`${ability.name} - `)
+                const isAlreadyPickedMajor = ability.type === "major" && hasTitledEntry(abilities, ability.name)
                 return (
                     <div
                         key={ability.name}
@@ -110,12 +97,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                         onClick={() => {
                             if (isAlreadyPickedMajor) return
 
-                            if (ability.parentName) {
-                                setAbilities(putAfterParentAbility(abilities, `${ability.parentName} - `, `${ability.name} - ${ability.description}`))
-                            } else {
-                                if (abilities.trim() === "") return setAbilities(`${ability.name} - ${ability.description}`)
-                                else setAbilities(`${abilities}\n\n${ability.name} - ${ability.description}`)
-                            }
+                            setAbilities(insertAbilityIntoText(abilities, ability))
                             applyStaticBonuses(ability.staticBonuses)
 
                             if (comesWithPick(ability)) {
@@ -128,7 +110,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                             <span className={hasIcon(ability) ? "ml-2" : ""}>{`${ability.name}`}</span>
                         </h2>
 
-                        <Markdown className="text-muted-foreground text-sm">{ability.description}</Markdown>
+                        <Markdown className="text-muted-foreground text-sm">{formatRulesText(ability.description)}</Markdown>
                     </div>
                 )
             })}

@@ -4,6 +4,7 @@ import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { beatTypes, beatsByCalling, type Beat, type BeatType } from "@/hiveborn/game_data/beats"
 import { isCalling } from "@/hiveborn/game_data/callings"
+import { formatBeatEntry, formatRulesText, normalizeMarkdownText } from "@/hiveborn/character_sheet/markdown_formatting"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { useState } from "react"
 import { useCharacterStore } from "../character_states"
@@ -27,7 +28,7 @@ const ActiveBeats = () => {
                     <BeatsDialog
                         calling={calling}
                         onSelect={(beat) => {
-                            const newBeat = formatBeat(beat)
+                            const newBeat = formatBeatEntry(beat)
                             if (activeBeats.trim() === "") setActiveBeats(newBeat)
                             else setActiveBeats(`${activeBeats}\n\n${newBeat}`)
 
@@ -47,9 +48,12 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
     const [beatType, setBeatType] = useState<BeatType>("minor")
     const selectedBeatTypeClassName = "border-b-0"
     const beatOptions = isCalling(calling) ? beatsByCalling[calling] : []
-    const normalizedActiveBeats = normalizeText(activeBeats)
+    const normalizedActiveBeats = normalizeMarkdownText(activeBeats)
     const isBeatPickedAlready = (beat: Beat) => {
-        return normalizedActiveBeats.includes(normalizeText(formatBeat(beat))) || normalizedActiveBeats.includes(normalizeText(beat.description))
+        return (
+            normalizedActiveBeats.includes(normalizeMarkdownText(formatBeatEntry(beat))) ||
+            normalizedActiveBeats.includes(normalizeMarkdownText(beat.description))
+        )
     }
     const filteredBeatOptions = beatOptions.filter((beat) => beat.type === beatType).filter((beat) => !isBeatPickedAlready(beat))
 
@@ -65,7 +69,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
                         className="border-1 border-t-0 px-4 py-3 text-left w-full cursor-pointer hover:bg-accent"
                         onClick={() => onSelect(beat)}
                     >
-                        <Markdown className="text-sm">{beat.description}</Markdown>
+                        <Markdown className="text-sm">{formatRulesText(beat.description)}</Markdown>
                     </button>
                 ))
             )}
@@ -107,10 +111,6 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
         </DialogContent>
     )
 }
-
-const formatBeat = (beat: Beat) => `${capitalize(beat.type)} - ${beat.description}`
-
-const normalizeText = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim()
 
 const capitalize = (text: string) => `${text.slice(0, 1).toUpperCase()}${text.slice(1)}`
 
