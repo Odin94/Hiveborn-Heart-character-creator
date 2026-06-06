@@ -7,6 +7,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Markdown } from "@/components/ui/markdown"
 import { CharacterClass, characterClasses, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
 import { useCharacterStore } from "../character_states"
 import { Calling, callings, isCalling } from "@/hiveborn/game_data/callings"
@@ -148,7 +149,9 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                         <div>
                             <p className="text-muted-foreground text-md my-2">Skill: {coreTraits.skill.toUpperCase()}</p>
                             <p className="text-muted-foreground text-md my-2">Domain: {coreTraits.domain.toUpperCase()}</p>
-                            <p className="text-muted-foreground text-md my-2">Resource: {coreTraits.resource}</p>
+                            <div className="text-muted-foreground text-md my-2">
+                                Resource: <Markdown inline>{coreTraits.resource}</Markdown>
+                            </div>
 
                             <p className="text-muted-foreground text-md my-2">
                                 Abilities: {coreTraits.abilities.map((ability) => `'${ability.name}'`).join(", ")}
@@ -157,7 +160,7 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                             <p>Equipment:</p>
                             {coreTraits.equipment ? (
                                 <>
-                                    <p>{coreTraits.equipment}</p>
+                                    <Markdown>{coreTraits.equipment}</Markdown>
                                     <p>AND</p>
                                 </>
                             ) : null}
@@ -165,7 +168,9 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                                 {coreTraits.pickEquipment.map((pickEquipment, i) => (
                                     <div className="flex items-center space-x-2" key={pickEquipment}>
                                         <RadioGroupItem value={`${i}`} id={`${i}`} />
-                                        <Label htmlFor={`${i}`}>{pickEquipment}</Label>
+                                        <Label htmlFor={`${i}`}>
+                                            <Markdown inline>{pickEquipment}</Markdown>
+                                        </Label>
                                     </div>
                                 ))}
                             </RadioGroup>
@@ -224,9 +229,9 @@ const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) =>
                     <DialogTitle>Apply {calling.toUpperCase()} stats?</DialogTitle>
                     <DialogDescription></DialogDescription>
                     <div>
-                        <p className="text-muted-foreground text-md my-2">
-                            '{callingAbility?.name}': {callingAbility?.description}
-                        </p>
+                        <div className="text-muted-foreground text-md my-2">
+                            '{callingAbility?.name}': {callingAbility?.description ? <Markdown inline>{callingAbility.description}</Markdown> : null}
+                        </div>
                         <div className="mt-2 flex justify-end">
                             <DialogClose asChild>
                                 <Button type="button" variant="secondary" onClick={() => {}}>
