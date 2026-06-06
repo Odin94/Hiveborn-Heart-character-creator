@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Markdown } from "@/components/ui/markdown"
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Textarea } from "@/components/ui/textarea"
 import { abilitiesByClassOrCalling, Ability, comesWithPick, PickFromOption } from "@/hiveborn/game_data/abilities"
 import { CharacterClass } from "@/hiveborn/game_data/classes"
 import { iconByDomain } from "@/hiveborn/game_data/domains"
@@ -22,7 +23,6 @@ const Abilities = () => {
     const characterClass = useCharacterStore.use.characterClass()
     const [pickingFromAbility, setPickingFromAbility] = useState<Ability>()
 
-    // TODOdin: Add https://milkdown.dev or https://lexical.dev instead of plain Textarea to render Markdown
     return (
         <div>
             <div className="row-span-3 col-span-2 text-left mt-2">
@@ -33,7 +33,7 @@ const Abilities = () => {
                     <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 </Dialog>
 
-                <Textarea value={abilities} onChange={(e) => setAbilities(e.target.value)} className="h-80 sm:h-142" />
+                <MarkdownTextarea value={abilities} onChange={(e) => setAbilities(e.target.value)} className="h-80 sm:h-142" />
             </div>
         </div>
     )
@@ -128,7 +128,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                             <span className={hasIcon(ability) ? "ml-2" : ""}>{`${ability.name}`}</span>
                         </h2>
 
-                        <p className="text-muted-foreground text-sm">{ability.description}</p>
+                        <Markdown className="text-muted-foreground text-sm">{ability.description}</Markdown>
                     </div>
                 )
             })}

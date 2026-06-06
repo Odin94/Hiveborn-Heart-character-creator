@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Markdown } from "@/components/ui/markdown"
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Textarea } from "@/components/ui/textarea"
 import { beatTypes, beatsByCalling, type Beat, type BeatType } from "@/hiveborn/game_data/beats"
 import { isCalling } from "@/hiveborn/game_data/callings"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
@@ -36,7 +37,7 @@ const ActiveBeats = () => {
                 ) : null}
             </Dialog>
 
-            <Textarea value={activeBeats} onChange={(e) => setActiveBeats(e.target.value)} className="h-25" />
+            <MarkdownTextarea value={activeBeats} onChange={(e) => setActiveBeats(e.target.value)} className="h-25" />
         </div>
     )
 }
@@ -64,7 +65,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
                         className="border-1 border-t-0 px-4 py-3 text-left w-full cursor-pointer hover:bg-accent"
                         onClick={() => onSelect(beat)}
                     >
-                        <p className="text-sm">{beat.description}</p>
+                        <Markdown className="text-sm">{beat.description}</Markdown>
                     </button>
                 ))
             )}
