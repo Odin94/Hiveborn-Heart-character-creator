@@ -84,7 +84,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     }
 
     const renderAbilities = () => (
-        <ScrollArea className="h-[calc(100dvh-14rem)] sm:h-170" style={{ borderColor: "red" }}>
+        <ScrollArea className="min-h-0 flex-1" style={{ borderColor: "red" }}>
             {filteredAbilityOptions.map((ability) => {
                 const isAlreadyPickedMajor = ability.type === "major" && hasTitledEntry(abilities, ability.name)
                 return (
@@ -119,9 +119,9 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
 
     return (
         <DialogContent
-            className={`${abilityOptions.length === 0 ? "max-sm:h-auto" : "h-[calc(100dvh-1rem)]"} w-[calc(100vw-1rem)] max-sm:overflow-hidden sm:h-200 sm:w-112`}
+            className={`${abilityOptions.length === 0 ? "max-sm:h-auto" : "h-[calc(100dvh-1rem)]"} flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-h-[calc(100vh-2rem)] sm:w-112`}
         >
-            <DialogHeader className="min-h-0">
+            <DialogHeader className="min-h-0 flex-1 overflow-hidden">
                 <DialogTitle>{pickingFromAbility ? pickingFromAbility.name.toUpperCase() : `${characterClass.toUpperCase()} ABILITIES`}</DialogTitle>
                 <DialogDescription></DialogDescription>
                 {abilityOptions.length === 0 ? (
@@ -129,8 +129,13 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                 ) : pickingFromAbility ? (
                     <PickFrom pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
                 ) : (
-                    <Tabs defaultValue="minor" className="w-full p-1 sm:w-[400px] sm:p-2" value={abilityType} onValueChange={setAbilityType}>
-                        <TabsList className="grid w-full grid-cols-3">
+                    <Tabs
+                        defaultValue="minor"
+                        className="flex min-h-0 w-full flex-1 flex-col p-1 sm:w-[400px] sm:p-2"
+                        value={abilityType}
+                        onValueChange={setAbilityType}
+                    >
+                        <TabsList className="grid w-full shrink-0 grid-cols-3">
                             <TabsTrigger value="minor" className={`border-1 ${abilityType === "minor" ? selectedClassName : ""}`}>
                                 Minor
                             </TabsTrigger>
@@ -142,13 +147,13 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                             </TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="minor" className="min-h-0">
+                        <TabsContent value="minor" className="flex min-h-0 flex-1 flex-col">
                             {renderAbilities()}
                         </TabsContent>
-                        <TabsContent value="major" className="min-h-0">
+                        <TabsContent value="major" className="flex min-h-0 flex-1 flex-col">
                             {renderAbilities()}
                         </TabsContent>
-                        <TabsContent value="zenith" className="min-h-0">
+                        <TabsContent value="zenith" className="flex min-h-0 flex-1 flex-col">
                             {renderAbilities()}
                         </TabsContent>
                     </Tabs>

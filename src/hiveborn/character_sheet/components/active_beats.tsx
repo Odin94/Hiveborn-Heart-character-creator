@@ -58,7 +58,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
     const filteredBeatOptions = beatOptions.filter((beat) => beat.type === beatType).filter((beat) => !isBeatPickedAlready(beat))
 
     const renderBeats = () => (
-        <ScrollArea className="h-[calc(100dvh-14rem)] sm:h-170" style={{ borderColor: "red" }}>
+        <ScrollArea className="min-h-0 flex-1" style={{ borderColor: "red" }}>
             {filteredBeatOptions.length === 0 ? (
                 <p className="p-4 text-muted-foreground text-sm">No available beats in this section.</p>
             ) : (
@@ -78,9 +78,9 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
 
     return (
         <DialogContent
-            className={`${beatOptions.length === 0 ? "max-sm:h-auto" : "h-[calc(100dvh-1rem)]"} w-[calc(100vw-1rem)] max-sm:overflow-hidden sm:h-200 sm:w-[44rem] sm:max-w-[44rem]`}
+            className={`${beatOptions.length === 0 ? "max-sm:h-auto" : "h-[calc(100dvh-1rem)]"} flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-h-[calc(100vh-2rem)] sm:w-[44rem] sm:max-w-[44rem]`}
         >
-            <DialogHeader className="min-h-0">
+            <DialogHeader className="min-h-0 flex-1 overflow-hidden">
                 <DialogTitle>{isCalling(calling) ? `${calling.toUpperCase()} BEATS` : "ACTIVE BEATS"}</DialogTitle>
                 <DialogDescription></DialogDescription>
                 {beatOptions.length === 0 ? (
@@ -88,11 +88,11 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
                 ) : (
                     <Tabs
                         defaultValue="minor"
-                        className="w-full p-1 sm:p-2"
+                        className="flex min-h-0 w-full flex-1 flex-col p-1 sm:p-2"
                         value={beatType}
                         onValueChange={(newBeatType) => setBeatType(newBeatType as BeatType)}
                     >
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid w-full shrink-0 grid-cols-3">
                             {beatTypes.map((type) => (
                                 <TabsTrigger key={type} value={type} className={`border-1 ${beatType === type ? selectedBeatTypeClassName : ""}`}>
                                     {capitalize(type)}
@@ -101,7 +101,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
                         </TabsList>
 
                         {beatTypes.map((type) => (
-                            <TabsContent key={type} value={type}>
+                            <TabsContent key={type} value={type} className="flex min-h-0 flex-1 flex-col">
                                 {renderBeats()}
                             </TabsContent>
                         ))}

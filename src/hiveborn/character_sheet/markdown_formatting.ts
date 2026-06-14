@@ -63,7 +63,7 @@ export const markAbilityPicked = (abilityText: string, ability: Ability, selecti
     return abilityText.replace(ability.description, formattedPickedDescription)
 }
 
-export const normalizeMarkdownText = (text: string) => {
+export function normalizeMarkdownText(text: string) {
     return text.replace(/\*\*/g, "").replace(/`/g, "").replace(/\s+/g, " ").trim().toLowerCase()
 }
 
