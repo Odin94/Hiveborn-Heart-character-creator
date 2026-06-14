@@ -53,6 +53,39 @@ export const insertAbilityIntoText = (abilityText: string, ability: Ability) => 
     return renderAbilitySections(parsedSections)
 }
 
+export const removeTitledEntriesFromText = (text: string, titles: string[]) => {
+    const normalizedTitles = new Set(titles.map(normalizeTitle))
+    const parsedSections = parseAbilitySections(text)
+
+    for (const section of abilitySectionOrder) {
+        parsedSections[section] = parsedSections[section].filter((entry) => {
+            return !getEntryTitles(entry).some((entryTitle) => normalizedTitles.has(normalizeTitle(entryTitle)))
+        })
+    }
+
+    return renderAbilitySections(parsedSections)
+}
+
+export const removeEquipmentEntriesFromText = (equipmentText: string, equipmentEntries: string[]) => {
+    const normalizedEquipmentEntries = new Set(equipmentEntries.flatMap((equipment) => [equipment, formatEquipmentEntry(equipment)]).map(normalizeMarkdownText))
+
+    return removeNormalizedEntriesFromText(equipmentText, normalizedEquipmentEntries)
+}
+
+export const removeMarkdownEntriesFromText = (text: string, entries: string[]) => {
+    const normalizedEntries = new Set(entries.flatMap((entry) => [entry, formatRulesText(entry)]).map(normalizeMarkdownText))
+
+    return removeNormalizedEntriesFromText(text, normalizedEntries)
+}
+
+const removeNormalizedEntriesFromText = (text: string, normalizedEntries: Set<string>) => {
+    return text
+        .split(/\n{2,}/)
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0 && !normalizedEntries.has(normalizeMarkdownText(entry)))
+        .join("\n\n")
+}
+
 export const markAbilityPicked = (abilityText: string, ability: Ability, selection: PickFromOption) => {
     const formattedDescription = formatRulesText(ability.description)
     const formattedSelection = formatRulesText(`${selection}`)

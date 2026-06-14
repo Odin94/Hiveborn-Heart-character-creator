@@ -8,18 +8,30 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
-import { formatEquipmentEntry, formatRulesText, hasTitledEntry, insertAbilityIntoText } from "@/hiveborn/character_sheet/markdown_formatting"
-import { CharacterClass, characterClasses, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
+import {
+    formatEquipmentEntry,
+    formatRulesText,
+    hasTitledEntry,
+    insertAbilityIntoText,
+    removeEquipmentEntriesFromText,
+    removeMarkdownEntriesFromText,
+    removeTitledEntriesFromText,
+} from "@/hiveborn/character_sheet/markdown_formatting"
+import { CharacterClass, characterClasses, CoreTraits, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
 import { useCharacterStore } from "../character_states"
 import { Calling, callings, isCalling } from "@/hiveborn/game_data/callings"
-import { abilitiesByClassOrCalling } from "@/hiveborn/game_data/abilities"
-import { useApplyStaticBonuses } from "../hooks/useApplyStaticBonuses"
+import { abilitiesByClassOrCalling, StaticBonuses } from "@/hiveborn/game_data/abilities"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
+import { Domains, Skills } from "@/hiveborn/game_data/character"
+import { DomainKey } from "@/hiveborn/game_data/domains"
+import { protectionMaximum } from "../character_states"
+import { Resistance } from "@/hiveborn/game_data/resistances"
+import { SkillKey } from "@/hiveborn/game_data/skills"
 
 const NameClassCalling = () => {
     const name = useCharacterStore.use.name()
@@ -38,38 +50,60 @@ const NameClassCalling = () => {
     const setResources = useCharacterStore.use.setResources()
     const equipment = useCharacterStore.use.equipment()
     const setEquipment = useCharacterStore.use.setEquipment()
-    const applyStaticBonuses = useApplyStaticBonuses()
+    const protections = useCharacterStore.use.protections()
+    const setProtections = useCharacterStore.use.setProtections()
 
-    const applyCoreTraits = ({ pickedEquipment }: { pickedEquipment: string }) => {
+    const applyCoreTraits = ({ pickedEquipment, previousClass }: { pickedEquipment: string; previousClass: CharacterClass | null }) => {
         if (isCharacterClass(characterClass)) {
             const coreTraits = coreTraitsByCharacter[characterClass]
+            const previousCoreTraits = previousClass ? coreTraitsByCharacter[previousClass] : null
+            const callingAbility = getCallingAbility(calling)
 
-            let newAbilities = abilities
+            let newAbilities = previousCoreTraits
+                ? removeTitledEntriesFromText(
+                      abilities,
+                      previousCoreTraits.abilities.map((ability) => ability.name),
+                  )
+                : abilities
             for (const coreAbility of coreTraits.abilities) {
-                if (!hasTitledEntry(abilities, coreAbility.name)) {
+                if (!hasTitledEntry(newAbilities, coreAbility.name)) {
                     newAbilities = insertAbilityIntoText(newAbilities, coreAbility)
                 }
-                applyStaticBonuses(coreAbility.staticBonuses)
             }
             setAbilities(newAbilities)
 
-            let newEquipment = equipment
+            let newEquipment = previousCoreTraits
+                ? removeEquipmentEntriesFromText(equipment, [previousCoreTraits.equipment, ...previousCoreTraits.pickEquipment].filter(Boolean))
+                : equipment
             for (const coreEquipment of [pickedEquipment, coreTraits.equipment]) {
                 if (!coreEquipment) continue
 
                 const formattedEquipment = formatEquipmentEntry(coreEquipment)
-                if (!equipment.includes(coreEquipment) && !equipment.includes(formattedEquipment)) {
+                if (!newEquipment.includes(coreEquipment) && !newEquipment.includes(formattedEquipment)) {
                     newEquipment = `${formattedEquipment}\n\n${newEquipment}`
                 }
             }
             setEquipment(newEquipment)
 
-            existingSkills[coreTraits.skill].hasSkill = true
-            setSkills({ ...existingSkills })
-            existingDomains[coreTraits.domain].hasDomain = true
-            setDomains({ ...existingDomains })
+            let newResources = previousCoreTraits ? removeMarkdownEntriesFromText(resources, [previousCoreTraits.resource]) : resources
+            const formattedResource = formatRulesText(coreTraits.resource)
+            if (!newResources.includes(coreTraits.resource) && !newResources.includes(formattedResource)) {
+                newResources = `${formattedResource}\n\n${newResources}`
+            }
+            setResources(newResources)
 
-            setResources(`${formatRulesText(coreTraits.resource)}\n\n${resources}`)
+            const newSkills = copySkills(existingSkills)
+            const newDomains = copyDomains(existingDomains)
+            const newProtections = { ...protections }
+            const callingBonuses = callingAbility?.staticBonuses ?? emptyStaticBonuses()
+
+            if (previousCoreTraits) {
+                removeClassBonusesFromDraft(newSkills, newDomains, newProtections, previousCoreTraits, callingBonuses)
+            }
+            applyClassBonusesToDraft(newSkills, newDomains, newProtections, coreTraits)
+            setSkills(newSkills)
+            setDomains(newDomains)
+            setProtections(newProtections)
         } else {
             console.log(`Not a correct character class: '${characterClass}'`)
         }
@@ -103,14 +137,35 @@ const NameClassCalling = () => {
                     onSelect={(calling: Calling) => {
                         setCalling(calling)
                     }}
-                    onConfirm={() => {
+                    onConfirm={({ previousCalling }) => {
                         // TODOdin: Deal with people putting their ancestry in this field somehow
                         if (isCalling(calling)) {
                             const callingAbility = abilitiesByClassOrCalling[calling][0]
-                            if (!hasTitledEntry(abilities, callingAbility.name)) {
-                                setAbilities(insertAbilityIntoText(abilities, callingAbility))
+                            const previousCallingAbility = previousCalling ? abilitiesByClassOrCalling[previousCalling][0] : null
+                            let newAbilities = previousCallingAbility ? removeTitledEntriesFromText(abilities, [previousCallingAbility.name]) : abilities
+                            if (!hasTitledEntry(newAbilities, callingAbility.name)) {
+                                newAbilities = insertAbilityIntoText(newAbilities, callingAbility)
                             }
-                            applyStaticBonuses(callingAbility.staticBonuses)
+                            setAbilities(newAbilities)
+
+                            const newSkills = copySkills(existingSkills)
+                            const newDomains = copyDomains(existingDomains)
+                            const newProtections = { ...protections }
+                            const classTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
+
+                            if (previousCallingAbility) {
+                                removeStaticBonusesFromDraft(
+                                    newSkills,
+                                    newDomains,
+                                    newProtections,
+                                    previousCallingAbility.staticBonuses,
+                                    getClassProvidedBonuses(classTraits),
+                                )
+                            }
+                            applyStaticBonusesToDraft(newSkills, newDomains, newProtections, callingAbility.staticBonuses)
+                            setSkills(newSkills)
+                            setDomains(newDomains)
+                            setProtections(newProtections)
                         } else {
                             console.log(`Not a correct calling: '${calling}'`)
                         }
@@ -121,10 +176,17 @@ const NameClassCalling = () => {
     )
 }
 
-const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClass) => void; onConfirm: (selection: { pickedEquipment: string }) => void }) => {
+const ClassDropdown = ({
+    onSelect,
+    onConfirm,
+}: {
+    onSelect: (text: CharacterClass) => void
+    onConfirm: (selection: { pickedEquipment: string; previousClass: CharacterClass | null }) => void
+}) => {
     const characterClass = useCharacterStore.use.characterClass()
     const coreTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
     const [pickedEquipmentIndex, setPickedEquipmentIndex] = useState("0")
+    const [previousClass, setPreviousClass] = useState<CharacterClass | null>(null)
 
     return (
         <Dialog>
@@ -137,7 +199,13 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                     <DropdownMenuSeparator />
                     {characterClasses.map((c) => (
                         <DialogTrigger asChild key={c}>
-                            <DropdownMenuItem onSelect={(_e) => onSelect(c)} key={c}>
+                            <DropdownMenuItem
+                                onSelect={(_e) => {
+                                    setPreviousClass(isCharacterClass(characterClass) ? characterClass : null)
+                                    onSelect(c)
+                                }}
+                                key={c}
+                            >
                                 {c}
                             </DropdownMenuItem>
                         </DialogTrigger>
@@ -190,8 +258,9 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
                                         className="ml-3"
                                         type="button"
                                         onClick={() => {
-                                            onConfirm({ pickedEquipment: coreTraits.pickEquipment[Number(pickedEquipmentIndex)] })
+                                            onConfirm({ pickedEquipment: coreTraits.pickEquipment[Number(pickedEquipmentIndex)], previousClass })
                                             setPickedEquipmentIndex("0")
+                                            setPreviousClass(null)
                                         }}
                                     >
                                         Apply
@@ -206,9 +275,16 @@ const ClassDropdown = ({ onSelect, onConfirm }: { onSelect: (text: CharacterClas
     )
 }
 
-const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) => void; onConfirm: () => void }) => {
+const CallingDropdown = ({
+    onSelect,
+    onConfirm,
+}: {
+    onSelect: (text: Calling) => void
+    onConfirm: (selection: { previousCalling: Calling | null }) => void
+}) => {
     const calling = useCharacterStore.use.calling()
     const callingAbility = isCalling(calling) ? abilitiesByClassOrCalling[calling][0] : null
+    const [previousCalling, setPreviousCalling] = useState<Calling | null>(null)
 
     return (
         <Dialog>
@@ -221,7 +297,13 @@ const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) =>
                     <DropdownMenuSeparator />
                     {callings.map((c) => (
                         <DialogTrigger asChild key={c}>
-                            <DropdownMenuItem onSelect={(_e) => onSelect(c)} key={c}>
+                            <DropdownMenuItem
+                                onSelect={(_e) => {
+                                    setPreviousCalling(isCalling(calling) ? calling : null)
+                                    onSelect(c)
+                                }}
+                                key={c}
+                            >
                                 {c}
                             </DropdownMenuItem>
                         </DialogTrigger>
@@ -243,7 +325,14 @@ const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) =>
                                 </Button>
                             </DialogClose>
                             <DialogClose asChild>
-                                <Button className="ml-3" type="button" onClick={onConfirm}>
+                                <Button
+                                    className="ml-3"
+                                    type="button"
+                                    onClick={() => {
+                                        onConfirm({ previousCalling })
+                                        setPreviousCalling(null)
+                                    }}
+                                >
                                     Apply
                                 </Button>
                             </DialogClose>
@@ -256,3 +345,99 @@ const CallingDropdown = ({ onSelect, onConfirm }: { onSelect: (text: Calling) =>
 }
 
 export default NameClassCalling
+
+const emptyStaticBonuses = (): StaticBonuses => ({ domains: [], skills: [], protections: [] })
+
+const getCallingAbility = (calling: string) => {
+    return isCalling(calling) ? abilitiesByClassOrCalling[calling][0] : null
+}
+
+const copySkills = (skills: Skills): Skills => {
+    return Object.fromEntries(Object.entries(skills).map(([skill, value]) => [skill, { ...value }])) as Skills
+}
+
+const copyDomains = (domains: Domains): Domains => {
+    return Object.fromEntries(Object.entries(domains).map(([domain, value]) => [domain, { ...value }])) as Domains
+}
+
+const applyClassBonusesToDraft = (skills: Skills, domains: Domains, protections: Record<Resistance, number>, coreTraits: CoreTraits) => {
+    skills[coreTraits.skill].hasSkill = true
+    domains[coreTraits.domain].hasDomain = true
+
+    for (const ability of coreTraits.abilities) {
+        applyStaticBonusesToDraft(skills, domains, protections, ability.staticBonuses)
+    }
+}
+
+const removeClassBonusesFromDraft = (
+    skills: Skills,
+    domains: Domains,
+    protections: Record<Resistance, number>,
+    coreTraits: CoreTraits,
+    preservedBonuses: StaticBonuses,
+) => {
+    if (!preservedBonuses.skills.includes(coreTraits.skill)) {
+        skills[coreTraits.skill].hasSkill = false
+    }
+    if (!preservedBonuses.domains.includes(coreTraits.domain)) {
+        domains[coreTraits.domain].hasDomain = false
+    }
+
+    for (const ability of coreTraits.abilities) {
+        removeStaticBonusesFromDraft(skills, domains, protections, ability.staticBonuses, preservedBonuses)
+    }
+}
+
+const applyStaticBonusesToDraft = (skills: Skills, domains: Domains, protections: Record<Resistance, number>, bonuses: StaticBonuses) => {
+    for (const skill of bonuses.skills) {
+        skills[skill].hasSkill = true
+    }
+
+    for (const domain of bonuses.domains) {
+        domains[domain].hasDomain = true
+    }
+
+    for (const { resistance, amount } of bonuses.protections) {
+        protections[resistance] = Math.min(protections[resistance] + amount, protectionMaximum)
+    }
+}
+
+const removeStaticBonusesFromDraft = (
+    skills: Skills,
+    domains: Domains,
+    protections: Record<Resistance, number>,
+    bonuses: StaticBonuses,
+    preservedBonuses: StaticBonuses,
+) => {
+    const preservedSkills = new Set<SkillKey>(preservedBonuses.skills)
+    const preservedDomains = new Set<DomainKey>(preservedBonuses.domains)
+    const preservedProtections = new Set<Resistance>(preservedBonuses.protections.map(({ resistance }) => resistance))
+
+    for (const skill of bonuses.skills) {
+        if (!preservedSkills.has(skill)) {
+            skills[skill].hasSkill = false
+        }
+    }
+
+    for (const domain of bonuses.domains) {
+        if (!preservedDomains.has(domain)) {
+            domains[domain].hasDomain = false
+        }
+    }
+
+    for (const { resistance, amount } of bonuses.protections) {
+        if (!preservedProtections.has(resistance)) {
+            protections[resistance] = Math.max(0, protections[resistance] - amount)
+        }
+    }
+}
+
+const getClassProvidedBonuses = (coreTraits: CoreTraits | null): StaticBonuses => {
+    if (!coreTraits) return emptyStaticBonuses()
+
+    return {
+        skills: [coreTraits.skill, ...coreTraits.abilities.flatMap((ability) => ability.staticBonuses.skills)],
+        domains: [coreTraits.domain, ...coreTraits.abilities.flatMap((ability) => ability.staticBonuses.domains)],
+        protections: coreTraits.abilities.flatMap((ability) => ability.staticBonuses.protections),
+    }
+}
