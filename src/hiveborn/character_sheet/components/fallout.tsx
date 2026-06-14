@@ -91,7 +91,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
         .filter((falloutOption) => !isFalloutPickedAlready(falloutOption))
 
     const renderFalloutOptions = () => (
-        <ScrollArea className="h-[calc(100dvh-17rem)] sm:h-150" style={{ borderColor: "red" }}>
+        <ScrollArea className="min-h-0 flex-1" style={{ borderColor: "red" }}>
             {filteredFalloutOptions.length === 0 ? (
                 <p className="p-4 text-muted-foreground text-sm">No available fallout in this section.</p>
             ) : (
@@ -99,7 +99,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
                     <button
                         key={`${falloutOption.severity}-${falloutOption.resistance}-${falloutOption.name}`}
                         type="button"
-                        className="border-1 border-t-0 p-2 text-left w-full cursor-pointer hover:bg-accent"
+                        className="border border-t-0 p-2 text-left w-full cursor-pointer hover:bg-accent"
                         onClick={() => onSelect(falloutOption)}
                     >
                         <h2 className="flex items-center justify-between gap-3">
@@ -114,37 +114,37 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     )
 
     return (
-        <DialogContent className="h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-sm:overflow-hidden sm:h-200 sm:w-[44rem] sm:max-w-[44rem]">
-            <DialogHeader className="min-h-0">
+        <DialogContent className="flex h-[calc(100dvh-1rem)] max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-h-[calc(100vh-2rem)] sm:w-176 sm:max-w-176">
+            <DialogHeader className="min-h-0 flex-1 overflow-hidden">
                 <DialogTitle>FALLOUT</DialogTitle>
                 <DialogDescription></DialogDescription>
                 <Tabs
                     defaultValue="minor"
-                    className="w-full p-1 sm:p-2"
+                    className="flex min-h-0 w-full flex-1 flex-col p-1 sm:p-2"
                     value={falloutSeverity}
                     onValueChange={(newSeverity) => setFalloutSeverity(newSeverity as FalloutSeverity)}
                 >
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full shrink-0 grid-cols-3">
                         {falloutSeverities.map((severity) => (
-                            <TabsTrigger
-                                key={severity}
-                                value={severity}
-                                className={`border-1 ${falloutSeverity === severity ? selectedSeverityClassName : ""}`}
-                            >
+                            <TabsTrigger key={severity} value={severity} className={`border ${falloutSeverity === severity ? selectedSeverityClassName : ""}`}>
                                 {capitalize(severity)}
                             </TabsTrigger>
                         ))}
                     </TabsList>
 
                     {falloutSeverities.map((severity) => (
-                        <TabsContent key={severity} value={severity}>
-                            <Tabs value={resistance} onValueChange={(newResistance) => setResistance(newResistance as Resistance)}>
-                                <TabsList className="grid w-full grid-cols-2 mt-2 sm:grid-cols-5">
+                        <TabsContent key={severity} value={severity} className="flex min-h-0 flex-1 flex-col">
+                            <Tabs
+                                value={resistance}
+                                onValueChange={(newResistance) => setResistance(newResistance as Resistance)}
+                                className="flex h-full min-h-0 flex-col"
+                            >
+                                <TabsList className="mt-2 grid w-full shrink-0 grid-cols-2 sm:grid-cols-5">
                                     {resistances.map((resistanceOption) => (
                                         <TabsTrigger
                                             key={resistanceOption}
                                             value={resistanceOption}
-                                            className={`border-1 text-xs sm:text-sm ${resistance === resistanceOption ? selectedResistanceClassName : ""}`}
+                                            className={`border text-xs sm:text-sm ${resistance === resistanceOption ? selectedResistanceClassName : ""}`}
                                         >
                                             {capitalize(resistanceOption)}
                                         </TabsTrigger>
@@ -152,7 +152,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
                                 </TabsList>
 
                                 {resistances.map((resistanceOption) => (
-                                    <TabsContent key={resistanceOption} value={resistanceOption}>
+                                    <TabsContent key={resistanceOption} value={resistanceOption} className="flex min-h-0 flex-1 flex-col">
                                         {renderFalloutOptions()}
                                     </TabsContent>
                                 ))}

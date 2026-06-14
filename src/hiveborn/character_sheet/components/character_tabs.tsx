@@ -1,7 +1,7 @@
 import { useIsLargeScreen } from "@/hooks/useIsLargeScreen"
 import { useCharacterStore } from "../character_states"
 import { Character } from "../../game_data/character"
-import { Book, Dices, Plus, X } from "lucide-react"
+import { ChevronDown, Dices, Plus, X } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -42,7 +42,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                         ? "bg-secondary text-secondary-foreground"
                         : "bg-secondary/40 hover:bg-secondary/60 text-secondary-foreground/80"
                 }
-                ${isLargeScreen ? "ml-[-10px] hover:ml-0" : "rounded-l-lg"}
+                ${isLargeScreen ? "-ml-2.5 hover:ml-0" : "rounded-l-lg"}
                 `}
                 onClick={() => setCurrentCharacter(index)}
                 style={{
@@ -139,7 +139,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                             onClick={() => setIsMobileTabsVisible(!isMobileTabsVisible)}
                             className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:scale-110 shadow-lg"
                         >
-                            <Book size={16} className={`transition-transform duration-200 ${isMobileTabsVisible ? "rotate-180" : ""}`} />
+                            <ChevronDown size={16} className={`transition-transform duration-200 ${isMobileTabsVisible ? "rotate-180" : ""}`} />
                         </button>
                     </div>
 
