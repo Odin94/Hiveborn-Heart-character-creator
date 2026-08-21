@@ -85,6 +85,8 @@ h1 {
 }
 
 button {
+    -webkit-appearance: none;
+    appearance: none;
     cursor: pointer;
 }
 button:hover {
