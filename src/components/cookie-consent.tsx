@@ -17,7 +17,7 @@ const LEARN_MORE_HREF = "https://odin-matthias.de/datenschutzerklaerung"
 const CookieHeader = () => <div className="flex items-center gap-2">Collect your Cookie ('Technology', D12)!</div>
 
 const CookieBody = () => (
-    <div className="text-left text-black">
+    <div className="text-left text-foreground">
         I use cookies to get better insights on usage patterns, which helps me improve Hiveborn for everyone.
         <br /> More info:{" "}
         <a href={LEARN_MORE_HREF} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4 hover:no-underline">
@@ -114,7 +114,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
                             <Button onClick={handleDecline} variant="outline" size="sm" className="flex-1 rounded-full">
                                 Decline
                             </Button>
-                            <Button onClick={handleAccept} size="sm" className="flex-1 rounded-full text-white bg-red-900 hover:bg-red-800 transition-colors">
+                            <Button onClick={handleAccept} size="sm" className="flex-1 rounded-full">
                                 Accept
                             </Button>
                         </CardFooter>
@@ -136,7 +136,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
                                     Decline
                                     <span className="sr-only sm:hidden">Decline</span>
                                 </Button>
-                                <Button onClick={handleAccept} size="sm" className="text-xs h-7 bg-red-900 hover:bg-red-800 transition-colors">
+                                <Button onClick={handleAccept} size="sm" className="h-7 text-xs">
                                     Accept
                                     <span className="sr-only sm:hidden">Accept</span>
                                 </Button>

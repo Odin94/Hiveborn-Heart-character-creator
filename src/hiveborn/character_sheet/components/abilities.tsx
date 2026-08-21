@@ -92,7 +92,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                         key={ability.name}
                         className={`border-1 p-2 border-t-0
                             ${ability.parentName ? "ml-6" : ""}
-                            ${isAlreadyPickedMajor ? "border border-[#999999] bg-[#eee] text-[#888] hover:bg-[#eee]" : "cursor-pointer hover:bg-accent"}
+                            ${isAlreadyPickedMajor ? "border-border bg-muted text-muted-foreground hover:bg-muted" : "cursor-pointer hover:bg-accent"}
                         `}
                         onClick={() => {
                             if (isAlreadyPickedMajor) return

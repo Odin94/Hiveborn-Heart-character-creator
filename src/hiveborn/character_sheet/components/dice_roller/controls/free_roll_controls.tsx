@@ -34,7 +34,7 @@ const FreeRollControls = ({
                 <div className="grid h-10 grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-md border border-input bg-background text-foreground shadow-xs">
                     <button
                         type="button"
-                        className="flex h-full items-center justify-center border-r border-red-900/20 bg-red-900 text-red-50 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-900/35 disabled:text-red-950/45"
+                        className="flex h-full items-center justify-center border-r border-primary/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:bg-primary/35 disabled:text-primary-foreground/45"
                         aria-label="Decrease dice count"
                         disabled={rolling || freeDiceCount <= 1}
                         onClick={() => updateDiceCount(freeDiceCount - 1)}
@@ -52,7 +52,7 @@ const FreeRollControls = ({
                     />
                     <button
                         type="button"
-                        className="flex h-full items-center justify-center border-l border-red-900/20 bg-red-900 text-red-50 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-900/35 disabled:text-red-950/45"
+                        className="flex h-full items-center justify-center border-l border-primary/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:bg-primary/35 disabled:text-primary-foreground/45"
                         aria-label="Increase dice count"
                         disabled={rolling || freeDiceCount >= maxFreeDiceCount}
                         onClick={() => updateDiceCount(freeDiceCount + 1)}
@@ -67,7 +67,7 @@ const FreeRollControls = ({
                 <div className="grid h-10 grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-md border border-input bg-background text-foreground shadow-xs">
                     <button
                         type="button"
-                        className="flex h-full items-center justify-center border-r border-red-900/20 bg-red-900 text-red-50 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-900/35 disabled:text-red-950/45"
+                        className="flex h-full items-center justify-center border-r border-primary/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:bg-primary/35 disabled:text-primary-foreground/45"
                         aria-label="Decrease dice size"
                         disabled={rolling || currentDieSizeIndex <= 0}
                         onClick={() => updateDieSize(-1)}
@@ -79,7 +79,7 @@ const FreeRollControls = ({
                     </span>
                     <button
                         type="button"
-                        className="flex h-full items-center justify-center border-l border-red-900/20 bg-red-900 text-red-50 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-900/35 disabled:text-red-950/45"
+                        className="flex h-full items-center justify-center border-l border-primary/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:bg-primary/35 disabled:text-primary-foreground/45"
                         aria-label="Increase dice size"
                         disabled={rolling || currentDieSizeIndex >= dieSizes.length - 1}
                         onClick={() => updateDieSize(1)}

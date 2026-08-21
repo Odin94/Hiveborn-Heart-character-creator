@@ -166,7 +166,7 @@ const DiceRoller = () => {
             role="dialog"
             aria-modal="false"
             aria-labelledby="dice-roller-title"
-            className="hiveborn-dice-roller fixed left-1/2 top-1/2 z-[70] w-[min(720px,calc(100vw-2rem))] rounded-lg border border-red-900/25 bg-background p-5 text-left text-red-950 shadow-2xl"
+            className="hiveborn-dice-roller fixed left-1/2 top-1/2 z-[70] w-[min(720px,calc(100vw-2rem))] rounded-lg border border-primary/25 bg-background p-5 text-left text-foreground shadow-2xl"
             style={
                 {
                     "--dice-drag-x": `${dragOffset.x}px`,
@@ -175,7 +175,7 @@ const DiceRoller = () => {
             }
         >
             <div
-                className="mb-4 flex cursor-move touch-none items-start justify-between gap-4 border-b border-red-900/10 pb-3"
+                className="mb-4 flex cursor-move touch-none items-start justify-between gap-4 border-b border-primary/15 pb-3"
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
@@ -185,7 +185,7 @@ const DiceRoller = () => {
                     <h2 id="dice-roller-title" className="text-xl font-bold">
                         Heart Dice Roller
                     </h2>
-                    <p className="text-sm text-red-900/70">
+                    <p className="text-sm text-primary/80">
                         {activeTab === "skill-domain" ? `${diceCount}d10 pool` : `${freeDiceCount}d${freeDieSize} free roll`}
                     </p>
                 </div>
