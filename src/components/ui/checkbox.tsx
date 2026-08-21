@@ -14,7 +14,7 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
             )}
             {...props}
         >
-            <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex items-center justify-center transition-none bg-red-900 text-red-900">
+            <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex items-center justify-center bg-primary text-primary transition-none">
                 {/* Icon needs to be here, otherwise background is just black. To hide it, we set its color to the same as background */}
                 <XIcon className="size-3.5" />
             </CheckboxPrimitive.Indicator>

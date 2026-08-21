@@ -120,7 +120,7 @@ const SkillsDomains = () => {
                         <h2 className="text-lg font-bold">SKILLS</h2>
                         <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
                     </div>
-                    <div className={`${mobileGridClass} gap-y-2 text-black`}>
+                    <div className={`${mobileGridClass} gap-y-2 text-foreground`}>
                         {skills.map((skill) => (
                             <div key={skill} className="contents">
                                 {renderSkill(skill, mobileColClass)}
@@ -134,7 +134,7 @@ const SkillsDomains = () => {
                         <h2 className="text-lg font-bold">DOMAINS</h2>
                         <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
                     </div>
-                    <div className={`${mobileGridClass} gap-y-2 text-black`}>
+                    <div className={`${mobileGridClass} gap-y-2 text-foreground`}>
                         {domains.map((domain) => (
                             <div key={domain} className="contents">
                                 {renderDomain(domain, mobileColClass)}
@@ -150,7 +150,7 @@ const SkillsDomains = () => {
                 <h2 className="text-lg font-bold">DOMAINS</h2>
                 <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
             </div>
-            <div className={`hidden text-black sm:grid sm:grid-cols-4 sm:gap-1 sm:gap-y-0 grid-rows-${rowCount} size-full`}>
+            <div className={`hidden text-foreground sm:grid sm:grid-cols-4 sm:gap-1 sm:gap-y-0 grid-rows-${rowCount} size-full`}>
                 {Array.from({ length: rowCount }).map((_, i) => {
                     const skill = skills[i]
                     const domain = domains[i]

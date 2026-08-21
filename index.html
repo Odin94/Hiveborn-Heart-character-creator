@@ -5,6 +5,24 @@
         <link rel="icon" type="image/svg+xml" href="/heart-illustration-1-svgrepo-com.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Hiveborn</title>
+        <script>
+            ;(() => {
+                const darkBackground = "#0d1e26"
+                const lightBackground = "#fbf7ef"
+                let theme = "light"
+
+                try {
+                    const savedTheme = JSON.parse(localStorage.getItem("hiveborn-theme") || "null")?.state?.theme
+                    if (savedTheme === "dark" || savedTheme === "light") theme = savedTheme
+                } catch {
+                    // A blocked or malformed localStorage value should not prevent the app from loading.
+                }
+
+                document.documentElement.classList.toggle("dark", theme === "dark")
+                document.documentElement.style.colorScheme = theme
+                document.documentElement.style.backgroundColor = theme === "dark" ? darkBackground : lightBackground
+            })()
+        </script>
     </head>
 
     <body>

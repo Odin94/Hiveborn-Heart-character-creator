@@ -79,14 +79,14 @@ const SkillDomainControls = ({
                 </label>
             </div>
 
-            <div className="my-4 grid grid-cols-3 overflow-hidden rounded-md border border-red-900/20">
+            <div className="my-4 grid grid-cols-3 overflow-hidden rounded-md border border-primary/25">
                 {risks.map((riskOption) => (
                     <button
                         key={riskOption.value}
                         type="button"
                         className={cn(
-                            "h-10 border-r border-red-900/15 text-sm font-semibold last:border-r-0 disabled:cursor-not-allowed disabled:opacity-60",
-                            risk === riskOption.value ? "bg-red-900 text-white" : "bg-background text-red-900 hover:bg-red-50",
+                            "h-10 border-r border-primary/20 text-sm font-semibold last:border-r-0 disabled:cursor-not-allowed disabled:opacity-60",
+                            risk === riskOption.value ? "bg-primary text-primary-foreground" : "bg-background text-primary hover:bg-accent",
                         )}
                         disabled={rolling}
                         onClick={() => setRisk(riskOption.value)}

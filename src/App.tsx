@@ -9,6 +9,7 @@ import { useEffect } from "react"
 import { usePostHog } from "posthog-js/react"
 import CookieConsent from "./components/cookie-consent"
 import DiceRoller from "./hiveborn/character_sheet/components/dice_roller/dice_roller"
+import ThemeToggle from "./components/theme-toggle"
 
 function App() {
     const posthog = usePostHog()
@@ -45,8 +46,11 @@ function App() {
                     </a>
 
                     <DialogTrigger className="link-like underline sm:absolute sm:top-2 sm:left-72">/Copyright/</DialogTrigger>
+                    <div className="sm:absolute sm:top-1 sm:right-5">
+                        <ThemeToggle />
+                    </div>
                 </nav>
-                <div className="container mx-auto max-w-screen-xl text-red-900">
+                <div className="container mx-auto max-w-screen-xl text-foreground">
                     <CharacterSheet />
                 </div>
                 <DiceRoller />
