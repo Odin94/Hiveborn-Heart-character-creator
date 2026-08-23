@@ -50,7 +50,7 @@ function App() {
                         <ThemeToggle />
                     </div>
                 </nav>
-                <div className="container mx-auto max-w-screen-xl text-foreground">
+                <div className="container mx-auto max-w-screen-xl text-foreground md:px-20">
                     <CharacterSheet />
                 </div>
                 <DiceRoller />
