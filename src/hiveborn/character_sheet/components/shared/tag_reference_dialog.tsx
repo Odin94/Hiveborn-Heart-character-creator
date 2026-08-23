@@ -112,7 +112,7 @@ export const TagReferenceDialog = ({ title, tags, primaryText, primarySourceLabe
                                         </span>
                                     ))}
                                 </div>
-                                <p className="mt-1 text-sm leading-snug text-red-950">{tag.meaning}</p>
+                                <p className="mt-1 text-sm leading-snug text-red-950 dark:text-foreground">{tag.meaning}</p>
                             </article>
                         ))}
                     </div>
