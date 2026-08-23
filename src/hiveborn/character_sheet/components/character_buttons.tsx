@@ -3,6 +3,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, Di
 import { generateCharacterPDF } from "@/hiveborn/creator/pdf_creator"
 import { Character, characterSchema, getEmptyCharacter } from "@/hiveborn/game_data/character"
 import { useUserUuid } from "@/lib/analytics"
+import { useThemeStore } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { Buffer } from "buffer"
 import { FileDown, Upload } from "lucide-react"
@@ -277,13 +278,14 @@ export const JSONUploadButton = () => {
 export const PDFDownloadButton = ({ className }: { className?: string }) => {
     const posthog = usePostHog()
     const getCharacterData = useCharacterStore.use.getCharacterData()
+    const theme = useThemeStore((state) => state.theme)
     const { userUuid } = useUserUuid()
 
     const handleDownload = async () => {
         const character = getCharacterData()
 
         try {
-            const pdfBytes = await generateCharacterPDF(character)
+            const pdfBytes = await generateCharacterPDF(character, theme)
 
             const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" })
             const link = document.createElement("a")
