@@ -31,7 +31,7 @@ function App() {
             <Toaster closeButton />
             <Dialog>
                 <div className="container relative mx-auto max-w-screen-xl text-foreground lg:px-20">
-                    <nav className="relative z-10 mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm lg:absolute lg:top-2 lg:left-20 lg:mb-0 lg:flex-nowrap lg:justify-start lg:px-0">
+                    <nav className="relative z-10 mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm lg:absolute lg:top-2 lg:left-24 lg:mb-0 lg:flex-nowrap lg:justify-start lg:px-0">
                         <a href="https://odin-matthias.de/" target="_blank" className="underline">
                             /Odin's Site/
                         </a>
@@ -74,7 +74,7 @@ function App() {
             </Dialog>
 
             <div className="container mx-auto max-w-screen-xl lg:px-20">
-                <div className="mt-0 flex flex-wrap justify-center gap-2 px-2 pb-4 lg:h-10 lg:justify-start lg:gap-8 lg:px-0 lg:pb-0">
+                <div className="mt-0 flex flex-wrap justify-center gap-2 px-2 pb-4 lg:h-10 lg:justify-start lg:gap-8 lg:pl-4 lg:pb-0">
                     <PDFDownloadButton />
                     <JSONDownloadButton />
                     <JSONUploadButton />
