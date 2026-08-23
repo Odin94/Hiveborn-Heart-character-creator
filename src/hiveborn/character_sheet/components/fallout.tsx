@@ -137,7 +137,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
                             <Tabs
                                 value={resistance}
                                 onValueChange={(newResistance) => setResistance(newResistance as Resistance)}
-                                className="flex h-full min-h-0 flex-col"
+                                className="relative flex h-full min-h-0 flex-col before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-0 before:h-2 before:border-x before:border-border"
                             >
                                 <TabsList className="mt-2 grid w-full shrink-0 grid-cols-2 sm:grid-cols-5">
                                     {resistances.map((resistanceOption) => (
