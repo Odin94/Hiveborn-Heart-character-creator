@@ -1,4 +1,5 @@
 import { StaticBonuses } from "@/hiveborn/game_data/abilities"
+import { gainDomain, gainSkill } from "@/hiveborn/game_data/character"
 import { protectionMaximum, useCharacterStore } from "../character_states"
 
 export const useApplyStaticBonuses = () => {
@@ -10,15 +11,17 @@ export const useApplyStaticBonuses = () => {
     const setProtections = useCharacterStore.use.setProtections()
 
     const applyStaticBonuses = ({ domains, skills, protections }: StaticBonuses) => {
+        const updatedDomains = { ...existingDomains }
         for (const domain of domains) {
-            existingDomains[domain].hasDomain = true
+            updatedDomains[domain] = gainDomain(updatedDomains[domain])
         }
-        setDomains({ ...existingDomains })
+        setDomains(updatedDomains)
 
+        const updatedSkills = { ...existingSkills }
         for (const skill of skills) {
-            existingSkills[skill].hasSkill = true
+            updatedSkills[skill] = gainSkill(updatedSkills[skill])
         }
-        setSkills({ ...existingSkills })
+        setSkills(updatedSkills)
 
         for (const { resistance, amount } of protections) {
             zustandProtections[resistance] = Math.min(zustandProtections[resistance] + amount, protectionMaximum)

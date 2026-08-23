@@ -20,6 +20,20 @@ export type Skills = Record<string, Skill>
 export type Domain = z.infer<typeof domainSchema>
 export type Domains = Record<string, Domain>
 
+export const knackPrompt = "<pick a knack>"
+
+const addKnackPrompt = (knacks: string) => (knacks ? `${knacks}, ${knackPrompt}` : knackPrompt)
+
+export const gainSkill = (skill: Skill): Skill => ({
+    hasSkill: true,
+    knacks: skill.hasSkill ? addKnackPrompt(skill.knacks) : skill.knacks,
+})
+
+export const gainDomain = (domain: Domain): Domain => ({
+    hasDomain: true,
+    knacks: domain.hasDomain ? addKnackPrompt(domain.knacks) : domain.knacks,
+})
+
 const ensureCompleteResistanceRecord = (val: Partial<Record<Resistance, number>>): Record<Resistance, number> => {
     const result: Record<Resistance, number> = {} as Record<Resistance, number>
     for (const resistance of resistances) {

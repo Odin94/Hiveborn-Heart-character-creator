@@ -1,4 +1,5 @@
 import { Ability, PickFromOption } from "@/hiveborn/game_data/abilities"
+import { gainDomain, gainSkill } from "@/hiveborn/game_data/character"
 import { markAbilityPicked } from "@/hiveborn/character_sheet/markdown_formatting"
 import { isDomain } from "@/hiveborn/game_data/domains"
 import { isResistance } from "@/hiveborn/game_data/resistances"
@@ -17,11 +18,9 @@ export const useApplyPickedBonus = () => {
 
     const applyPickedBonus = (selection: PickFromOption, pickingFromAbility: Ability) => {
         if (isSkill(selection)) {
-            existingSkills[selection].hasSkill = true
-            setSkills({ ...existingSkills })
+            setSkills({ ...existingSkills, [selection]: gainSkill(existingSkills[selection]) })
         } else if (isDomain(selection)) {
-            existingDomains[selection].hasDomain = true
-            setDomains({ ...existingDomains })
+            setDomains({ ...existingDomains, [selection]: gainDomain(existingDomains[selection]) })
         } else if (isResistance(selection)) {
             zustandProtections[selection] = Math.min(zustandProtections[selection] + 1, protectionMaximum)
             setProtections({ ...zustandProtections })
