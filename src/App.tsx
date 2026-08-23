@@ -30,28 +30,27 @@ function App() {
             <CookieConsent variant="small" />
             <Toaster closeButton />
             <Dialog>
-                <nav className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm sm:contents sm:px-0">
-                    <a href="https://odin-matthias.de/" target="_blank" className="underline sm:absolute sm:top-2 sm:left-8">
-                        /Odin's Site/
-                    </a>
-                    <a href="https://github.com/Odin94/Hiveborn-Heart-character-creator" target="_blank" className="underline sm:absolute sm:top-2 sm:left-31">
-                        /Source Code/
-                    </a>
-                    <a
-                        href="https://rowanrookanddecard.com/product-category/game-systems/resistance/heart/"
-                        target="_blank"
-                        className="underline sm:absolute sm:top-2 sm:left-57"
-                    >
-                        /Heart/
-                    </a>
+                <div className="container relative mx-auto max-w-screen-xl text-foreground lg:px-20">
+                    <nav className="relative z-10 mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm lg:absolute lg:top-2 lg:left-20 lg:mb-0 lg:flex-nowrap lg:justify-start lg:px-0">
+                        <a href="https://odin-matthias.de/" target="_blank" className="underline">
+                            /Odin's Site/
+                        </a>
+                        <a href="https://github.com/Odin94/Hiveborn-Heart-character-creator" target="_blank" className="underline">
+                            /Source Code/
+                        </a>
+                        <a href="https://rowanrookanddecard.com/product-category/game-systems/resistance/heart/" target="_blank" className="underline">
+                            /Heart/
+                        </a>
 
-                    <DialogTrigger className="link-like underline sm:absolute sm:top-2 sm:left-72">/Copyright/</DialogTrigger>
-                    <div className="sm:absolute sm:top-1 sm:right-5">
-                        <ThemeToggle />
-                    </div>
-                </nav>
-                <div className="container mx-auto max-w-screen-xl text-foreground md:px-20">
+                        <DialogTrigger className="link-like underline">/Copyright/</DialogTrigger>
+                        <div className="lg:hidden">
+                            <ThemeToggle />
+                        </div>
+                    </nav>
                     <CharacterSheet />
+                </div>
+                <div className="hidden lg:absolute lg:top-1 lg:right-5 lg:block">
+                    <ThemeToggle />
                 </div>
                 <DiceRoller />
 
@@ -74,13 +73,15 @@ function App() {
                 </DialogContent>
             </Dialog>
 
-            <div className="mt-4 flex flex-wrap justify-center gap-2 px-2 pb-4 sm:absolute sm:left-0 sm:mt-0 sm:ml-4 sm:h-10 sm:items-start sm:gap-8 sm:p-0">
-                <PDFDownloadButton />
-                <JSONDownloadButton />
-                <JSONUploadButton />
-                <ResetButton />
+            <div className="container mx-auto max-w-screen-xl lg:px-20">
+                <div className="mt-0 flex flex-wrap justify-center gap-2 px-2 pb-4 lg:h-10 lg:justify-start lg:gap-8 lg:px-0 lg:pb-0">
+                    <PDFDownloadButton />
+                    <JSONDownloadButton />
+                    <JSONUploadButton />
+                    <ResetButton />
 
-                {/* TODOdin: Add a button that opens a history pane that keeps character-states from the past (in case you accidentally overwrite) */}
+                    {/* TODOdin: Add a button that opens a history pane that keeps character-states from the past (in case you accidentally overwrite) */}
+                </div>
             </div>
         </div>
     )
