@@ -27,7 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { Domains, Skills } from "@/hiveborn/game_data/character"
+import { Domains, gainDomain, gainSkill, Skills } from "@/hiveborn/game_data/character"
 import { DomainKey } from "@/hiveborn/game_data/domains"
 import { protectionMaximum } from "../character_states"
 import { Resistance } from "@/hiveborn/game_data/resistances"
@@ -361,8 +361,8 @@ const copyDomains = (domains: Domains): Domains => {
 }
 
 const applyClassBonusesToDraft = (skills: Skills, domains: Domains, protections: Record<Resistance, number>, coreTraits: CoreTraits) => {
-    skills[coreTraits.skill].hasSkill = true
-    domains[coreTraits.domain].hasDomain = true
+    skills[coreTraits.skill] = gainSkill(skills[coreTraits.skill])
+    domains[coreTraits.domain] = gainDomain(domains[coreTraits.domain])
 
     for (const ability of coreTraits.abilities) {
         applyStaticBonusesToDraft(skills, domains, protections, ability.staticBonuses)
@@ -390,11 +390,11 @@ const removeClassBonusesFromDraft = (
 
 const applyStaticBonusesToDraft = (skills: Skills, domains: Domains, protections: Record<Resistance, number>, bonuses: StaticBonuses) => {
     for (const skill of bonuses.skills) {
-        skills[skill].hasSkill = true
+        skills[skill] = gainSkill(skills[skill])
     }
 
     for (const domain of bonuses.domains) {
-        domains[domain].hasDomain = true
+        domains[domain] = gainDomain(domains[domain])
     }
 
     for (const { resistance, amount } of bonuses.protections) {
