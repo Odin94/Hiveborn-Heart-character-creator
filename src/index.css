@@ -79,6 +79,17 @@ html {
     background: var(--background);
 }
 
+html,
+body,
+#root {
+    min-height: 100%;
+}
+
+body,
+#root {
+    background: var(--background);
+}
+
 h1 {
     font-size: 3.2em;
     line-height: 1.1;
