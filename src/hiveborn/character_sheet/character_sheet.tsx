@@ -1,5 +1,5 @@
-import Logo from "@/assets/logo.png"
 import DarkLogo from "@/assets/logo-dark.png"
+import LightLogo from "@/assets/logo-light.png"
 import { useThemeStore } from "@/lib/theme"
 import Abilities from "./components/abilities"
 import ActiveBeats from "./components/active_beats"
@@ -20,7 +20,7 @@ const CharacterSheet = () => {
         <div className="grid grid-cols-1 grid-rows-none gap-4 w-full p-3 border-1 rounded-sm sm:grid-rows-[110px_300px_200px_330px] sm:gap-6 sm:p-5 lg:grid-cols-2 lg:grid-rows-[170px_90px_500px_330px]">
             <div className="">
                 <img
-                    src={theme === "dark" ? DarkLogo : Logo}
+                    src={theme === "dark" ? DarkLogo : LightLogo}
                     alt="Decorative"
                     className="mx-auto w-full max-w-[350px] object-contain sm:w-[350px] lg:w-full lg:max-w-[600px]"
                 />
