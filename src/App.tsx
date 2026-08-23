@@ -26,7 +26,7 @@ function App() {
     }
 
     return (
-        <div className="relative min-h-screen pb-28 sm:pb-0">
+        <div className="relative min-h-screen bg-background pb-28 sm:pb-0">
             <CookieConsent variant="small" />
             <Toaster closeButton />
             <Dialog>
