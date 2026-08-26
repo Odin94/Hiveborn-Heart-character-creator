@@ -1,3 +1,4 @@
+# Compatibility copy for explicit mprox.yaml opens. oprocs discovers mprocs.yaml by default.
 procs:
     backend:
         shell: "if [ -f ../Progeny/backend/.env ]; then . ../Progeny/backend/.env; fi; FRONTEND_URL=http://localhost:5173 BACKEND_URL=http://localhost:3003 DATABASE_URL=./data/hiveborn.sqlite PORT=3003 pnpm --dir backend dev"
