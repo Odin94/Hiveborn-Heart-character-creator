@@ -38,8 +38,6 @@ const NameClassCalling = () => {
     const setName = useCharacterStore.use.setName()
     const characterClass = useCharacterStore.use.characterClass()
     const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const background = useCharacterStore.use.background()
-    const setBackground = useCharacterStore.use.setBackground()
     const abilities = useCharacterStore.use.abilities()
     const setAbilities = useCharacterStore.use.setAbilities()
     const calling = useCharacterStore.use.calling()
@@ -112,7 +110,7 @@ const NameClassCalling = () => {
     }
 
     return (
-        <div className="grid size-full grid-cols-1 gap-1 sm:grid-cols-[1fr_6fr] sm:grid-rows-4">
+        <div className="grid size-full grid-cols-1 gap-1 sm:grid-cols-[1fr_6fr] sm:grid-rows-3">
             {/* Name */}
             <div className="flex items-center font-bold text-left">Name</div>
             <div className="flex items-center">
@@ -129,12 +127,6 @@ const NameClassCalling = () => {
                     }}
                     onConfirm={applyCoreTraits}
                 />
-            </div>
-
-            {/* Background */}
-            <div className="flex items-center font-bold text-left">Background</div>
-            <div className="flex items-center">
-                <Input value={background} onChange={(e) => setBackground(e.target.value)} className="sm:w-[90%]" />
             </div>
 
             {/* Calling */}

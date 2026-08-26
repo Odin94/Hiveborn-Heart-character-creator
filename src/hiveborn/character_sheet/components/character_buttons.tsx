@@ -60,7 +60,6 @@ export const JSONDownloadButton = ({ className }: { className?: string }) => {
 export const ResetButton = () => {
     const setName = useCharacterStore.use.setName()
     const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const setBackground = useCharacterStore.use.setBackground()
     const setCalling = useCharacterStore.use.setCalling()
     const setActiveBeats = useCharacterStore.use.setActiveBeats()
     const setEquipment = useCharacterStore.use.setEquipment()
@@ -75,7 +74,6 @@ export const ResetButton = () => {
     const setCharacter = (character: Character) => {
         setName(character.name)
         setCharacterClass(character.characterClass)
-        setBackground(character.background)
         setCalling(character.calling)
         setActiveBeats(character.activeBeats)
         setEquipment(character.equipment)
@@ -121,7 +119,6 @@ export const JSONUploadButton = () => {
     const [file, setFile] = useState<File>()
     const setName = useCharacterStore.use.setName()
     const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const setBackground = useCharacterStore.use.setBackground()
     const setCalling = useCharacterStore.use.setCalling()
     const setActiveBeats = useCharacterStore.use.setActiveBeats()
     const setEquipment = useCharacterStore.use.setEquipment()
@@ -136,7 +133,6 @@ export const JSONUploadButton = () => {
     const setCharacter = (character: Character) => {
         setName(character.name)
         setCharacterClass(character.characterClass)
-        setBackground(character.background)
         setCalling(character.calling)
         setActiveBeats(character.activeBeats)
         setEquipment(character.equipment)

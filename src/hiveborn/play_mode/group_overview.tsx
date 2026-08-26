@@ -6,7 +6,7 @@ import { api, API_URL, tokenStorage, type GroupCharacter, type PlayGroup, type U
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { resistances } from "@/hiveborn/game_data/resistances"
-import { BookOpen, ChevronLeft, Dices, Plus, ScrollText, Sparkles, Users } from "lucide-react"
+import { BookOpen, ChevronLeft, Dices, Plus, Sparkles, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
@@ -302,7 +302,7 @@ function CharacterCard({
     onOpen: () => void
     onFallout: () => void
 }) {
-    const data = character.data as typeof character.data & { background?: string }
+    const data = character.data
     return (
         <article
             className={`group cursor-pointer rounded-xl border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
@@ -315,21 +315,13 @@ function CharacterCard({
                 </div>
                 <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
             </div>
-            <dl className="mt-4 grid grid-cols-3 divide-x divide-foreground/10 rounded-lg border border-foreground/10 bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
+            <dl className="mt-4 grid grid-cols-2 divide-x divide-foreground/10 rounded-lg border border-foreground/10 bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
                 <div className="min-w-0 px-2">
                     <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
                         <BookOpen className="size-3.5" /> Class
                     </dt>
                     <dd className="mt-1 truncate font-bold" title={data.characterClass || undefined}>
                         {data.characterClass || "—"}
-                    </dd>
-                </div>
-                <div className="min-w-0 px-2">
-                    <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                        <ScrollText className="size-3.5" /> Background
-                    </dt>
-                    <dd className="mt-1 truncate font-bold" title={data.background || undefined}>
-                        {data.background || "—"}
                     </dd>
                 </div>
                 <div className="min-w-0 px-2">
@@ -385,9 +377,6 @@ function CharacterSheetModal({ character, onClose }: { character: CharacterWithO
                             </p>
                             <p>
                                 <b>Calling:</b> {character.data.calling || "—"}
-                            </p>
-                            <p>
-                                <b>Background:</b> {(character.data as typeof character.data & { background?: string }).background || "—"}
                             </p>
                             <p>
                                 <b>Active beats:</b>
