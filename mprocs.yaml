@@ -1,6 +1,6 @@
 procs:
     backend:
-        shell: "if [ -f ../Progeny/backend/.env ]; then . ../Progeny/backend/.env; fi; FRONTEND_URL=http://localhost:5173 BACKEND_URL=http://localhost:3003 DATABASE_URL=./data/hiveborn.sqlite PORT=3003 pnpm --dir backend dev"
+        shell: "if [ -f ../Progeny/backend/.env ]; then . ../Progeny/backend/.env; fi; FRONTEND_URL=http://localhost:5173 BACKEND_URL=http://localhost:3003 DATABASE_URL=./data/hiveborn.sqlite PORT=3003 pnpm --dir backend db:migrate && FRONTEND_URL=http://localhost:5173 BACKEND_URL=http://localhost:3003 DATABASE_URL=./data/hiveborn.sqlite PORT=3003 pnpm --dir backend dev"
     frontend:
         shell: "VITE_API_URL=http://localhost:3003 pnpm run dev"
     drizzle-studio:

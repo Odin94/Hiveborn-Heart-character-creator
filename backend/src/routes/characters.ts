@@ -72,6 +72,7 @@ export async function characterRoutes(fastify: FastifyInstance) {
             .where(and(eq(schema.characters.id, params.data.id), eq(schema.characters.userId, request.userId!)))
             .returning()
         if (!character) return reply.code(404).send({ error: "Character not found" })
+        await broadcastUserCharacterChange(request.userId!)
         return { success: true }
     })
 }

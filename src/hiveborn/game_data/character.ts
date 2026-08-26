@@ -61,6 +61,9 @@ const ensureCompleteSkillRecord = (val: Partial<Skills>): Skills => {
 export const characterSchema = z.object({
     name: z.string(),
     characterClass: z.union([z.enum(characterClasses), z.string()]),
+    // Kept optional while loading older saved sheets; newly saved sheets always
+    // include it so play groups can show the requested character summary.
+    background: z.string().optional().default(""),
     calling: z.union([z.enum(callings), z.string()]),
     activeBeats: z.string(),
     equipment: z.string(),
@@ -170,6 +173,7 @@ export const getEmptyCharacter = (): Character => {
     const emptyCharacter: Character = {
         name: "",
         characterClass: "",
+        background: "",
         calling: "",
         activeBeats: "",
         equipment: "",
