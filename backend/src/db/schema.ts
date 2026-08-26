@@ -20,7 +20,9 @@ export const users = sqliteTable(
         nickname: text("nickname"),
         ...timestamps,
     },
-    (table) => ({ nicknameUnique: uniqueIndex("users_nickname_unique").on(table.nickname) }),
+    // Nicknames are identifiers used for invitations. Treat casing as display
+    // only, so `HoneyWitch` cannot be claimed a second time as `honeywitch`.
+    (table) => ({ nicknameUnique: uniqueIndex("users_nickname_unique").on(sql`${table.nickname} COLLATE NOCASE`) }),
 )
 
 export const characters = sqliteTable(

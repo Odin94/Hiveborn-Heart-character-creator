@@ -11,7 +11,7 @@ export type PlayGroup = {
     name: string
     ownerId: string
     createdAt: string
-    members: Array<{ id: string; nickname: string | null; email: string; joinedAt: string; characters: GroupCharacter[] }>
+    members: Array<{ id: string; nickname: string | null; joinedAt: string; characters: GroupCharacter[] }>
     rolls: Array<{ id: string; userId: string; characterName: string; label: string; dice: string; result: string; createdAt: string }>
 }
 
