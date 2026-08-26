@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { JSONDownloadButton, JSONUploadButton, PDFDownloadButton, ResetButton } from "./hiveborn/character_sheet/components/character_buttons"
 import { Toaster } from "@/components/ui/sonner"
 import { useUserUuid } from "@/lib/analytics"
-import { useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import { usePostHog } from "posthog-js/react"
 import CookieConsent from "./components/cookie-consent"
 import DiceRoller from "./hiveborn/character_sheet/components/dice_roller/dice_roller"
@@ -17,12 +17,21 @@ import { useAuth } from "./hooks/useAuth"
 import { useCloudCharacterSync } from "./hooks/useCloudCharacterSync"
 import GroupOverview from "./hiveborn/play_mode/group_overview"
 import { toast } from "sonner"
+import { Outlet, useNavigate } from "@tanstack/react-router"
+
+type AuthState = ReturnType<typeof useAuth>
+const AuthContext = createContext<AuthState | null>(null)
+
+export const useAppAuth = () => {
+    const auth = useContext(AuthContext)
+    if (!auth) throw new Error("useAppAuth must be used inside the app route")
+    return auth
+}
 
 function App() {
     const posthog = usePostHog()
     const { userUuid, setUserUuid } = useUserUuid()
     const auth = useAuth()
-    const [playModeOpen, setPlayModeOpen] = useState(false)
     useEffect(() => {
         if (!userUuid) {
             setUserUuid()
@@ -41,19 +50,21 @@ function App() {
         posthog.capture("Pageview: Hiveborn", { userUuid, authenticated: Boolean(auth.user) })
     }, [auth.user, posthog, userUuid])
 
-    if (window.location.pathname === "/auth/callback") return <AuthCallback onFinished={auth.refresh} />
-    if (playModeOpen && auth.user)
-        return (
-            <>
-                <Toaster closeButton />
-                <GroupOverview user={auth.user} onClose={() => setPlayModeOpen(false)} />
-            </>
-        )
+    return (
+        <AuthContext.Provider value={auth}>
+            <Toaster closeButton />
+            <Outlet />
+        </AuthContext.Provider>
+    )
+}
+
+export function CharacterSheetPage() {
+    const auth = useAppAuth()
+    const navigate = useNavigate()
 
     return (
         <div className="relative min-h-screen bg-background pb-28 sm:pb-0">
             <CookieConsent variant="small" />
-            <Toaster closeButton />
             <Dialog>
                 <div className="container relative mx-auto max-w-screen-xl text-foreground lg:px-20">
                     <nav className="relative z-10 mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm lg:absolute lg:top-2 lg:left-24 lg:mb-0 lg:flex-nowrap lg:justify-start lg:px-0">
@@ -70,7 +81,7 @@ function App() {
                         <DialogTrigger className="link-like underline">/Copyright/</DialogTrigger>
                         {auth.isAuthenticated ? (
                             <>
-                                <Button variant="link" className="h-auto p-0 text-sm" onClick={() => setPlayModeOpen(true)}>
+                                <Button variant="link" className="h-auto p-0 text-sm" onClick={() => void navigate({ to: "/play" })}>
                                     /Play Mode/
                                 </Button>
                                 <AccountDialog nickname={auth.user?.nickname ?? ""} onSave={auth.updateProfile} onLogout={auth.logout} />
@@ -135,7 +146,9 @@ function App() {
     )
 }
 
-function AuthCallback({ onFinished }: { onFinished: () => Promise<unknown> }) {
+export function AuthCallbackPage() {
+    const auth = useAppAuth()
+    const navigate = useNavigate()
     const [error, setError] = useState<string | null>(null)
     useEffect(() => {
         const code = new URLSearchParams(window.location.search).get("code")
@@ -147,12 +160,11 @@ function AuthCallback({ onFinished }: { onFinished: () => Promise<unknown> }) {
             .callback(code)
             .then(async (response) => {
                 tokenStorage.set(response.token)
-                await onFinished()
-                window.history.replaceState({}, "", "/")
-                window.location.reload()
+                await auth.refresh()
+                await navigate({ to: "/", replace: true })
             })
             .catch((reason: Error) => setError(reason.message))
-    }, [onFinished])
+    }, [auth, navigate])
     return (
         <main className="grid min-h-screen place-items-center bg-background p-6">
             <div className="text-center">
@@ -160,6 +172,32 @@ function AuthCallback({ onFinished }: { onFinished: () => Promise<unknown> }) {
                 {error && <p className="mt-3 text-destructive">{error}</p>}
             </div>
         </main>
+    )
+}
+
+export function PlayModePage({ groupId }: { groupId?: string }) {
+    const auth = useAppAuth()
+    const navigate = useNavigate()
+    if (!auth.user) {
+        return (
+            <main className="grid min-h-screen place-items-center bg-background p-6 text-center">
+                <div>
+                    <h1 className="text-2xl font-bold">Sign in to enter Play Mode</h1>
+                    <p className="mt-2 text-muted-foreground">Play groups and shared sheets require an account.</p>
+                    <Button className="mt-4" onClick={() => void navigate({ to: "/" })}>
+                        Back to character sheets
+                    </Button>
+                </div>
+            </main>
+        )
+    }
+    return (
+        <GroupOverview
+            user={auth.user}
+            selectedGroupId={groupId}
+            onClose={() => void navigate({ to: "/" })}
+            onSelectGroup={(id) => void navigate({ to: "/play/$groupId", params: { groupId: id } })}
+        />
     )
 }
 
