@@ -35,8 +35,9 @@ export async function characterRoutes(fastify: FastifyInstance) {
             })
             .returning()
         trackEvent("character_created", request.userId!)
-        await broadcastUserCharacterChange(request.userId!)
-        return serialize(character!)
+        const serialized = serialize(character!)
+        await broadcastUserCharacterChange(request.userId!, { character: serialized })
+        return serialized
     })
 
     fastify.put("/characters/:id", { preHandler: authenticateUser }, async (request, reply) => {
@@ -59,8 +60,9 @@ export async function characterRoutes(fastify: FastifyInstance) {
             })
             .where(eq(schema.characters.id, current.id))
             .returning()
-        await broadcastUserCharacterChange(request.userId!)
-        return serialize(character!)
+        const serialized = serialize(character!)
+        await broadcastUserCharacterChange(request.userId!, { character: serialized })
+        return serialized
     })
 
     fastify.delete("/characters/:id", { preHandler: authenticateUser }, async (request, reply) => {
@@ -72,7 +74,7 @@ export async function characterRoutes(fastify: FastifyInstance) {
             .where(and(eq(schema.characters.id, params.data.id), eq(schema.characters.userId, request.userId!)))
             .returning()
         if (!character) return reply.code(404).send({ error: "Character not found" })
-        await broadcastUserCharacterChange(request.userId!)
+        await broadcastUserCharacterChange(request.userId!, { characterId: character.id, deleted: true })
         return { success: true }
     })
 }

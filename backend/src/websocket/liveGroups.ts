@@ -7,6 +7,12 @@ import { isAllowedFrontendOrigin, isLocalhostHost, isLoopbackAddress } from "../
 
 const subscribers = new Map<string, Set<WebSocket>>()
 
+type CharacterChange = {
+    character?: Record<string, unknown>
+    characterId?: string
+    deleted?: boolean
+}
+
 export function broadcastGroupEvent(groupId: string, event: Record<string, unknown>) {
     const groupSubscribers = subscribers.get(groupId)
     if (!groupSubscribers) return
@@ -14,9 +20,15 @@ export function broadcastGroupEvent(groupId: string, event: Record<string, unkno
     for (const socket of groupSubscribers) if (socket.readyState === socket.OPEN) socket.send(payload)
 }
 
-export async function broadcastUserCharacterChange(userId: string) {
+export async function broadcastUserCharacterChange(userId: string, change: CharacterChange = {}) {
     const memberships = await db.select().from(schema.groupMembers).where(eq(schema.groupMembers.userId, userId))
-    for (const membership of memberships) broadcastGroupEvent(membership.groupId, { type: "character.updated", userId })
+    for (const membership of memberships) {
+        broadcastGroupEvent(membership.groupId, {
+            type: change.deleted ? "character.deleted" : "character.updated",
+            userId,
+            ...change,
+        })
+    }
 }
 
 export async function registerLiveGroupRoutes(fastify: FastifyInstance) {
