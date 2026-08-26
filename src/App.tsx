@@ -32,11 +32,14 @@ function App() {
     useCloudCharacterSync(auth.isAuthenticated)
 
     useEffect(() => {
-        if (userUuid) {
-            posthog.identify(userUuid)
-            posthog.capture("Pageview: Hiveborn", { userUuid })
-        }
-    }, [posthog, userUuid])
+        // Keep authenticated account activity on the WorkOS user identity.
+        // Previously this effect ran after useAuth identified the account and
+        // replaced it with an anonymous browser UUID.
+        const distinctId = auth.user?.id ?? userUuid
+        if (!distinctId) return
+        posthog.identify(distinctId)
+        posthog.capture("Pageview: Hiveborn", { userUuid, authenticated: Boolean(auth.user) })
+    }, [auth.user, posthog, userUuid])
 
     if (window.location.pathname === "/auth/callback") return <AuthCallback onFinished={auth.refresh} />
     if (playModeOpen && auth.user)

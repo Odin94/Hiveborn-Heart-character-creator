@@ -3,6 +3,7 @@ import websocket from "@fastify/websocket"
 import { and, eq } from "drizzle-orm"
 import { db, schema } from "../db/index.js"
 import { authenticateToken } from "../middleware/auth.js"
+import { isAllowedFrontendOrigin, isLocalhostHost, isLoopbackAddress } from "../config/env.js"
 
 const subscribers = new Map<string, Set<WebSocket>>()
 
@@ -24,7 +25,8 @@ export async function registerLiveGroupRoutes(fastify: FastifyInstance) {
         const params = request.params as { id?: string }
         const token = (request.query as { token?: string }).token
         if (!params.id || !token) return socket.close(1008, "Missing group or token")
-        const user = await authenticateToken(token)
+        if (!isAllowedFrontendOrigin(request.headers.origin)) return socket.close(1008, "Untrusted origin")
+        const user = await authenticateToken(token, isLocalhostHost(request.headers.host) && isLoopbackAddress(request.raw.socket.remoteAddress))
         if (!user) return socket.close(1008, "Unauthorized")
         const membership = await db
             .select()
