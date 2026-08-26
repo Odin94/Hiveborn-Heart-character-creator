@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { randomInt } from "node:crypto"
-import { and, desc, eq, inArray, isNull } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { db, schema } from "../db/index.js"
@@ -50,7 +50,6 @@ async function groupOverview(groupId: string) {
             return {
                 id: member.userId,
                 nickname: user?.nickname ?? null,
-                email: user?.email ?? "",
                 joinedAt: member.joinedAt,
                 characters: characters
                     .filter((character) => character.userId === member.userId)
@@ -86,7 +85,11 @@ export async function groupRoutes(fastify: FastifyInstance) {
         const parsed = inviteInput.safeParse(request.body)
         if (!params.success || !parsed.success) return reply.code(400).send({ error: "Invalid invitation" })
         if (!(await assertMember(params.data.id, request.userId!))) return reply.code(403).send({ error: "You are not in this play group" })
-        const recipient = await db.select().from(schema.users).where(eq(schema.users.nickname, parsed.data.nickname)).get()
+        const recipient = await db
+            .select()
+            .from(schema.users)
+            .where(sql`lower(${schema.users.nickname}) = lower(${parsed.data.nickname})`)
+            .get()
         if (!recipient) return reply.code(404).send({ error: "No player has that nickname" })
         try {
             await db.insert(schema.groupMembers).values({ groupId: params.data.id, userId: recipient.id })

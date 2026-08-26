@@ -22,7 +22,6 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
     const [autoUpdateStress, setAutoUpdateStress] = useState(true)
-    const activeGroupId = usePlayModeStore((state) => state.activeGroupId)
     const setActiveGroupId = usePlayModeStore((state) => state.setActiveGroupId)
     const isGameMaster = usePlayModeStore((state) => state.isGameMaster)
     const setGameMaster = usePlayModeStore((state) => state.setGameMaster)
@@ -44,8 +43,10 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
 
     const group = groups.find((entry) => entry.id === selectedId) ?? null
     useEffect(() => {
-        setActiveGroupId(group?.id ?? activeGroupId)
-    }, [activeGroupId, group?.id, setActiveGroupId])
+        // Do not retain a group from a previous account/session. A stale group
+        // id would make rolls appear shareable until the API rejected them.
+        setActiveGroupId(group?.id ?? null)
+    }, [group?.id, setActiveGroupId])
     useEffect(() => {
         if (!group?.id || !tokenStorage.get()) return
         let closed = false
