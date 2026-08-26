@@ -10,14 +10,13 @@ import { ChevronLeft, Dices, Plus, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
-type GroupOverviewProps = { user: User; onClose: () => void }
+type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
 type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null }
 
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
 
-export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
+export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
-    const [selectedId, setSelectedId] = useState<string | null>(null)
     const [createName, setCreateName] = useState("")
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
@@ -32,7 +31,6 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
         try {
             const next = await api.groups()
             setGroups(next.groups)
-            setSelectedId((current) => (current && next.groups.some((group) => group.id === current) ? current : (next.groups[0]?.id ?? null)))
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Could not load play groups")
         }
@@ -41,7 +39,7 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
         void refresh()
     }, [refresh])
 
-    const group = groups.find((entry) => entry.id === selectedId) ?? null
+    const group = groups.find((entry) => entry.id === selectedGroupId) ?? null
     useEffect(() => {
         // Do not retain a group from a previous account/session. A stale group
         // id would make rolls appear shareable until the API rejected them.
@@ -80,7 +78,7 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
             const created = await api.createGroup(createName)
             setCreateName("")
             await refresh()
-            setSelectedId(created.id)
+            onSelectGroup(created.id)
             toast.success("Play group created")
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Could not create group")
@@ -139,8 +137,8 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
                     {groups.map((entry) => (
                         <button
                             key={entry.id}
-                            onClick={() => setSelectedId(entry.id)}
-                            className={`w-full rounded px-3 py-2 text-left ${entry.id === group?.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                            onClick={() => onSelectGroup(entry.id)}
+                            className={`w-full rounded px-3 py-2 text-left ${entry.id === selectedGroupId ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
                         >
                             {entry.name}
                         </button>
@@ -187,8 +185,12 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
                 )}
                 {!group ? (
                     <section className="mx-auto mt-20 max-w-md text-center">
-                        <h1 className="text-3xl font-bold">Start a play group</h1>
-                        <p className="mt-2 text-muted-foreground">Set your nickname in the account menu, then create a group and invite players by nickname.</p>
+                        <h1 className="text-3xl font-bold">{groups.length ? "Choose a play group" : "Start a play group"}</h1>
+                        <p className="mt-2 text-muted-foreground">
+                            {groups.length
+                                ? "Choose a group from the sidebar to join its live table."
+                                : "Set your nickname in the account menu, then create a group and invite players by nickname."}
+                        </p>
                         <div className="mt-6 flex gap-2">
                             <Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="Group name" />
                             <Button disabled={!createName.trim()} onClick={createGroup}>
@@ -209,8 +211,8 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
                             </label>
                             <select
                                 id="mobile-play-group"
-                                value={selectedId ?? ""}
-                                onChange={(event) => setSelectedId(event.target.value || null)}
+                                value={selectedGroupId ?? ""}
+                                onChange={(event) => event.target.value && onSelectGroup(event.target.value)}
                                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                             >
                                 {groups.map((entry) => (
