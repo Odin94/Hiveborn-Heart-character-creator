@@ -1,7 +1,7 @@
 import Fastify from "fastify"
 import cors from "@fastify/cors"
 import rateLimit from "@fastify/rate-limit"
-import { env } from "./config/env.js"
+import { env, isAllowedFrontendOrigin } from "./config/env.js"
 import { authRoutes } from "./routes/auth.js"
 import { characterRoutes } from "./routes/characters.js"
 import { groupRoutes } from "./routes/groups.js"
@@ -12,8 +12,8 @@ import { registerLiveGroupRoutes } from "./websocket/liveGroups.js"
 const app = Fastify({ logger: env.NODE_ENV === "development" ? { transport: { target: "pino-pretty" } } : true, trustProxy: true })
 await app.register(cors, {
     origin: (origin, callback) => {
-        if (!origin || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) return callback(null, true)
-        callback(null, origin === new URL(env.FRONTEND_URL).origin)
+        if (!origin || isAllowedFrontendOrigin(origin)) return callback(null, true)
+        callback(null, false)
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

@@ -96,12 +96,11 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
     }
     const rollFallout = async (character: CharacterWithOwner) => {
         if (!group) return
-        const roll = Math.floor(Math.random() * 12) + 1
         try {
-            const result = await api.falloutRoll(group.id, { characterId: character.id, roll, applyStressUpdate: autoUpdateStress })
+            const result = await api.falloutRoll(group.id, { characterId: character.id, applyStressUpdate: autoUpdateStress })
             const message = result.fallout
-                ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${roll} vs ${result.totalStress} stress)${result.stressUpdated ? " — stress updated" : ""}`
-                : `${character.name}: no fallout (${roll} vs ${result.totalStress} stress)`
+                ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${result.stressUpdated ? " — stress updated" : ""}`
+                : `${character.name}: no fallout (${result.roll} vs ${result.totalStress} stress)`
             toast(result.fallout ? message : message)
             await refresh()
         } catch (error) {
@@ -311,15 +310,19 @@ function CharacterSheetModal({ character, onClose }: { character: CharacterWithO
                                 <b>Calling:</b> {character.data.calling || "—"}
                             </p>
                             <p>
+                                <b>Background:</b> {(character.data as typeof character.data & { background?: string }).background || "—"}
+                            </p>
+                            <p>
                                 <b>Active beats:</b>
                             </p>
                             <p className="whitespace-pre-wrap">{character.data.activeBeats || "—"}</p>
                         </SheetSection>
-                        <SheetSection title="Stress">
+                        <SheetSection title="Stress & protections">
                             <div className="grid grid-cols-2 gap-2">
                                 {resistances.map((resistance) => (
                                     <p key={resistance}>
-                                        <b>{resistance.toUpperCase()}:</b> {character.data.stress[resistance]}
+                                        <b>{resistance.toUpperCase()}:</b> {character.data.stress[resistance]} stress / {character.data.protections[resistance]}{" "}
+                                        protection
                                     </p>
                                 ))}
                             </div>
@@ -329,6 +332,22 @@ function CharacterSheetModal({ character, onClose }: { character: CharacterWithO
                         </SheetSection>
                         <SheetSection title="Abilities">
                             <p className="whitespace-pre-wrap">{character.data.abilities || "—"}</p>
+                        </SheetSection>
+                        <SheetSection title="Skills">
+                            <p className="whitespace-pre-wrap">
+                                {Object.entries(character.data.skills)
+                                    .filter(([, skill]) => skill.hasSkill)
+                                    .map(([skill, details]) => `${skill}${details.knacks ? ` — ${details.knacks}` : ""}`)
+                                    .join("\n") || "—"}
+                            </p>
+                        </SheetSection>
+                        <SheetSection title="Domains">
+                            <p className="whitespace-pre-wrap">
+                                {Object.entries(character.data.domains)
+                                    .filter(([, domain]) => domain.hasDomain)
+                                    .map(([domain, details]) => `${domain}${details.knacks ? ` — ${details.knacks}` : ""}`)
+                                    .join("\n") || "—"}
+                            </p>
                         </SheetSection>
                         <SheetSection title="Equipment">
                             <p className="whitespace-pre-wrap">{character.data.equipment || "—"}</p>

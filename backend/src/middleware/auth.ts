@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { env, hasWorkosConfiguration } from "../config/env.js"
+import { env, hasWorkosConfiguration, isLocalhostHost, isLoopbackAddress } from "../config/env.js"
 import { workos } from "../config/workos.js"
 
 declare module "fastify" {
@@ -12,7 +12,12 @@ declare module "fastify" {
 export async function authenticateUser(request: FastifyRequest, reply: FastifyReply) {
     const token = request.headers.authorization?.startsWith("Bearer ") ? request.headers.authorization.slice(7) : undefined
     if (!token) return reply.code(401).send({ error: "Unauthorized", message: "No session token provided" })
-    if (env.NODE_ENV !== "production" && token === "hiveborn-local-dev-user") {
+    if (
+        env.NODE_ENV !== "production" &&
+        isLocalhostHost(request.headers.host) &&
+        isLoopbackAddress(request.raw.socket.remoteAddress) &&
+        token === "hiveborn-local-dev-user"
+    ) {
         request.user = { id: "local-hivekeeper", email: "local@hiveborn.test", firstName: "Local", lastName: "Hivekeeper" }
         request.userId = request.user.id
         return
@@ -39,8 +44,8 @@ export async function authenticateUser(request: FastifyRequest, reply: FastifyRe
     return reply.code(401).send({ error: "Unauthorized", message: "Session is invalid" })
 }
 
-export async function authenticateToken(token: string) {
-    if (env.NODE_ENV !== "production" && token === "hiveborn-local-dev-user") {
+export async function authenticateToken(token: string, allowLocalDevelopmentToken = false) {
+    if (env.NODE_ENV !== "production" && allowLocalDevelopmentToken && token === "hiveborn-local-dev-user") {
         return { id: "local-hivekeeper", email: "local@hiveborn.test", firstName: "Local", lastName: "Hivekeeper" }
     }
     if (!hasWorkosConfiguration || !workos) {

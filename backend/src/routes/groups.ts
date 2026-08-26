@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify"
+import { randomInt } from "node:crypto"
 import { and, desc, eq, inArray, isNull } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { z } from "zod"
@@ -16,7 +17,7 @@ const rollInput = z.object({
     result: z.string().trim().min(1).max(160),
     characterName: z.string().trim().min(1).max(120),
 })
-const falloutUpdateInput = z.object({ characterId: z.string().min(1), roll: z.number().int().min(1).max(12), applyStressUpdate: z.boolean() })
+const falloutUpdateInput = z.object({ characterId: z.string().min(1), applyStressUpdate: z.boolean() })
 
 async function assertMember(groupId: string, userId: string) {
     return db
@@ -124,7 +125,10 @@ export async function groupRoutes(fastify: FastifyInstance) {
         if (!character || !(await assertMember(params.data.id, character.userId))) return reply.code(404).send({ error: "Character not found in this group" })
         const data = JSON.parse(character.data) as { stress?: Record<string, number>; lastStressResistance?: string }
         const totalStress = Object.values(data.stress ?? {}).reduce((total, value) => total + Number(value || 0), 0)
-        const fallout = parsed.data.roll < totalStress ? (parsed.data.roll >= 7 ? "major" : "minor") : null
+        // The server owns the random result so a GM cannot accidentally (or
+        // deliberately) submit a chosen fallout outcome from a modified client.
+        const roll = randomInt(1, 13)
+        const fallout = roll < totalStress ? (roll >= 7 ? "major" : "minor") : null
         if (fallout && parsed.data.applyStressUpdate) {
             if (fallout === "major") for (const key of Object.keys(data.stress ?? {})) data.stress![key] = 0
             else if (data.lastStressResistance && data.stress) data.stress[data.lastStressResistance] = 0
@@ -137,7 +141,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
         const result = {
             characterId: character.id,
             totalStress,
-            roll: parsed.data.roll,
+            roll,
             fallout,
             stressUpdated: Boolean(fallout && parsed.data.applyStressUpdate),
             lastStressResistance: data.lastStressResistance ?? null,

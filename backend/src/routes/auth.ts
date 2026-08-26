@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
-import { env, hasWorkosConfiguration } from "../config/env.js"
+import { env, hasWorkosConfiguration, isLocalhostHost, isLoopbackAddress } from "../config/env.js"
 import { workos } from "../config/workos.js"
 import { db, schema } from "../db/index.js"
 import { authenticateUser } from "../middleware/auth.js"
@@ -22,8 +22,8 @@ function publicUser(user: { id: string; email: string; firstName: string | null;
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.post("/auth/dev-login", async (request, reply) => {
-        const host = request.headers.host ?? ""
-        if (env.NODE_ENV === "production" || (!host.includes("localhost") && !host.includes("127.0.0.1"))) return reply.code(404).send({ error: "Not found" })
+        if (env.NODE_ENV === "production" || !isLocalhostHost(request.headers.host) || !isLoopbackAddress(request.raw.socket.remoteAddress))
+            return reply.code(404).send({ error: "Not found" })
         const existing = await db.select().from(schema.users).where(eq(schema.users.id, "local-hivekeeper")).get()
         if (!existing)
             await db

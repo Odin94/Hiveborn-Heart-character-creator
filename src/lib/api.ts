@@ -58,7 +58,7 @@ export const api = {
         request<PlayGroup>(`/play-groups/${groupId}/invitations`, { method: "POST", body: JSON.stringify({ nickname }) }),
     shareRoll: (groupId: string, payload: { label: string; dice: string; result: string; characterName: string }) =>
         request(`/play-groups/${groupId}/rolls`, { method: "POST", body: JSON.stringify(payload) }),
-    falloutRoll: (groupId: string, payload: { characterId: string; roll: number; applyStressUpdate: boolean }) =>
+    falloutRoll: (groupId: string, payload: { characterId: string; applyStressUpdate: boolean }) =>
         request<{
             characterId: string
             totalStress: number
