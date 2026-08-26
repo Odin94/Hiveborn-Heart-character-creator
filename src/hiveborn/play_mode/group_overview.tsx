@@ -48,15 +48,30 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
     }, [activeGroupId, group?.id, setActiveGroupId])
     useEffect(() => {
         if (!group?.id || !tokenStorage.get()) return
-        const url = new URL(API_URL)
-        url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
-        url.pathname = `/play-groups/${group.id}/live`
-        url.searchParams.set("token", tokenStorage.get()!)
-        const socket = new WebSocket(url)
-        socket.onmessage = () => {
-            void refresh()
+        let closed = false
+        let socket: WebSocket | undefined
+        let reconnectTimer: number | undefined
+        const connect = () => {
+            const url = new URL(API_URL)
+            url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
+            url.pathname = `/play-groups/${group.id}/live`
+            url.searchParams.set("token", tokenStorage.get()!)
+            socket = new WebSocket(url)
+            socket.onmessage = () => {
+                void refresh()
+            }
+            socket.onclose = (event) => {
+                // Authentication and membership failures will not recover by
+                // reconnecting; transient network/server closes will.
+                if (!closed && event.code !== 1008) reconnectTimer = window.setTimeout(connect, 1_500)
+            }
         }
-        return () => socket.close()
+        connect()
+        return () => {
+            closed = true
+            if (reconnectTimer) window.clearTimeout(reconnectTimer)
+            socket?.close()
+        }
     }, [group?.id, refresh])
 
     const createGroup = async () => {
@@ -155,10 +170,20 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
                     <Button variant="outline" onClick={onClose}>
                         <ChevronLeft /> Sheets
                     </Button>
-                    <Button variant="outline" onClick={() => setGameMaster(!isGameMaster)}>
-                        GM: {isGameMaster ? "on" : "off"}
-                    </Button>
+                    <label className="flex cursor-pointer items-center gap-2 rounded border border-primary/20 px-3 py-2 text-sm">
+                        <Checkbox checked={isGameMaster} onCheckedChange={(checked) => setGameMaster(checked === true)} /> I’m the GM
+                    </label>
                 </div>
+                {isGameMaster && (
+                    <label className="mb-4 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm md:hidden">
+                        <Checkbox checked={autoUpdateStress} onCheckedChange={(checked) => setAutoUpdateStress(checked === true)} />
+                        <span>
+                            Auto-update stress after fallout
+                            <br />
+                            <small className="text-muted-foreground">Off lets the player update their own sheet.</small>
+                        </span>
+                    </label>
+                )}
                 {!group ? (
                     <section className="mx-auto mt-20 max-w-md text-center">
                         <h1 className="text-3xl font-bold">Start a play group</h1>
@@ -177,6 +202,29 @@ export default function GroupOverview({ user, onClose }: GroupOverviewProps) {
                             <h1 className="text-4xl font-black">{group.name}</h1>
                             <p className="mt-1 text-muted-foreground">Character changes and shared rolls update immediately for everyone here.</p>
                         </header>
+                        <section className="mb-6 space-y-3 rounded-lg border border-border bg-card/40 p-3 md:hidden">
+                            <label className="block text-sm font-semibold" htmlFor="mobile-play-group">
+                                Play group
+                            </label>
+                            <select
+                                id="mobile-play-group"
+                                value={selectedId ?? ""}
+                                onChange={(event) => setSelectedId(event.target.value || null)}
+                                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            >
+                                {groups.map((entry) => (
+                                    <option key={entry.id} value={entry.id}>
+                                        {entry.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="flex gap-2">
+                                <Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="New group name" />
+                                <Button disabled={!createName.trim()} onClick={createGroup}>
+                                    <Plus /> Create
+                                </Button>
+                            </div>
+                        </section>
                         <section className="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card/40 p-3">
                             <span className="font-semibold">Invite by nickname</span>
                             <Input

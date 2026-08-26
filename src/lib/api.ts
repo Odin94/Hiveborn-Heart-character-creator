@@ -52,6 +52,7 @@ export const api = {
         request<CloudCharacter>("/characters", { method: "POST", body: JSON.stringify({ name: character.name, data: character }) }),
     updateCharacter: (id: string, character: Character) =>
         request<CloudCharacter>(`/characters/${id}`, { method: "PUT", body: JSON.stringify({ name: character.name, data: character }) }),
+    deleteCharacter: (id: string) => request<{ success: boolean }>(`/characters/${id}`, { method: "DELETE" }),
     groups: () => request<{ groups: PlayGroup[] }>("/play-groups"),
     createGroup: (name: string) => request<PlayGroup>("/play-groups", { method: "POST", body: JSON.stringify({ name }) }),
     invite: (groupId: string, nickname: string) =>
