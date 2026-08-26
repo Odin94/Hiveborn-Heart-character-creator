@@ -8,6 +8,7 @@ export const protectionMaximum = 5
 
 export type CharacterState = {
     characters: Character[]
+    cloudCharacterIds: string[]
     currentCharacterIndex: number
 
     name: string
@@ -39,6 +40,8 @@ export type CharacterState = {
     addCharacter: (name?: string) => void
     removeCharacter: (index: number) => void
     setCurrentCharacter: (index: number) => void
+    setCloudCharacters: (characters: Character[], ids: string[]) => void
+    setCloudCharacterIds: (ids: string[]) => void
     getCharacterData: () => Character
 }
 
@@ -82,6 +85,7 @@ export const useCharacterStore = createSelectors(
 
                 return {
                     characters: [getEmptyCharacter()],
+                    cloudCharacterIds: [],
                     currentCharacterIndex: 0,
 
                     name: getEmptyCharacter().name,
@@ -108,7 +112,11 @@ export const useCharacterStore = createSelectors(
                     setSkills: (skills) => updateCurrentCharacter({ skills }),
                     setDomains: (domains) => updateCurrentCharacter({ domains }),
                     setProtections: (protections) => updateCurrentCharacter({ protections }),
-                    setStress: (stress) => updateCurrentCharacter({ stress }),
+                    setStress: (stress) => {
+                        const currentStress = getCurrentCharacter().stress
+                        const lastStressResistance = (Object.keys(stress) as Resistance[]).find((resistance) => stress[resistance] > currentStress[resistance])
+                        updateCurrentCharacter({ stress, ...(lastStressResistance ? { lastStressResistance } : {}) })
+                    },
 
                     addCharacter: () => {
                         const state = get()
@@ -173,6 +181,27 @@ export const useCharacterStore = createSelectors(
                             })
                         }
                     },
+                    setCloudCharacters: (characters, cloudCharacterIds) => {
+                        const character = characters[0] || getEmptyCharacter()
+                        set({
+                            characters: characters.length ? characters : [getEmptyCharacter()],
+                            cloudCharacterIds,
+                            currentCharacterIndex: 0,
+                            name: character.name,
+                            characterClass: character.characterClass,
+                            calling: character.calling,
+                            activeBeats: character.activeBeats,
+                            equipment: character.equipment,
+                            resources: character.resources,
+                            abilities: character.abilities,
+                            fallout: character.fallout,
+                            skills: character.skills,
+                            domains: character.domains,
+                            protections: character.protections,
+                            stress: character.stress,
+                        })
+                    },
+                    setCloudCharacterIds: (cloudCharacterIds) => set({ cloudCharacterIds }),
                     getCharacterData: () => getCurrentCharacter(),
                 }
             },
