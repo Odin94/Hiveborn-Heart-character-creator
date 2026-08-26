@@ -12,6 +12,10 @@ import { toast } from "sonner"
 
 type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
 type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null }
+type LiveGroupEvent =
+    | { type: "character.updated"; userId: string; character: GroupCharacter }
+    | { type: "character.deleted"; userId: string; characterId: string }
+    | { type: "roll.shared" | "fallout.rolled" | "group.members.updated" }
 
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
 
@@ -28,6 +32,28 @@ const classCardThemes: Record<string, string> = {
 }
 
 const getClassCardTheme = (characterClass: string) => classCardThemes[characterClass] ?? "border-border bg-card hover:border-primary"
+
+function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: LiveGroupEvent): PlayGroup[] {
+    if (event.type !== "character.updated" && event.type !== "character.deleted") return groups
+    return groups.map((entry) => {
+        if (entry.id !== groupId) return entry
+        return {
+            ...entry,
+            members: entry.members.map((member) => {
+                if (member.id !== event.userId) return member
+                if (event.type === "character.deleted")
+                    return { ...member, characters: member.characters.filter((character) => character.id !== event.characterId) }
+                const hasCharacter = member.characters.some((character) => character.id === event.character.id)
+                return {
+                    ...member,
+                    characters: hasCharacter
+                        ? member.characters.map((character) => (character.id === event.character.id ? event.character : character))
+                        : [...member.characters, event.character],
+                }
+            }),
+        }
+    })
+}
 
 export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
@@ -70,7 +96,13 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             url.pathname = `/play-groups/${group.id}/live`
             url.searchParams.set("token", tokenStorage.get()!)
             socket = new WebSocket(url)
-            socket.onmessage = () => {
+            socket.onmessage = (message) => {
+                try {
+                    const event = JSON.parse(message.data) as LiveGroupEvent
+                    setGroups((current) => applyLiveCharacterUpdate(current, group.id, event))
+                } catch {
+                    // A malformed live event never prevents the authoritative refresh below.
+                }
                 void refresh()
             }
             socket.onclose = (event) => {
@@ -345,7 +377,7 @@ function CharacterCard({
             </div>
             <div className="mt-3 rounded border-l-4 border-destructive bg-destructive/5 p-2">
                 <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
-                <p className="line-clamp-3 whitespace-pre-wrap text-sm">{data.fallout || "None recorded"}</p>
+                <p className="whitespace-pre-wrap text-sm">{data.fallout || "None recorded"}</p>
             </div>
             <div className="mt-4 flex gap-2" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (

@@ -135,11 +135,14 @@ export async function groupRoutes(fastify: FastifyInstance) {
         if (fallout && parsed.data.applyStressUpdate) {
             if (fallout === "major") for (const key of Object.keys(data.stress ?? {})) data.stress![key] = 0
             else if (data.lastStressResistance && data.stress) data.stress[data.lastStressResistance] = 0
-            await db
+            const [updatedCharacter] = await db
                 .update(schema.characters)
                 .set({ data: JSON.stringify(data), updatedAt: new Date(), version: character.version + 1 })
                 .where(eq(schema.characters.id, character.id))
-            await broadcastUserCharacterChange(character.userId)
+                .returning()
+            await broadcastUserCharacterChange(character.userId, {
+                character: { ...updatedCharacter!, data },
+            })
         }
         const result = {
             characterId: character.id,
