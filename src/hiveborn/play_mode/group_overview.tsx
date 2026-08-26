@@ -6,7 +6,7 @@ import { api, API_URL, tokenStorage, type GroupCharacter, type PlayGroup, type U
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { resistances } from "@/hiveborn/game_data/resistances"
-import { ChevronLeft, Dices, Plus, Users } from "lucide-react"
+import { BookOpen, ChevronLeft, Dices, Plus, ScrollText, Sparkles, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
@@ -14,6 +14,20 @@ type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () =>
 type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null }
 
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
+
+const classCardThemes: Record<string, string> = {
+    Cleaver: "border-red-500/25 bg-red-500/8 hover:border-red-500/50",
+    Deadwalker: "border-sky-400/25 bg-gradient-to-br from-sky-400/12 via-violet-400/10 to-card hover:border-violet-400/50",
+    "Deep Apiarist": "border-amber-400/25 bg-amber-400/8 hover:border-amber-400/50",
+    Heretic: "border-slate-400/25 bg-slate-400/8 hover:border-slate-400/50",
+    Hound: "border-emerald-500/25 bg-emerald-500/8 hover:border-emerald-500/50",
+    Incarnadine: "border-rose-400/25 bg-rose-400/8 hover:border-rose-400/50",
+    "Junk Mage": "border-orange-400/25 bg-orange-400/8 hover:border-orange-400/50",
+    "Vermissian Knight": "border-teal-400/25 bg-teal-400/8 hover:border-teal-400/50",
+    Witch: "border-fuchsia-400/25 bg-fuchsia-400/8 hover:border-fuchsia-400/50",
+}
+
+const getClassCardTheme = (characterClass: string) => classCardThemes[characterClass] ?? "border-border bg-card hover:border-primary"
 
 export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
@@ -291,7 +305,7 @@ function CharacterCard({
     const data = character.data as typeof character.data & { background?: string }
     return (
         <article
-            className="group cursor-pointer rounded-xl border border-border bg-card p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-xl"
+            className={`group cursor-pointer rounded-xl border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
             onClick={onOpen}
         >
             <div className="flex items-start justify-between gap-3">
@@ -301,18 +315,30 @@ function CharacterCard({
                 </div>
                 <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-                <div>
-                    <dt className="text-muted-foreground">Class</dt>
-                    <dd>{data.characterClass || "—"}</dd>
+            <dl className="mt-4 grid grid-cols-3 divide-x divide-foreground/10 rounded-lg border border-foreground/10 bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
+                <div className="min-w-0 px-2">
+                    <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <BookOpen className="size-3.5" /> Class
+                    </dt>
+                    <dd className="mt-1 truncate font-bold" title={data.characterClass || undefined}>
+                        {data.characterClass || "—"}
+                    </dd>
                 </div>
-                <div>
-                    <dt className="text-muted-foreground">Background</dt>
-                    <dd>{data.background || "—"}</dd>
+                <div className="min-w-0 px-2">
+                    <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <ScrollText className="size-3.5" /> Background
+                    </dt>
+                    <dd className="mt-1 truncate font-bold" title={data.background || undefined}>
+                        {data.background || "—"}
+                    </dd>
                 </div>
-                <div className="col-span-2">
-                    <dt className="text-muted-foreground">Calling</dt>
-                    <dd>{data.calling || "—"}</dd>
+                <div className="min-w-0 px-2">
+                    <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                        <Sparkles className="size-3.5" /> Calling
+                    </dt>
+                    <dd className="mt-1 truncate font-bold" title={data.calling || undefined}>
+                        {data.calling || "—"}
+                    </dd>
                 </div>
             </dl>
             <div className="mt-4">
