@@ -12,6 +12,10 @@ import TabSwitcher from "./controls/tab_switcher"
 import DiceScene from "./dice_scene"
 import { createPendingDice, getRemovedIndexes, getResult, rollDice } from "./roll_utils"
 import { DieRoll, DieSize, RollerTab, RollResult } from "./types"
+import { Checkbox } from "@/components/ui/checkbox"
+import { usePlayModeStore } from "@/lib/playMode"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
 
 const DiceRoller = () => {
     const isOpen = useDiceRollerStore.use.isOpen()
@@ -26,6 +30,10 @@ const DiceRoller = () => {
     const setRisk = useDiceRollerStore.use.setRisk()
     const characterSkills = useCharacterStore.use.skills()
     const characterDomains = useCharacterStore.use.domains()
+    const characterName = useCharacterStore.use.name()
+    const activeGroupId = usePlayModeStore((state) => state.activeGroupId)
+    const shareRolls = usePlayModeStore((state) => state.shareRolls)
+    const setShareRolls = usePlayModeStore((state) => state.setShareRolls)
     const [activeTab, setActiveTab] = useState<RollerTab>("skill-domain")
     const [dice, setDice] = useState<DieRoll[]>([{ id: 0, value: 10, sides: 10, removed: false }])
     const [freeDiceCount, setFreeDiceCount] = useState(1)
@@ -109,17 +117,38 @@ const DiceRoller = () => {
         rollTimeoutRef.current = window.setTimeout(() => {
             setRolling(false)
             setResult(getResult(resultValue))
+            if (activeGroupId && shareRolls) {
+                const label = [selectedSkill, selectedDomain].filter(Boolean).join(" + ") || "Heart roll"
+                void api
+                    .shareRoll(activeGroupId, {
+                        characterName: characterName || "Unnamed hiveborn",
+                        label,
+                        dice: `${diceCount}d10`,
+                        result: String(resultValue),
+                    })
+                    .catch(() => toast.error("Could not share this roll with the group"))
+            }
         }, 1600)
     }
 
     const handleFreeRoll = () => {
         if (rollTimeoutRef.current) window.clearTimeout(rollTimeoutRef.current)
 
-        setDice(rollDice(freeDiceCount, freeDieSize))
+        const nextDice = rollDice(freeDiceCount, freeDieSize)
+        setDice(nextDice)
         setResult(null)
         setRolling(true)
         rollTimeoutRef.current = window.setTimeout(() => {
             setRolling(false)
+            if (activeGroupId && shareRolls)
+                void api
+                    .shareRoll(activeGroupId, {
+                        characterName: characterName || "Unnamed hiveborn",
+                        label: "Free roll",
+                        dice: `${freeDiceCount}d${freeDieSize}`,
+                        result: nextDice.map((die) => die.value).join(", "),
+                    })
+                    .catch(() => toast.error("Could not share this roll with the group"))
         }, 1600)
     }
 
@@ -227,6 +256,11 @@ const DiceRoller = () => {
                     setFreeDieSize={setFreeDieSize}
                 />
             )}
+
+            <label className="mt-4 flex cursor-pointer items-center gap-2 rounded border border-primary/20 p-3 text-sm">
+                <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!activeGroupId} />
+                <span>Share this roll with my group{!activeGroupId ? " (choose a play group first)" : ""}</span>
+            </label>
 
             <Button type="button" size="lg" className="h-14 w-full text-lg font-black tracking-wide" disabled={rolling} onClick={handleRoll}>
                 ROLL

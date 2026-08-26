@@ -71,6 +71,7 @@ export const characterSchema = z.object({
     skills: z.record(z.enum(skills), skillSchema).transform(ensureCompleteSkillRecord),
     protections: z.record(z.enum(resistances), z.number()).transform(ensureCompleteResistanceRecord),
     stress: z.record(z.enum(resistances), z.number()).transform(ensureCompleteResistanceRecord),
+    lastStressResistance: z.enum(resistances).optional().default("blood"),
 })
 
 export type Character = z.infer<typeof characterSchema>
@@ -179,6 +180,7 @@ export const getEmptyCharacter = (): Character => {
         skills: skills,
         protections: protections,
         stress: stress,
+        lastStressResistance: "blood",
     }
 
     return emptyCharacter
