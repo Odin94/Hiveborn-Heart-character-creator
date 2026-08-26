@@ -13,7 +13,6 @@ export type CharacterState = {
 
     name: string
     characterClass: string
-    background: string
     calling: string
     activeBeats: string
     equipment: string
@@ -27,7 +26,6 @@ export type CharacterState = {
 
     setName: (name: string) => void
     setCharacterClass: (characterClass: string) => void
-    setBackground: (background: string) => void
     setCalling: (calling: string) => void
     setActiveBeats: (activeBeats: string) => void
     setEquipment: (equipment: string) => void
@@ -72,7 +70,6 @@ export const useCharacterStore = createSelectors(
                         characters: newCharacters,
                         name: updatedCharacter.name,
                         characterClass: updatedCharacter.characterClass,
-                        background: updatedCharacter.background,
                         calling: updatedCharacter.calling,
                         activeBeats: updatedCharacter.activeBeats,
                         equipment: updatedCharacter.equipment,
@@ -93,7 +90,6 @@ export const useCharacterStore = createSelectors(
 
                     name: getEmptyCharacter().name,
                     characterClass: getEmptyCharacter().characterClass,
-                    background: getEmptyCharacter().background,
                     calling: getEmptyCharacter().calling,
                     activeBeats: getEmptyCharacter().activeBeats,
                     equipment: getEmptyCharacter().equipment,
@@ -107,7 +103,6 @@ export const useCharacterStore = createSelectors(
 
                     setName: (name) => updateCurrentCharacter({ name }),
                     setCharacterClass: (characterClass) => updateCurrentCharacter({ characterClass }),
-                    setBackground: (background) => updateCurrentCharacter({ background }),
                     setCalling: (calling) => updateCurrentCharacter({ calling }),
                     setActiveBeats: (activeBeats) => updateCurrentCharacter({ activeBeats }),
                     setEquipment: (equipment) => updateCurrentCharacter({ equipment }),
@@ -131,7 +126,6 @@ export const useCharacterStore = createSelectors(
                             currentCharacterIndex: state.characters.length,
                             name: newCharacter.name,
                             characterClass: newCharacter.characterClass,
-                            background: newCharacter.background,
                             calling: newCharacter.calling,
                             activeBeats: newCharacter.activeBeats,
                             equipment: newCharacter.equipment,
@@ -156,7 +150,6 @@ export const useCharacterStore = createSelectors(
                             currentCharacterIndex: Math.max(0, newIndex),
                             name: character.name,
                             characterClass: character.characterClass,
-                            background: character.background,
                             calling: character.calling,
                             activeBeats: character.activeBeats,
                             equipment: character.equipment,
@@ -177,7 +170,6 @@ export const useCharacterStore = createSelectors(
                                 currentCharacterIndex: index,
                                 name: character.name,
                                 characterClass: character.characterClass,
-                                background: character.background,
                                 calling: character.calling,
                                 activeBeats: character.activeBeats,
                                 equipment: character.equipment,
@@ -199,7 +191,6 @@ export const useCharacterStore = createSelectors(
                             currentCharacterIndex: 0,
                             name: character.name,
                             characterClass: character.characterClass,
-                            background: character.background,
                             calling: character.calling,
                             activeBeats: character.activeBeats,
                             equipment: character.equipment,
