@@ -8,12 +8,14 @@ import { api, API_URL, tokenStorage, type GroupCharacter, type PlayGroup, type U
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { resistances } from "@/hiveborn/game_data/resistances"
+import FalloutDie from "./fallout_die"
 import { BookOpen, ChevronLeft, Dices, Plus, Sparkles, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
 type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
 type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null }
+type FalloutRoll = { characterName: string; roll: number; fallout: "minor" | "major" | null }
 type LiveGroupEvent =
     | { type: "character.updated"; userId: string; character: GroupCharacter }
     | { type: "character.deleted"; userId: string; characterId: string }
@@ -70,6 +72,8 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
     const [autoUpdateStress, setAutoUpdateStress] = useState(true)
+    const [falloutRoll, setFalloutRoll] = useState<FalloutRoll | null>(null)
+    const [rollingFalloutCharacterId, setRollingFalloutCharacterId] = useState<string | null>(null)
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const setActiveGroupId = usePlayModeStore((state) => state.setActiveGroupId)
     const isGameMaster = usePlayModeStore((state) => state.isGameMaster)
@@ -196,8 +200,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     }
     const rollFallout = async (character: CharacterWithOwner) => {
         if (!group) return
+        setRollingFalloutCharacterId(character.id)
         try {
             const result = await api.falloutRoll(group.id, { characterId: character.id, applyStressUpdate: autoUpdateStress })
+            setFalloutRoll({ characterName: rollCharacterName(character), roll: result.roll, fallout: result.fallout })
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 3_600))
             const message = result.fallout
                 ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${result.stressUpdated ? " — stress updated" : ""}`
                 : `${character.name}: no fallout (${result.roll} vs ${result.totalStress} stress)`
@@ -205,6 +212,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             await refresh()
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Could not roll fallout")
+        } finally {
+            setFalloutRoll(null)
+            setRollingFalloutCharacterId(null)
         }
     }
 
@@ -377,6 +387,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                     character={character}
                                     own={character.ownerId === user.id}
                                     gameMaster={isGameMaster}
+                                    rollingFallout={rollingFalloutCharacterId === character.id}
                                     onOpen={() => openCharacter(character)}
                                     onFallout={() => void rollFallout(character)}
                                 />
@@ -387,6 +398,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 )}
             </main>
             <CharacterSheetModal character={selectedCharacter} onClose={() => setSelectedCharacter(null)} />
+            {falloutRoll && <FalloutDie {...falloutRoll} value={falloutRoll.roll} />}
         </div>
     )
 }
@@ -442,12 +454,14 @@ function CharacterCard({
     character,
     own,
     gameMaster,
+    rollingFallout,
     onOpen,
     onFallout,
 }: {
     character: CharacterWithOwner
     own: boolean
     gameMaster: boolean
+    rollingFallout: boolean
     onOpen: () => void
     onFallout: () => void
 }) {
@@ -498,7 +512,7 @@ function CharacterCard({
             </div>
             <div className="mt-4 flex gap-2" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (
-                    <Button size="sm" variant="destructive" onClick={onFallout}>
+                    <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout}>
                         <Dices /> Roll fallout
                     </Button>
                 )}
