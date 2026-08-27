@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
 import ThemeToggle from "@/components/theme-toggle"
-import { api, API_URL, tokenStorage, type GroupCharacter, type PlayGroup, type User } from "@/lib/api"
+import { api, API_URL, tokenStorage, type CloudCharacter, type GroupCharacter, type PlayGroup, type User } from "@/lib/api"
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { resistances } from "@/hiveborn/game_data/resistances"
@@ -26,7 +26,7 @@ const ROLL_LIFETIME_MS = 10 * 60 * 1_000
 const ROLL_FADE_TICK_MS = 10 * 1_000
 
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
-const rollCharacterName = (character: GroupCharacter) => character.name || "Unnamed hiveborn"
+const rollCharacterName = (character: Pick<CloudCharacter, "name">) => character.name || "Unnamed hiveborn"
 const rollAge = (createdAt: string, now: number) => Math.max(0, now - new Date(createdAt).getTime())
 
 const classCardThemes: Record<string, string> = {
@@ -67,7 +67,7 @@ function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: L
 
 export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
-    const [ownCharacters, setOwnCharacters] = useState<GroupCharacter[]>([])
+    const [ownCharacters, setOwnCharacters] = useState<CloudCharacter[]>([])
     const [createName, setCreateName] = useState("")
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
@@ -165,7 +165,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             toast.error(error instanceof Error ? error.message : "Could not invite that player")
         }
     }
-    const assignCharacter = async (character: GroupCharacter) => {
+    const assignCharacter = async (character: CloudCharacter) => {
         if (!group) return
         try {
             await api.assignCharacter(group.id, character.id)
@@ -175,7 +175,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             toast.error(error instanceof Error ? error.message : "Could not add that character")
         }
     }
-    const removeCharacter = async (character: GroupCharacter) => {
+    const removeCharacter = async (character: CloudCharacter) => {
         if (!group) return
         try {
             await api.removeCharacterFromGroup(group.id, character.id)
@@ -197,6 +197,15 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             return
         }
         setSelectedCharacter(character)
+    }
+    const updateBeatVisibility = async (character: GroupCharacter, showBeats: boolean) => {
+        if (!group) return
+        try {
+            await api.updateBeatVisibility(group.id, character.id, showBeats)
+            await refresh()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not update beat visibility")
+        }
     }
     const rollFallout = async (character: CharacterWithOwner) => {
         if (!group) return
@@ -372,6 +381,25 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                                 >
                                                     {assigned ? "Remove" : "Add"}
                                                 </Button>
+                                                {assigned && (
+                                                    <label className="flex cursor-pointer items-center gap-2 pr-2 text-xs">
+                                                        <Checkbox
+                                                            checked={
+                                                                group.members
+                                                                    .find((member) => member.id === user.id)
+                                                                    ?.characters.find((assignedCharacter) => assignedCharacter.id === character.id)
+                                                                    ?.showBeats ?? true
+                                                            }
+                                                            onCheckedChange={(checked) => {
+                                                                const assignedCharacter = group.members
+                                                                    .find((member) => member.id === user.id)
+                                                                    ?.characters.find((entry) => entry.id === character.id)
+                                                                if (assignedCharacter) void updateBeatVisibility(assignedCharacter, checked === true)
+                                                            }}
+                                                        />
+                                                        Show beats
+                                                    </label>
+                                                )}
                                             </div>
                                         )
                                     })}
@@ -390,6 +418,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                     rollingFallout={rollingFalloutCharacterId === character.id}
                                     onOpen={() => openCharacter(character)}
                                     onFallout={() => void rollFallout(character)}
+                                    showBeats={character.showBeats}
                                 />
                             ))}
                         </section>
@@ -457,6 +486,7 @@ function CharacterCard({
     rollingFallout,
     onOpen,
     onFallout,
+    showBeats,
 }: {
     character: CharacterWithOwner
     own: boolean
@@ -464,6 +494,7 @@ function CharacterCard({
     rollingFallout: boolean
     onOpen: () => void
     onFallout: () => void
+    showBeats: boolean
 }) {
     const data = character.data
     return (
@@ -510,10 +541,12 @@ function CharacterCard({
                 <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
                 <Markdown className="text-sm">{data.fallout || "None recorded"}</Markdown>
             </div>
-            <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2 text-left">
-                <p className="text-xs font-bold tracking-wider text-primary">ACTIVE BEATS</p>
-                <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
-            </div>
+            {showBeats && (
+                <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2 text-left">
+                    <p className="text-xs font-bold tracking-wider text-primary">ACTIVE BEATS</p>
+                    <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
+                </div>
+            )}
             <div className="mt-4 flex gap-2" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (
                     <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout}>
