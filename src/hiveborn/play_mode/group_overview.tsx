@@ -510,7 +510,7 @@ function CharacterCard({
                 <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
                 <Markdown className="text-sm">{data.fallout || "None recorded"}</Markdown>
             </div>
-            <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2">
+            <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2 text-left">
                 <p className="text-xs font-bold tracking-wider text-primary">ACTIVE BEATS</p>
                 <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
             </div>
