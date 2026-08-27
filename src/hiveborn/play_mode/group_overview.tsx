@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
+import ThemeToggle from "@/components/theme-toggle"
 import { api, API_URL, tokenStorage, type GroupCharacter, type PlayGroup, type User } from "@/lib/api"
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
@@ -19,21 +20,26 @@ type LiveGroupEvent =
     | { type: "roll.shared" | "fallout.rolled" | "group.members.updated" }
 
 const lastGroupStorageKey = (userId: string) => `hiveborn-last-play-group:${window.location.origin}:${userId}`
+const ROLL_LIFETIME_MS = 10 * 60 * 1_000
+const ROLL_FADE_TICK_MS = 10 * 1_000
+
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
+const rollCharacterName = (character: GroupCharacter) => character.name || "Unnamed hiveborn"
+const rollAge = (createdAt: string, now: number) => Math.max(0, now - new Date(createdAt).getTime())
 
 const classCardThemes: Record<string, string> = {
-    Cleaver: "border-red-500/25 bg-red-500/8 hover:border-red-500/50",
-    Deadwalker: "border-sky-400/25 bg-gradient-to-br from-sky-400/12 via-violet-400/10 to-card hover:border-violet-400/50",
-    "Deep Apiarist": "border-amber-400/25 bg-amber-400/8 hover:border-amber-400/50",
-    Heretic: "border-slate-400/25 bg-slate-400/8 hover:border-slate-400/50",
-    Hound: "border-emerald-500/25 bg-emerald-500/8 hover:border-emerald-500/50",
-    Incarnadine: "border-rose-400/25 bg-rose-400/8 hover:border-rose-400/50",
-    "Junk Mage": "border-orange-400/25 bg-orange-400/8 hover:border-orange-400/50",
-    "Vermissian Knight": "border-teal-400/25 bg-teal-400/8 hover:border-teal-400/50",
-    Witch: "border-fuchsia-400/25 bg-fuchsia-400/8 hover:border-fuchsia-400/50",
+    Cleaver: "bg-gradient-to-br from-red-500/18 via-stone-300/18 to-card dark:from-red-950/70 dark:via-stone-900/60 dark:to-card",
+    Deadwalker: "bg-gradient-to-br from-teal-400/16 via-slate-300/20 to-card dark:from-teal-950/70 dark:via-slate-800/65 dark:to-card",
+    "Deep Apiarist": "bg-gradient-to-br from-amber-400/18 via-teal-400/11 to-card dark:from-amber-950/75 dark:via-teal-950/55 dark:to-card",
+    Heretic: "bg-gradient-to-br from-orange-400/18 via-red-400/11 to-card dark:from-orange-950/70 dark:via-red-950/50 dark:to-card",
+    Hound: "bg-gradient-to-br from-blue-400/16 via-amber-300/11 to-card dark:from-blue-950/75 dark:via-amber-950/45 dark:to-card",
+    Incarnadine: "bg-gradient-to-br from-amber-400/16 via-rose-500/14 to-card dark:from-amber-950/60 dark:via-rose-950/70 dark:to-card",
+    "Junk Mage": "bg-gradient-to-br from-teal-400/18 via-blue-500/14 to-card dark:from-teal-950/70 dark:via-blue-950/65 dark:to-card",
+    "Vermissian Knight": "bg-gradient-to-br from-sky-400/17 via-yellow-300/12 to-card dark:from-sky-950/75 dark:via-yellow-950/45 dark:to-card",
+    Witch: "bg-gradient-to-br from-red-500/17 via-orange-400/11 to-card dark:from-red-950/75 dark:via-orange-950/55 dark:to-card",
 }
 
-const getClassCardTheme = (characterClass: string) => classCardThemes[characterClass] ?? "border-border bg-card hover:border-primary"
+const getClassCardTheme = (characterClass: string) => classCardThemes[characterClass] ?? "bg-card"
 
 function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: LiveGroupEvent): PlayGroup[] {
     if (event.type !== "character.updated" && event.type !== "character.deleted") return groups
@@ -63,6 +69,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
     const [autoUpdateStress, setAutoUpdateStress] = useState(true)
+    const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const setActiveGroupId = usePlayModeStore((state) => state.setActiveGroupId)
     const isGameMaster = usePlayModeStore((state) => state.isGameMaster)
     const setGameMaster = usePlayModeStore((state) => state.setGameMaster)
@@ -181,12 +188,25 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
 
     const characters: CharacterWithOwner[] =
         group?.members.flatMap((member) => member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname }))) ?? []
+    const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
+    const hasFadingRolls = visibleRolls.length > 0
+    useEffect(() => {
+        if (!hasFadingRolls) return
+
+        setRollAgeUpdatedAt(Date.now())
+        const interval = window.setInterval(() => setRollAgeUpdatedAt(Date.now()), ROLL_FADE_TICK_MS)
+        return () => window.clearInterval(interval)
+    }, [group?.id, hasFadingRolls])
+
     return (
         <div className="mx-auto flex min-h-screen max-w-screen-2xl bg-background text-foreground">
             <aside className="w-72 shrink-0 border-r border-border bg-card/40 p-4 max-md:hidden">
-                <Button variant="ghost" className="mb-6 w-full justify-start" onClick={onClose}>
-                    <ChevronLeft /> Character sheets
-                </Button>
+                <div className="mb-6 flex items-center gap-2">
+                    <Button variant="ghost" className="flex-1 justify-start" onClick={onClose}>
+                        <ChevronLeft /> Character sheets
+                    </Button>
+                    <ThemeToggle />
+                </div>
                 <div className="mb-3 flex items-center gap-2 font-bold">
                     <Users /> Play groups
                 </div>
@@ -226,9 +246,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     <Button variant="outline" onClick={onClose}>
                         <ChevronLeft /> Sheets
                     </Button>
-                    <label className="flex cursor-pointer items-center gap-2 rounded border border-primary/20 px-3 py-2 text-sm">
-                        <Checkbox checked={isGameMaster} onCheckedChange={(checked) => setGameMaster(checked === true)} /> I’m the GM
-                    </label>
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle />
+                        <label className="flex cursor-pointer items-center gap-2 rounded border border-primary/20 px-3 py-2 text-sm">
+                            <Checkbox checked={isGameMaster} onCheckedChange={(checked) => setGameMaster(checked === true)} /> I’m the GM
+                        </label>
+                    </div>
                 </div>
                 {isGameMaster && (
                     <label className="mb-4 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm md:hidden">
@@ -262,7 +285,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                             <h1 className="text-4xl font-black">{group.name}</h1>
                             <p className="mt-1 text-muted-foreground">Character changes and shared rolls update immediately for everyone here.</p>
                         </header>
-                        <section className="mb-6 space-y-3 rounded-lg border border-border bg-card/40 p-3 md:hidden">
+                        <section className="mb-6 space-y-3 rounded-lg bg-card/40 p-3 md:hidden">
                             <label className="block text-sm font-semibold" htmlFor="mobile-play-group">
                                 Play group
                             </label>
@@ -285,7 +308,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 </Button>
                             </div>
                         </section>
-                        <section className="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card/40 p-3">
+                        <section className="mb-6 flex flex-wrap items-center gap-2 rounded-lg bg-card/40 p-3">
                             <span className="font-semibold">Invite by nickname</span>
                             <Input
                                 value={inviteNickname}
@@ -309,26 +332,59 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 />
                             ))}
                         </section>
-                        <section className="mt-8 rounded-lg border border-border bg-card/40 p-4">
-                            <h2 className="font-bold">Recent shared rolls</h2>
-                            <div className="mt-2 space-y-1 text-sm">
-                                {group.rolls.length ? (
-                                    group.rolls.map((roll) => (
-                                        <p key={roll.id}>
-                                            <span className="font-semibold">{roll.characterName}</span> rolled {roll.dice} for {roll.label}:{" "}
-                                            <span className="font-bold text-primary">{roll.result}</span>
-                                        </p>
-                                    ))
-                                ) : (
-                                    <p className="text-muted-foreground">Shared rolls will appear here.</p>
-                                )}
-                            </div>
-                        </section>
+                        <SharedRolls characters={characters} rolls={visibleRolls} now={rollAgeUpdatedAt} />
                     </>
                 )}
             </main>
             <CharacterSheetModal character={selectedCharacter} onClose={() => setSelectedCharacter(null)} />
         </div>
+    )
+}
+
+function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwner[]; rolls: PlayGroup["rolls"]; now: number }) {
+    const knownCharacterNames = new Set(characters.map(rollCharacterName))
+    const formerCharacterNames = [...new Set(rolls.map((roll) => roll.characterName).filter((name) => !knownCharacterNames.has(name)))]
+    const columns = [
+        ...characters.map((character) => ({ id: character.id, name: rollCharacterName(character) })),
+        ...formerCharacterNames.map((name) => ({ id: `former-${name}`, name })),
+    ]
+
+    return (
+        <section className="mt-8 rounded-lg bg-card/40 p-4">
+            <h2 className="font-bold">Recent shared rolls</h2>
+            {columns.length ? (
+                <div className="mt-3 overflow-x-auto pb-1">
+                    <div className="grid min-w-max grid-flow-col auto-cols-[minmax(13rem,1fr)] gap-4">
+                        {columns.map((column) => {
+                            const characterRolls = rolls.filter((roll) => roll.characterName === column.name)
+                            return (
+                                <section key={column.id} className="min-h-28 rounded-md bg-background/35 p-3">
+                                    <h3 className="truncate text-sm font-bold" title={column.name}>
+                                        {column.name}
+                                    </h3>
+                                    <div className="mt-2 space-y-2 text-sm">
+                                        {characterRolls.length ? (
+                                            characterRolls.map((roll) => {
+                                                const opacity = Math.max(0, 1 - rollAge(roll.createdAt, now) / ROLL_LIFETIME_MS)
+                                                return (
+                                                    <p key={roll.id} className="transition-opacity duration-[10000ms] ease-linear" style={{ opacity }}>
+                                                        Rolled {roll.dice} for {roll.label}: <span className="font-bold text-primary">{roll.result}</span>
+                                                    </p>
+                                                )
+                                            })
+                                        ) : (
+                                            <p className="text-muted-foreground">No recent rolls</p>
+                                        )}
+                                    </div>
+                                </section>
+                            )
+                        })}
+                    </div>
+                </div>
+            ) : (
+                <p className="mt-2 text-sm text-muted-foreground">Shared rolls will appear here.</p>
+            )}
+        </section>
     )
 }
 
@@ -348,7 +404,7 @@ function CharacterCard({
     const data = character.data
     return (
         <article
-            className={`group cursor-pointer rounded-xl border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
+            className={`group cursor-pointer rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
             onClick={onOpen}
         >
             <div className="flex items-start justify-between gap-3">
@@ -358,7 +414,7 @@ function CharacterCard({
                 </div>
                 <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
             </div>
-            <dl className="mt-4 grid grid-cols-2 divide-x divide-foreground/10 rounded-lg border border-foreground/10 bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
+            <dl className="mt-4 grid grid-cols-2 divide-x divide-foreground/10 rounded-lg bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
                 <div className="min-w-0 px-2">
                     <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
                         <BookOpen className="size-3.5" /> Class
@@ -396,7 +452,7 @@ function CharacterCard({
                         <Dices /> Roll fallout
                     </Button>
                 )}
-                <Button size="sm" variant="outline" onClick={onOpen}>
+                <Button size="sm" variant="outline" className="border-0" onClick={onOpen}>
                     {own ? "Open my sheet" : "View sheet"}
                 </Button>
             </div>
