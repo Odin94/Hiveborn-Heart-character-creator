@@ -22,6 +22,13 @@
             "when": 1787844232811,
             "tag": "0002_opposite_scalphunter",
             "breakpoints": true
+        },
+        {
+            "idx": 3,
+            "version": "6",
+            "when": 1787851054755,
+            "tag": "0003_legal_proemial_gods",
+            "breakpoints": true
         }
     ]
 }

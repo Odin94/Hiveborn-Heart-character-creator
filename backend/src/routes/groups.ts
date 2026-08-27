@@ -19,6 +19,7 @@ const rollInput = z.object({
 })
 const falloutUpdateInput = z.object({ characterId: z.string().min(1), applyStressUpdate: z.boolean() })
 const characterAssignmentInput = z.object({ characterId: z.string().min(1) })
+const beatVisibilityInput = z.object({ showBeats: z.boolean() })
 const characterAssignmentParams = z.object({ id: z.string().min(1), characterId: z.string().min(1) })
 
 const groupAdjectives = [
@@ -162,7 +163,7 @@ async function groupOverview(groupId: string) {
               .where(and(inArray(schema.characters.userId, userIds), isNull(schema.characters.deletedAt)))
         : []
     const assignments = await db.select().from(schema.groupCharacterAssignments).where(eq(schema.groupCharacterAssignments.groupId, groupId))
-    const assignedCharacterIds = new Set(assignments.map((assignment) => assignment.characterId))
+    const assignmentsByCharacterId = new Map(assignments.map((assignment) => [assignment.characterId, assignment]))
     const rolls = await db.select().from(schema.rollEvents).where(eq(schema.rollEvents.groupId, groupId)).orderBy(desc(schema.rollEvents.createdAt)).limit(30)
     return {
         id: group.id,
@@ -176,8 +177,14 @@ async function groupOverview(groupId: string) {
                 nickname: user?.nickname ?? null,
                 joinedAt: member.joinedAt,
                 characters: characters
-                    .filter((character) => character.userId === member.userId && assignedCharacterIds.has(character.id))
-                    .map((character) => ({ id: character.id, name: character.name, data: JSON.parse(character.data), updatedAt: character.updatedAt })),
+                    .filter((character) => character.userId === member.userId && assignmentsByCharacterId.has(character.id))
+                    .map((character) => ({
+                        id: character.id,
+                        name: character.name,
+                        data: JSON.parse(character.data),
+                        updatedAt: character.updatedAt,
+                        showBeats: assignmentsByCharacterId.get(character.id)!.showBeats,
+                    })),
             }
         }),
         rolls: rolls.map((roll) => ({ ...roll })),
@@ -258,6 +265,27 @@ export async function groupRoutes(fastify: FastifyInstance) {
             .where(and(eq(schema.groupCharacterAssignments.groupId, params.data.id), eq(schema.groupCharacterAssignments.characterId, character.id)))
         broadcastGroupEvent(params.data.id, { type: "group.members.updated" })
         return { success: true }
+    })
+
+    fastify.patch("/play-groups/:id/characters/:characterId", { preHandler: authenticateUser }, async (request, reply) => {
+        const params = characterAssignmentParams.safeParse(request.params)
+        const parsed = beatVisibilityInput.safeParse(request.body)
+        if (!params.success || !parsed.success) return reply.code(400).send({ error: "Invalid beat visibility" })
+        if (!(await assertMember(params.data.id, request.userId!))) return reply.code(403).send({ error: "You are not in this play group" })
+        const character = await db
+            .select({ id: schema.characters.id })
+            .from(schema.characters)
+            .where(and(eq(schema.characters.id, params.data.characterId), eq(schema.characters.userId, request.userId!), isNull(schema.characters.deletedAt)))
+            .get()
+        if (!character) return reply.code(404).send({ error: "Character not found" })
+        const updated = await db
+            .update(schema.groupCharacterAssignments)
+            .set({ showBeats: parsed.data.showBeats })
+            .where(and(eq(schema.groupCharacterAssignments.groupId, params.data.id), eq(schema.groupCharacterAssignments.characterId, character.id)))
+            .returning({ characterId: schema.groupCharacterAssignments.characterId })
+        if (!updated.length) return reply.code(404).send({ error: "Character not found in this group" })
+        broadcastGroupEvent(params.data.id, { type: "group.members.updated" })
+        return { showBeats: parsed.data.showBeats }
     })
 
     fastify.post("/play-groups/:id/rolls", { preHandler: authenticateUser }, async (request, reply) => {

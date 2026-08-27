@@ -1,0 +1,1 @@
+ALTER TABLE `play_group_character_assignments` ADD `show_beats` integer DEFAULT true NOT NULL;

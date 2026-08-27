@@ -82,6 +82,7 @@ export const groupCharacterAssignments = sqliteTable(
         assignedAt: integer("assigned_at", { mode: "timestamp" })
             .notNull()
             .default(sql`(unixepoch())`),
+        showBeats: integer("show_beats", { mode: "boolean" }).notNull().default(true),
     },
     (table) => ({
         pk: primaryKey({ columns: [table.groupId, table.characterId] }),
