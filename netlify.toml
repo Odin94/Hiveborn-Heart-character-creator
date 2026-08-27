@@ -1,0 +1,9 @@
+[build]
+command = "pnpm run build"
+publish = "dist"
+
+# Let the React router handle production deep links such as /auth/callback.
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
