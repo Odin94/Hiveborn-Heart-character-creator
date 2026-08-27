@@ -137,11 +137,12 @@ async function assignOnlyCharacterToGroups(userId: string, groupIds?: string[]) 
         .from(schema.groupMembers)
         .where(and(eq(schema.groupMembers.userId, userId), ...(groupIds?.length ? [inArray(schema.groupMembers.groupId, groupIds)] : [])))
     if (!memberships.length) return []
-    await db
+    const assignments = await db
         .insert(schema.groupCharacterAssignments)
         .values(memberships.map((membership) => ({ groupId: membership.groupId, characterId: characters[0]!.id })))
         .onConflictDoNothing()
-    return memberships.map((membership) => membership.groupId)
+        .returning({ groupId: schema.groupCharacterAssignments.groupId })
+    return assignments.map((assignment) => assignment.groupId)
 }
 
 export async function assignSoleCharacterToAllGroups(userId: string) {
