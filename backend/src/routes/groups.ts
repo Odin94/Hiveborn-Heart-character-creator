@@ -19,6 +19,102 @@ const rollInput = z.object({
 })
 const falloutUpdateInput = z.object({ characterId: z.string().min(1), applyStressUpdate: z.boolean() })
 
+const groupAdjectives = [
+    "amber",
+    "ancient",
+    "black",
+    "blue",
+    "brass",
+    "bright",
+    "cinder",
+    "crimson",
+    "deep",
+    "distant",
+    "drifting",
+    "golden",
+    "hidden",
+    "hollow",
+    "iron",
+    "lunar",
+    "misty",
+    "mossy",
+    "quiet",
+    "red",
+    "secret",
+    "silver",
+    "smoky",
+    "swift",
+    "verdant",
+    "violet",
+    "wild",
+]
+const groupAnimals = [
+    "badger",
+    "beetle",
+    "crow",
+    "eel",
+    "fox",
+    "goat",
+    "heron",
+    "hound",
+    "lynx",
+    "moth",
+    "newt",
+    "otter",
+    "owl",
+    "raven",
+    "serpent",
+    "shark",
+    "spider",
+    "stoat",
+    "toad",
+    "viper",
+    "walrus",
+    "weasel",
+    "whale",
+    "wolf",
+    "wren",
+]
+const groupActions = [
+    "beckons",
+    "burrows",
+    "calls",
+    "crawls",
+    "dances",
+    "drifts",
+    "dreams",
+    "follows",
+    "gathers",
+    "glows",
+    "howls",
+    "hunts",
+    "keeps",
+    "listens",
+    "lurks",
+    "marches",
+    "roams",
+    "runs",
+    "sings",
+    "sleeps",
+    "sneaks",
+    "soars",
+    "stalks",
+    "waits",
+    "wanders",
+]
+
+const randomItem = <T>(items: T[]) => items[randomInt(items.length)]!
+const readableGroupId = () => `${randomItem(groupAdjectives)}-${randomItem(groupAnimals)}-${randomItem(groupActions)}`
+
+async function newGroupId() {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        const id = readableGroupId()
+        const existing = await db.select({ id: schema.groups.id }).from(schema.groups).where(eq(schema.groups.id, id)).get()
+        if (!existing) return id
+    }
+    throw new Error("Could not allocate a unique play group ID")
+}
+
 async function assertMember(groupId: string, userId: string) {
     return db
         .select()
@@ -71,7 +167,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
         if (!parsed.success) return reply.code(400).send({ error: "A group needs a name" })
         const user = await db.select().from(schema.users).where(eq(schema.users.id, request.userId!)).get()
         if (!user?.nickname) return reply.code(422).send({ error: "Choose a nickname before creating a play group" })
-        const id = nanoid()
+        const id = await newGroupId()
         db.transaction((tx) => {
             tx.insert(schema.groups).values({ id, name: parsed.data.name, ownerId: request.userId! }).run()
             tx.insert(schema.groupMembers).values({ groupId: id, userId: request.userId! }).run()
