@@ -510,6 +510,10 @@ function CharacterCard({
                 <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
                 <Markdown className="text-sm">{data.fallout || "None recorded"}</Markdown>
             </div>
+            <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2">
+                <p className="text-xs font-bold tracking-wider text-primary">ACTIVE BEATS</p>
+                <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
+            </div>
             <div className="mt-4 flex gap-2" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (
                     <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout}>
