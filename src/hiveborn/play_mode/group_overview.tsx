@@ -17,6 +17,7 @@ type LiveGroupEvent =
     | { type: "character.deleted"; userId: string; characterId: string }
     | { type: "roll.shared" | "fallout.rolled" | "group.members.updated" }
 
+const lastGroupStorageKey = (userId: string) => `hiveborn-last-play-group:${window.location.origin}:${userId}`
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
 
 const classCardThemes: Record<string, string> = {
@@ -81,10 +82,19 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
 
     const group = groups.find((entry) => entry.id === selectedGroupId) ?? null
     useEffect(() => {
+        if (selectedGroupId || groups.length === 0) return
+        const rememberedGroupId = localStorage.getItem(lastGroupStorageKey(user.id))
+        const initialGroup = groups.find((entry) => entry.id === rememberedGroupId) ?? groups[0]
+        onSelectGroup(initialGroup.id)
+    }, [groups, onSelectGroup, selectedGroupId, user.id])
+    useEffect(() => {
         // Do not retain a group from a previous account/session. A stale group
         // id would make rolls appear shareable until the API rejected them.
         setActiveGroupId(group?.id ?? null)
     }, [group?.id, setActiveGroupId])
+    useEffect(() => {
+        if (group) localStorage.setItem(lastGroupStorageKey(user.id), group.id)
+    }, [group, user.id])
     useEffect(() => {
         if (!group?.id || !tokenStorage.get()) return
         let closed = false
