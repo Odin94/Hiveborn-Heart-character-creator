@@ -197,6 +197,9 @@ if ! id "$APP_USER" >/dev/null 2>&1; then
     useradd -r -s /bin/bash -d "$APP_DIR" -M "$APP_USER"
 fi
 install -d -o "$APP_USER" -g "$APP_USER" -m 0755 "$APP_DIR" /var/log/hiveborn-backend
+# A first clone may have been made as root before this setup script runs.
+# Hand it to the service user before asking that user to fast-forward it.
+chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 if [ -d "$APP_DIR/.git" ]; then
     run_app "git -C '$APP_DIR' pull --ff-only"
@@ -207,7 +210,6 @@ else
     run_app "git clone '$REPOSITORY_URL' '$APP_DIR'"
 fi
 
-chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 write_environment_file
 run_app "cd '$BACKEND_DIR' && corepack pnpm install --frozen-lockfile --reporter=append-only && corepack pnpm run build && corepack pnpm run db:migrate"
 run_app "cd '$BACKEND_DIR' && pm2 startOrReload ecosystem.config.cjs --update-env && pm2 save"
