@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Markdown } from "@/components/ui/markdown"
 import { api, API_URL, tokenStorage, type GroupCharacter, type PlayGroup, type User } from "@/lib/api"
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
@@ -387,7 +388,7 @@ function CharacterCard({
             </div>
             <div className="mt-3 rounded border-l-4 border-destructive bg-destructive/5 p-2">
                 <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
-                <p className="whitespace-pre-wrap text-sm">{data.fallout || "None recorded"}</p>
+                <Markdown className="text-sm">{data.fallout || "None recorded"}</Markdown>
             </div>
             <div className="mt-4 flex gap-2" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (
@@ -436,7 +437,7 @@ function CharacterSheetModal({ character, onClose }: { character: CharacterWithO
                             </div>
                         </SheetSection>
                         <SheetSection title="Fallout">
-                            <p className="whitespace-pre-wrap">{character.data.fallout || "None recorded"}</p>
+                            <Markdown>{character.data.fallout || "None recorded"}</Markdown>
                         </SheetSection>
                         <SheetSection title="Abilities">
                             <p className="whitespace-pre-wrap">{character.data.abilities || "—"}</p>
