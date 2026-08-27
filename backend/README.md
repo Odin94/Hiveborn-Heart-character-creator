@@ -15,16 +15,21 @@ pnpm run dev
 
 Hiveborn follows the same model as Progeny: a dedicated `hiveborn` user runs Fastify under PM2, and Caddy terminates TLS before proxying to the loopback-only backend on port `3003`.
 
-The first deployment assumes Node.js 24+, Corepack/pnpm 10, PM2, Caddy, Git, and SQLite are already installed on the server (as they are for Progeny). Run the following as `root`, substituting the repository URL only if it differs:
+The first deployment is handled by [`scripts/setupServer.sh`](scripts/setupServer.sh). It installs the required system packages, creates the `hiveborn` user and `/opt/hiveborn` checkout, prompts for the production environment secrets when `.env` does not already exist, builds and migrates the backend, configures the PM2 startup service, and safely replaces only the `api-hiveborn` Caddy site block (with a backup of the prior Caddyfile).
 
 ```bash
-useradd -r -s /bin/bash -d /opt/hiveborn -m hiveborn
-install -d -o hiveborn -g hiveborn /var/log/hiveborn-backend
-runuser -u hiveborn -- git clone https://github.com/Odin94/Hiveborn-Heart-character-creator.git /opt/hiveborn
-runuser -u hiveborn -- bash -lc 'cd /opt/hiveborn/backend && corepack enable && pnpm install --frozen-lockfile && pnpm run build'
+scp backend/scripts/setupServer.sh root@YOUR_HETZNER_IP:/tmp/hiveborn-setup.sh
+ssh root@YOUR_HETZNER_IP 'chmod +x /tmp/hiveborn-setup.sh && /tmp/hiveborn-setup.sh'
 ```
 
-Create `/opt/hiveborn/backend/.env`, owned by `hiveborn`, with the production secrets and URLs:
+The script needs the API DNS record to have propagated before it reloads Caddy and requests TLS. Create these records first:
+
+- `api-hiveborn.odin-matthias.de`: an `A` record for the Hetzner server's IPv4 address, plus an `AAAA` record only when that IPv6 address is publicly reachable.
+- `hiveborn.odin-matthias.de`: keep this pointing at the frontend host (for example Netlify); it should not point at Hetzner unless the frontend is moved there too.
+
+Allow inbound TCP ports `80` and `443` in the Hetzner Cloud firewall (and in any host firewall). Do not expose port `3003`.
+
+If the script is run non-interactively, create `/opt/hiveborn/backend/.env`, owned by `hiveborn` and mode `0600`, with these production values before running it:
 
 ```dotenv
 WORKOS_API_KEY=...
@@ -40,36 +45,23 @@ BACKEND_URL=https://api-hiveborn.odin-matthias.de
 DATABASE_URL=./data/hiveborn.sqlite
 ```
 
-Apply migrations and start the service:
+## Frontend, WorkOS, and DNS
 
-```bash
-runuser -u hiveborn -- bash -lc 'cd /opt/hiveborn/backend && pnpm run db:migrate && pm2 start ecosystem.config.cjs && pm2 save'
-pm2 startup systemd -u hiveborn --hp /opt/hiveborn
-# Run the sudo command printed by the preceding command, then:
-systemctl enable --now pm2-hiveborn
+The browser must be built with the API URL; set this environment variable in the frontend host's production build configuration and redeploy:
+
+```dotenv
+VITE_API_URL=https://api-hiveborn.odin-matthias.de
 ```
 
-Replace or add the `api-hiveborn.odin-matthias.de` site block in `/etc/caddy/Caddyfile` with this configuration. It intentionally uses port `3003`; an older shared Caddy template used `3002`, which does not match Hiveborn's backend configuration.
+Set `FRONTEND_URL=https://hiveborn.odin-matthias.de` in the backend `.env` (the setup script does this) so CORS and WebSocket origin checks permit the production site. In the shared WorkOS application, register this redirect URI before enabling sign-in:
 
-```caddyfile
-api-hiveborn.odin-matthias.de {
-    reverse_proxy 127.0.0.1:3003
-
-    log {
-        output file /var/log/caddy/hiveborn.log
-    }
-}
+```text
+https://hiveborn.odin-matthias.de/auth/callback
 ```
 
-Once the DNS A/AAAA records for `api-hiveborn.odin-matthias.de` point to the server, validate and reload Caddy:
+The managed Caddy site proxies to `127.0.0.1:3003`. The port is loopback-only: do not add a public firewall rule for `3003`; Caddy is the public HTTPS endpoint on ports 80 and 443.
 
-```bash
-caddy validate --config /etc/caddy/Caddyfile
-systemctl reload caddy
-curl -fsS https://api-hiveborn.odin-matthias.de/health
-```
-
-For routine deploys, run `/opt/hiveborn/backend/scripts/updateCode.sh` as `root` or `hiveborn`. It creates a timestamped SQLite backup under `backend/db_backups/`, fast-forward pulls the code, installs locked dependencies, builds, migrates, restarts PM2, and verifies the public health endpoint.
+For routine deploys, run `/opt/hiveborn/backend/scripts/updateCode.sh` as `root` or `hiveborn`. It creates a timestamped SQLite backup under `backend/db_backups/`, fast-forward pulls the code, installs locked dependencies, builds, migrates, restarts PM2, and verifies the public health endpoint. This script is already present and is the Hiveborn equivalent of Progeny's `updateCode.sh`.
 
 Useful production commands:
 
