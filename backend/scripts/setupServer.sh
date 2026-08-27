@@ -116,6 +116,8 @@ configure_caddy() {
     ' "$CADDYFILE" >"$temporary_caddyfile"
 
     caddy validate --config "$temporary_caddyfile" --adapter caddyfile
+    chown root:caddy "$temporary_caddyfile"
+    chmod 0640 "$temporary_caddyfile"
     mv "$temporary_caddyfile" "$CADDYFILE"
     systemctl enable --now caddy
     systemctl reload caddy
