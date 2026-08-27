@@ -70,6 +70,25 @@ export const groupMembers = sqliteTable(
     (table) => ({ pk: primaryKey({ columns: [table.groupId, table.userId] }), userIdx: index("group_members_user_idx").on(table.userId) }),
 )
 
+export const groupCharacterAssignments = sqliteTable(
+    "play_group_character_assignments",
+    {
+        groupId: text("group_id")
+            .notNull()
+            .references(() => groups.id, { onDelete: "cascade" }),
+        characterId: text("character_id")
+            .notNull()
+            .references(() => characters.id, { onDelete: "cascade" }),
+        assignedAt: integer("assigned_at", { mode: "timestamp" })
+            .notNull()
+            .default(sql`(unixepoch())`),
+    },
+    (table) => ({
+        pk: primaryKey({ columns: [table.groupId, table.characterId] }),
+        characterIdx: index("group_character_assignments_character_idx").on(table.characterId),
+    }),
+)
+
 export const rollEvents = sqliteTable("roll_events", {
     id: text("id").primaryKey(),
     groupId: text("group_id")
@@ -87,4 +106,8 @@ export const rollEvents = sqliteTable("roll_events", {
         .default(sql`(unixepoch())`),
 })
 
-export const groupRelations = relations(groups, ({ many }) => ({ members: many(groupMembers), rolls: many(rollEvents) }))
+export const groupRelations = relations(groups, ({ many }) => ({
+    members: many(groupMembers),
+    characterAssignments: many(groupCharacterAssignments),
+    rolls: many(rollEvents),
+}))

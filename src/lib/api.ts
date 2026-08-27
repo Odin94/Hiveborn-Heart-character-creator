@@ -57,6 +57,10 @@ export const api = {
     createGroup: (name: string) => request<PlayGroup>("/play-groups", { method: "POST", body: JSON.stringify({ name }) }),
     invite: (groupId: string, nickname: string) =>
         request<PlayGroup>(`/play-groups/${groupId}/invitations`, { method: "POST", body: JSON.stringify({ nickname }) }),
+    assignCharacter: (groupId: string, characterId: string) =>
+        request<PlayGroup>(`/play-groups/${groupId}/characters`, { method: "POST", body: JSON.stringify({ characterId }) }),
+    removeCharacterFromGroup: (groupId: string, characterId: string) =>
+        request<{ success: boolean }>(`/play-groups/${groupId}/characters/${characterId}`, { method: "DELETE" }),
     shareRoll: (groupId: string, payload: { label: string; dice: string; result: string; characterName: string }) =>
         request(`/play-groups/${groupId}/rolls`, { method: "POST", body: JSON.stringify(payload) }),
     falloutRoll: (groupId: string, payload: { characterId: string; applyStressUpdate: boolean }) =>

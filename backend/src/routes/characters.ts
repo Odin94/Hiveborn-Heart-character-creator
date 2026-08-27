@@ -5,7 +5,8 @@ import { z } from "zod"
 import { db, schema } from "../db/index.js"
 import { authenticateUser } from "../middleware/auth.js"
 import { trackEvent } from "../utils/tracker.js"
-import { broadcastUserCharacterChange } from "../websocket/liveGroups.js"
+import { broadcastGroupEvent, broadcastUserCharacterChange } from "../websocket/liveGroups.js"
+import { assignSoleCharacterToAllGroups } from "./groups.js"
 
 const characterInput = z.object({ name: z.string().trim().max(120), data: z.record(z.string(), z.unknown()), version: z.number().int().positive().optional() })
 const characterId = z.object({ id: z.string().min(1) })
@@ -36,7 +37,9 @@ export async function characterRoutes(fastify: FastifyInstance) {
             .returning()
         trackEvent("character_created", request.userId!)
         const serialized = serialize(character!)
+        const automaticallyAssignedGroupIds = await assignSoleCharacterToAllGroups(request.userId!)
         await broadcastUserCharacterChange(request.userId!, { character: serialized })
+        for (const groupId of automaticallyAssignedGroupIds) broadcastGroupEvent(groupId, { type: "group.members.updated" })
         return serialized
     })
 
@@ -75,6 +78,9 @@ export async function characterRoutes(fastify: FastifyInstance) {
             .returning()
         if (!character) return reply.code(404).send({ error: "Character not found" })
         await broadcastUserCharacterChange(request.userId!, { characterId: character.id, deleted: true })
+        await db.delete(schema.groupCharacterAssignments).where(eq(schema.groupCharacterAssignments.characterId, character.id))
+        const automaticallyAssignedGroupIds = await assignSoleCharacterToAllGroups(request.userId!)
+        for (const groupId of automaticallyAssignedGroupIds) broadcastGroupEvent(groupId, { type: "group.members.updated" })
         return { success: true }
     })
 }

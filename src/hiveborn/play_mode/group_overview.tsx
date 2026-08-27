@@ -65,6 +65,7 @@ function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: L
 
 export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
+    const [ownCharacters, setOwnCharacters] = useState<GroupCharacter[]>([])
     const [createName, setCreateName] = useState("")
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
@@ -78,8 +79,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
 
     const refresh = useCallback(async () => {
         try {
-            const next = await api.groups()
-            setGroups(next.groups)
+            const [nextGroups, nextCharacters] = await Promise.all([api.groups(), api.characters()])
+            setGroups(nextGroups.groups)
+            setOwnCharacters(nextCharacters.characters)
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Could not load play groups")
         }
@@ -159,6 +161,26 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             toast.error(error instanceof Error ? error.message : "Could not invite that player")
         }
     }
+    const assignCharacter = async (character: GroupCharacter) => {
+        if (!group) return
+        try {
+            await api.assignCharacter(group.id, character.id)
+            await refresh()
+            toast.success(`${rollCharacterName(character)} added to this group`)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not add that character")
+        }
+    }
+    const removeCharacter = async (character: GroupCharacter) => {
+        if (!group) return
+        try {
+            await api.removeCharacterFromGroup(group.id, character.id)
+            await refresh()
+            toast.success(`${rollCharacterName(character)} removed from this group`)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not remove that character")
+        }
+    }
     const openCharacter = (character: CharacterWithOwner) => {
         if (character.ownerId === user.id) {
             const index = cloudIds.indexOf(character.id)
@@ -188,6 +210,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
 
     const characters: CharacterWithOwner[] =
         group?.members.flatMap((member) => member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname }))) ?? []
+    const assignedOwnCharacterIds = new Set(group?.members.find((member) => member.id === user.id)?.characters.map((character) => character.id) ?? [])
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const hasFadingRolls = visibleRolls.length > 0
     useEffect(() => {
@@ -319,6 +342,33 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                             <Button size="sm" disabled={!inviteNickname.trim()} onClick={invite}>
                                 Invite
                             </Button>
+                        </section>
+                        <section className="mb-6 rounded-lg bg-card/40 p-3">
+                            <h2 className="font-semibold">Your characters in this group</h2>
+                            {ownCharacters.length ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {ownCharacters.map((character) => {
+                                        const assigned = assignedOwnCharacterIds.has(character.id)
+                                        return (
+                                            <div
+                                                key={character.id}
+                                                className="flex items-center gap-2 rounded-md border bg-background/40 py-1 pl-3 pr-1 text-sm"
+                                            >
+                                                <span>{rollCharacterName(character)}</span>
+                                                <Button
+                                                    size="sm"
+                                                    variant={assigned ? "outline" : "default"}
+                                                    onClick={() => void (assigned ? removeCharacter(character) : assignCharacter(character))}
+                                                >
+                                                    {assigned ? "Remove" : "Add"}
+                                                </Button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="mt-2 text-sm text-muted-foreground">Create a character sheet to add it to this group.</p>
+                            )}
                         </section>
                         <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
                             {characters.map((character) => (

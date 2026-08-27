@@ -15,6 +15,13 @@
             "when": 1787768400000,
             "tag": "0001_case_insensitive_nicknames",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "6",
+            "when": 1787844232811,
+            "tag": "0002_opposite_scalphunter",
+            "breakpoints": true
         }
     ]
 }

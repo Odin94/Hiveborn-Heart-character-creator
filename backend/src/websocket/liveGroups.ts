@@ -8,7 +8,7 @@ import { isAllowedFrontendOrigin, isLocalhostHost, isLoopbackAddress } from "../
 const subscribers = new Map<string, Set<WebSocket>>()
 
 type CharacterChange = {
-    character?: Record<string, unknown>
+    character?: Record<string, unknown> & { id?: string }
     characterId?: string
     deleted?: boolean
 }
@@ -21,9 +21,15 @@ export function broadcastGroupEvent(groupId: string, event: Record<string, unkno
 }
 
 export async function broadcastUserCharacterChange(userId: string, change: CharacterChange = {}) {
-    const memberships = await db.select().from(schema.groupMembers).where(eq(schema.groupMembers.userId, userId))
-    for (const membership of memberships) {
-        broadcastGroupEvent(membership.groupId, {
+    const characterId = change.deleted ? change.characterId : change.character?.id
+    const assignments = characterId
+        ? await db
+              .select({ groupId: schema.groupCharacterAssignments.groupId })
+              .from(schema.groupCharacterAssignments)
+              .where(eq(schema.groupCharacterAssignments.characterId, characterId))
+        : await db.select({ groupId: schema.groupMembers.groupId }).from(schema.groupMembers).where(eq(schema.groupMembers.userId, userId))
+    for (const assignment of assignments) {
+        broadcastGroupEvent(assignment.groupId, {
             type: change.deleted ? "character.deleted" : "character.updated",
             userId,
             ...change,

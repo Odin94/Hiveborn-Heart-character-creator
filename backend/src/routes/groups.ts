@@ -18,6 +18,8 @@ const rollInput = z.object({
     characterName: z.string().trim().min(1).max(120),
 })
 const falloutUpdateInput = z.object({ characterId: z.string().min(1), applyStressUpdate: z.boolean() })
+const characterAssignmentInput = z.object({ characterId: z.string().min(1) })
+const characterAssignmentParams = z.object({ id: z.string().min(1), characterId: z.string().min(1) })
 
 const groupAdjectives = [
     "amber",
@@ -123,6 +125,29 @@ async function assertMember(groupId: string, userId: string) {
         .get()
 }
 
+/** Assign a user's sole active character to the specified groups (or every group they belong to). */
+async function assignOnlyCharacterToGroups(userId: string, groupIds?: string[]) {
+    const characters = await db
+        .select({ id: schema.characters.id })
+        .from(schema.characters)
+        .where(and(eq(schema.characters.userId, userId), isNull(schema.characters.deletedAt)))
+    if (characters.length !== 1) return []
+    const memberships = await db
+        .select({ groupId: schema.groupMembers.groupId })
+        .from(schema.groupMembers)
+        .where(and(eq(schema.groupMembers.userId, userId), ...(groupIds?.length ? [inArray(schema.groupMembers.groupId, groupIds)] : [])))
+    if (!memberships.length) return []
+    await db
+        .insert(schema.groupCharacterAssignments)
+        .values(memberships.map((membership) => ({ groupId: membership.groupId, characterId: characters[0]!.id })))
+        .onConflictDoNothing()
+    return memberships.map((membership) => membership.groupId)
+}
+
+export async function assignSoleCharacterToAllGroups(userId: string) {
+    return assignOnlyCharacterToGroups(userId)
+}
+
 async function groupOverview(groupId: string) {
     const group = await db.select().from(schema.groups).where(eq(schema.groups.id, groupId)).get()
     if (!group) return undefined
@@ -135,6 +160,8 @@ async function groupOverview(groupId: string) {
               .from(schema.characters)
               .where(and(inArray(schema.characters.userId, userIds), isNull(schema.characters.deletedAt)))
         : []
+    const assignments = await db.select().from(schema.groupCharacterAssignments).where(eq(schema.groupCharacterAssignments.groupId, groupId))
+    const assignedCharacterIds = new Set(assignments.map((assignment) => assignment.characterId))
     const rolls = await db.select().from(schema.rollEvents).where(eq(schema.rollEvents.groupId, groupId)).orderBy(desc(schema.rollEvents.createdAt)).limit(30)
     return {
         id: group.id,
@@ -148,7 +175,7 @@ async function groupOverview(groupId: string) {
                 nickname: user?.nickname ?? null,
                 joinedAt: member.joinedAt,
                 characters: characters
-                    .filter((character) => character.userId === member.userId)
+                    .filter((character) => character.userId === member.userId && assignedCharacterIds.has(character.id))
                     .map((character) => ({ id: character.id, name: character.name, data: JSON.parse(character.data), updatedAt: character.updatedAt })),
             }
         }),
@@ -172,6 +199,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
             tx.insert(schema.groups).values({ id, name: parsed.data.name, ownerId: request.userId! }).run()
             tx.insert(schema.groupMembers).values({ groupId: id, userId: request.userId! }).run()
         })
+        await assignOnlyCharacterToGroups(request.userId!, [id])
         trackEvent("play_group_created", request.userId!, { group_name_length: parsed.data.name.length })
         return groupOverview(id)
     })
@@ -192,9 +220,43 @@ export async function groupRoutes(fastify: FastifyInstance) {
         } catch {
             return reply.code(409).send({ error: "That player is already in the group" })
         }
+        await assignOnlyCharacterToGroups(recipient.id, [params.data.id])
         trackEvent("play_group_invitation_accepted", request.userId!)
         broadcastGroupEvent(params.data.id, { type: "group.members.updated" })
         return groupOverview(params.data.id)
+    })
+
+    fastify.post("/play-groups/:id/characters", { preHandler: authenticateUser }, async (request, reply) => {
+        const params = idInput.safeParse(request.params)
+        const parsed = characterAssignmentInput.safeParse(request.body)
+        if (!params.success || !parsed.success) return reply.code(400).send({ error: "Invalid character assignment" })
+        if (!(await assertMember(params.data.id, request.userId!))) return reply.code(403).send({ error: "You are not in this play group" })
+        const character = await db
+            .select({ id: schema.characters.id })
+            .from(schema.characters)
+            .where(and(eq(schema.characters.id, parsed.data.characterId), eq(schema.characters.userId, request.userId!), isNull(schema.characters.deletedAt)))
+            .get()
+        if (!character) return reply.code(404).send({ error: "Character not found" })
+        await db.insert(schema.groupCharacterAssignments).values({ groupId: params.data.id, characterId: character.id }).onConflictDoNothing()
+        broadcastGroupEvent(params.data.id, { type: "group.members.updated" })
+        return groupOverview(params.data.id)
+    })
+
+    fastify.delete("/play-groups/:id/characters/:characterId", { preHandler: authenticateUser }, async (request, reply) => {
+        const params = characterAssignmentParams.safeParse(request.params)
+        if (!params.success) return reply.code(400).send({ error: "Invalid character assignment" })
+        if (!(await assertMember(params.data.id, request.userId!))) return reply.code(403).send({ error: "You are not in this play group" })
+        const character = await db
+            .select({ id: schema.characters.id })
+            .from(schema.characters)
+            .where(and(eq(schema.characters.id, params.data.characterId), eq(schema.characters.userId, request.userId!), isNull(schema.characters.deletedAt)))
+            .get()
+        if (!character) return reply.code(404).send({ error: "Character not found" })
+        await db
+            .delete(schema.groupCharacterAssignments)
+            .where(and(eq(schema.groupCharacterAssignments.groupId, params.data.id), eq(schema.groupCharacterAssignments.characterId, character.id)))
+        broadcastGroupEvent(params.data.id, { type: "group.members.updated" })
+        return { success: true }
     })
 
     fastify.post("/play-groups/:id/rolls", { preHandler: authenticateUser }, async (request, reply) => {
@@ -221,7 +283,14 @@ export async function groupRoutes(fastify: FastifyInstance) {
             .from(schema.characters)
             .where(and(eq(schema.characters.id, parsed.data.characterId), isNull(schema.characters.deletedAt)))
             .get()
-        if (!character || !(await assertMember(params.data.id, character.userId))) return reply.code(404).send({ error: "Character not found in this group" })
+        const assignment = character
+            ? await db
+                  .select()
+                  .from(schema.groupCharacterAssignments)
+                  .where(and(eq(schema.groupCharacterAssignments.groupId, params.data.id), eq(schema.groupCharacterAssignments.characterId, character.id)))
+                  .get()
+            : undefined
+        if (!character || !assignment) return reply.code(404).send({ error: "Character not found in this group" })
         const data = JSON.parse(character.data) as { stress?: Record<string, number>; lastStressResistance?: string }
         const totalStress = Object.values(data.stress ?? {}).reduce((total, value) => total + Number(value || 0), 0)
         // The server owns the random result so a GM cannot accidentally (or
