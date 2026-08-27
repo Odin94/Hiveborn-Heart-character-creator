@@ -1,6 +1,9 @@
 [build]
-command = "pnpm run build"
+command = "pnpm install --frozen-lockfile && pnpm run build"
 publish = "dist"
+
+[build.environment]
+PNPM_VERSION = "10.33.0"
 
 # Let the React router handle production deep links such as /auth/callback.
 [[redirects]]
