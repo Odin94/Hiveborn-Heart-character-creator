@@ -22,8 +22,7 @@ export const useApplyPickedBonus = () => {
         } else if (isDomain(selection)) {
             setDomains({ ...existingDomains, [selection]: gainDomain(existingDomains[selection]) })
         } else if (isResistance(selection)) {
-            zustandProtections[selection] = Math.min(zustandProtections[selection] + 1, protectionMaximum)
-            setProtections({ ...zustandProtections })
+            setProtections({ ...zustandProtections, [selection]: Math.min(zustandProtections[selection] + 1, protectionMaximum) })
         }
 
         setAbilities(markAbilityPicked(abilities, pickingFromAbility, selection))

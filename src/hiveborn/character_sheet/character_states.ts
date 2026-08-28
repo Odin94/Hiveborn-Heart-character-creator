@@ -5,6 +5,7 @@ import { Resistance } from "../game_data/resistances"
 import { createSelectors } from "../../lib/selectors"
 
 export const protectionMaximum = 5
+const cloneCharacter = (character: Character) => structuredClone(character)
 
 export type CharacterState = {
     characters: Character[]
@@ -139,7 +140,7 @@ export const useCharacterStore = createSelectors(
                             characters: [...state.characters, newCharacter],
                             cloudCharacterIds: [...state.cloudCharacterIds, ""],
                             cloudCharacterVersions: [...state.cloudCharacterVersions, 0],
-                            cloudCharacterBases: [...state.cloudCharacterBases, newCharacter],
+                            cloudCharacterBases: [...state.cloudCharacterBases, cloneCharacter(newCharacter)],
                             currentCharacterIndex: state.characters.length,
                             name: newCharacter.name,
                             characterClass: newCharacter.characterClass,
@@ -203,12 +204,13 @@ export const useCharacterStore = createSelectors(
                         }
                     },
                     setCloudCharacters: (characters, cloudCharacterIds, cloudCharacterVersions) => {
-                        const character = characters[0] || getEmptyCharacter()
+                        const nextCharacters = characters.length ? characters.map(cloneCharacter) : [getEmptyCharacter()]
+                        const character = nextCharacters[0]!
                         set({
-                            characters: characters.length ? characters : [getEmptyCharacter()],
-                            cloudCharacterIds,
-                            cloudCharacterVersions,
-                            cloudCharacterBases: characters,
+                            characters: nextCharacters,
+                            cloudCharacterIds: characters.length ? cloudCharacterIds : [""],
+                            cloudCharacterVersions: characters.length ? cloudCharacterVersions : [0],
+                            cloudCharacterBases: nextCharacters.map(cloneCharacter),
                             currentCharacterIndex: 0,
                             name: character.name,
                             characterClass: character.characterClass,
@@ -238,8 +240,8 @@ export const useCharacterStore = createSelectors(
                         const characters = [...state.characters]
                         const cloudCharacterBases = [...state.cloudCharacterBases]
                         const cloudCharacterVersions = [...state.cloudCharacterVersions]
-                        characters[index] = remoteCharacter
-                        cloudCharacterBases[index] = remoteCharacter
+                        characters[index] = cloneCharacter(remoteCharacter)
+                        cloudCharacterBases[index] = cloneCharacter(remoteCharacter)
                         cloudCharacterVersions[index] = version
                         const isCurrentCharacter = index === state.currentCharacterIndex
                         set({
@@ -272,8 +274,8 @@ export const useCharacterStore = createSelectors(
                         const cloudCharacterBases = [...state.cloudCharacterBases]
                         const cloudCharacterVersions = [...state.cloudCharacterVersions]
                         const shouldApplyServerData = JSON.stringify(characters[index]) === JSON.stringify(snapshot)
-                        if (shouldApplyServerData) characters[index] = remoteCharacter
-                        cloudCharacterBases[index] = remoteCharacter
+                        if (shouldApplyServerData) characters[index] = cloneCharacter(remoteCharacter)
+                        cloudCharacterBases[index] = cloneCharacter(remoteCharacter)
                         cloudCharacterVersions[index] = version
                         const isCurrentCharacter = index === state.currentCharacterIndex
                         const currentCharacter = characters[index] || getEmptyCharacter()
