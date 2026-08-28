@@ -32,7 +32,9 @@ const DiceRoller = () => {
     const characterDomains = useCharacterStore.use.domains()
     const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
     const cloudCharacterIds = useCharacterStore.use.cloudCharacterIds()
+    const characters = useCharacterStore.use.characters()
     const activeGroupId = usePlayModeStore((state) => state.activeGroupId)
+    const activeGroupName = usePlayModeStore((state) => state.activeGroupName)
     const shareRolls = usePlayModeStore((state) => state.shareRolls)
     const setShareRolls = usePlayModeStore((state) => state.setShareRolls)
     const [activeTab, setActiveTab] = useState<RollerTab>("skill-domain")
@@ -47,6 +49,7 @@ const DiceRoller = () => {
     const trainedSkills = useMemo(() => skills.filter((skill) => characterSkills[skill]?.hasSkill), [characterSkills])
     const trainedDomains = useMemo(() => domains.filter((domain) => characterDomains[domain]?.hasDomain), [characterDomains])
     const cloudCharacterId = cloudCharacterIds[currentCharacterIndex]
+    const characterName = characters[currentCharacterIndex]?.name || `Character ${currentCharacterIndex + 1}`
 
     const diceCount = useMemo(() => {
         const skillDie = selectedSkill && characterSkills[selectedSkill]?.hasSkill ? 1 : 0
@@ -264,8 +267,10 @@ const DiceRoller = () => {
             <label className="mt-4 flex cursor-pointer items-center gap-2 rounded border border-primary/20 p-3 text-sm">
                 <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!activeGroupId || !cloudCharacterId} />
                 <span>
-                    Share this roll with my group
-                    {!activeGroupId ? " (choose a play group first)" : !cloudCharacterId ? " (wait for this sheet to sync)" : ""}
+                    {activeGroupId && cloudCharacterId
+                        ? `Share as ${characterName} in ${activeGroupName ?? "your active group"}`
+                        : "Share this roll with my group"}
+                    {!activeGroupId ? " — choose a play group first." : !cloudCharacterId ? " — wait for this sheet to sync, then add it to the group." : ""}
                 </span>
             </label>
 

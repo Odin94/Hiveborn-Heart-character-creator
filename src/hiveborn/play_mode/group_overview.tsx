@@ -13,16 +13,17 @@ import { equipmentTags } from "@/hiveborn/game_data/equipment_tags"
 import { resourceTags } from "@/hiveborn/game_data/resource_tags"
 import { resistances } from "@/hiveborn/game_data/resistances"
 import FalloutDie, { falloutRollOverlayLifetimeMs } from "./fallout_die"
-import { BookOpen, ChevronLeft, Dices, Plus, Sparkles, Users } from "lucide-react"
+import { BookOpen, ChevronLeft, Circle, Dices, Plus, Sparkles, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
 type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
-type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null }
+type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null; isOnline: boolean }
 type FalloutRoll = { characterName: string; roll: number; fallout: "minor" | "major" | null }
 type LiveGroupEvent =
     | { type: "character.updated"; userId: string; character: GroupCharacter }
     | { type: "character.deleted"; userId: string; characterId: string }
+    | { type: "member.presence"; userId: string; online: boolean }
     | { type: "roll.shared" | "fallout.rolled" | "group.members.updated" }
 
 const lastGroupStorageKey = (userId: string) => `hiveborn-last-play-group:${window.location.origin}:${userId}`
@@ -33,6 +34,14 @@ const ROLL_FADE_TICK_MS = 10 * 1_000
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
 const rollCharacterName = (character: Pick<CloudCharacter, "name">) => character.name || "Unnamed hiveborn"
 const rollAge = (createdAt: string, now: number) => Math.max(0, now - new Date(createdAt).getTime())
+const relativeTime = (date: string, now = Date.now()) => {
+    const seconds = Math.max(0, Math.floor((now - new Date(date).getTime()) / 1_000))
+    if (seconds < 10) return "just now"
+    if (seconds < 60) return `${seconds}s ago`
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+    return `${Math.floor(minutes / 60)}h ago`
+}
 
 const classCardThemes: Record<string, string> = {
     Cleaver: "bg-gradient-to-br from-red-500/18 via-stone-300/18 to-card dark:from-red-950/70 dark:via-stone-900/60 dark:to-card",
@@ -54,9 +63,12 @@ const selectedFeaturesMarkdown = (features: Record<string, { hasSkill?: boolean;
 }
 
 function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: LiveGroupEvent): PlayGroup[] {
-    if (event.type !== "character.updated" && event.type !== "character.deleted") return groups
     return groups.map((entry) => {
         if (entry.id !== groupId) return entry
+        if (event.type === "member.presence") {
+            return { ...entry, members: entry.members.map((member) => (member.id === event.userId ? { ...member, isOnline: event.online } : member)) }
+        }
+        if (event.type !== "character.updated" && event.type !== "character.deleted") return entry
         return {
             ...entry,
             members: entry.members.map((member) => {
@@ -83,12 +95,15 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
     const [autoUpdateStress, setAutoUpdateStress] = useState(true)
+    const [gmTargetCharacterId, setGmTargetCharacterId] = useState("")
     const [falloutRoll, setFalloutRoll] = useState<FalloutRoll | null>(null)
     const [rollingFalloutCharacterId, setRollingFalloutCharacterId] = useState<string | null>(null)
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const [showOtherPlayersBeats, setShowOtherPlayersBeats] = useState(() => localStorage.getItem(otherPlayersBeatsStorageKey(user.id)) === "true")
-    const setActiveGroupId = usePlayModeStore((state) => state.setActiveGroupId)
+    const setActiveGroup = usePlayModeStore((state) => state.setActiveGroup)
     const cloudIds = useCharacterStore.use.cloudCharacterIds()
+    const localCharacters = useCharacterStore.use.characters()
+    const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
     const setCurrentCharacter = useCharacterStore.use.setCurrentCharacter()
     const applyRemoteCloudCharacter = useCharacterStore.use.applyRemoteCloudCharacter()
 
@@ -116,6 +131,8 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     }, [refresh])
 
     const group = groups.find((entry) => entry.id === selectedGroupId) ?? null
+    const activeGroupId = group?.id ?? null
+    const activeGroupName = group?.name ?? null
     useEffect(() => {
         if (selectedGroupId || groups.length === 0) return
         const rememberedGroupId = localStorage.getItem(lastGroupStorageKey(user.id))
@@ -125,8 +142,8 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     useEffect(() => {
         // Do not retain a group from a previous account/session. A stale group
         // id would make rolls appear shareable until the API rejected them.
-        setActiveGroupId(group?.id ?? null)
-    }, [group?.id, setActiveGroupId])
+        setActiveGroup(activeGroupId && activeGroupName ? { id: activeGroupId, name: activeGroupName } : null)
+    }, [activeGroupId, activeGroupName, setActiveGroup])
     useEffect(() => {
         if (group) localStorage.setItem(lastGroupStorageKey(user.id), group.id)
     }, [group, user.id])
@@ -273,10 +290,14 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     }
 
     const characters: CharacterWithOwner[] =
-        group?.members.flatMap((member) => member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname }))) ?? []
+        group?.members.flatMap((member) =>
+            member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname, isOnline: member.isOnline })),
+        ) ?? []
     const assignedOwnCharacterIds = new Set(group?.members.find((member) => member.id === user.id)?.characters.map((character) => character.id) ?? [])
+    const unassignedOwnCharacters = ownCharacters.filter((character) => !assignedOwnCharacterIds.has(character.id))
     const isGameMaster = group?.members.find((member) => member.id === user.id)?.isGameMaster ?? false
     const isGroupOwner = group?.ownerId === user.id
+    const gmTarget = characters.find((character) => character.id === gmTargetCharacterId) ?? characters[0]
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const hasFadingRolls = visibleRolls.length > 0
     useEffect(() => {
@@ -398,24 +419,47 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                         <header className="mb-7">
                             <p className="text-sm uppercase tracking-widest text-primary">Live play table</p>
                             <h1 className="text-4xl font-black">{group.name}</h1>
-                            <p className="mt-1 text-muted-foreground">Character changes and shared rolls update immediately for everyone here.</p>
+                            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
+                                <span>Character changes and shared rolls update immediately for everyone here.</span>
+                                <span className="inline-flex items-center gap-1 text-sm text-foreground">
+                                    <Circle className="size-2 fill-emerald-500 text-emerald-500" />
+                                    {group.members.filter((member) => member.isOnline).length} online
+                                </span>
+                            </p>
                         </header>
-                        <section className="mb-6 space-y-3 rounded-lg bg-card/40 p-3 md:hidden">
-                            <label className="block text-sm font-semibold" htmlFor="mobile-play-group">
-                                Play group
-                            </label>
-                            <select
-                                id="mobile-play-group"
-                                value={selectedGroupId ?? ""}
-                                onChange={(event) => event.target.value && onSelectGroup(event.target.value)}
-                                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                            >
-                                {groups.map((entry) => (
-                                    <option key={entry.id} value={entry.id}>
-                                        {entry.name}
-                                    </option>
-                                ))}
-                            </select>
+                        <section className="sticky top-2 z-20 mb-6 space-y-3 rounded-lg border bg-card/95 p-3 shadow-sm backdrop-blur md:hidden">
+                            <div className="grid grid-cols-2 gap-2">
+                                <label className="block text-sm font-semibold" htmlFor="mobile-play-group">
+                                    <span className="mb-1 block">Group</span>
+                                    <select
+                                        id="mobile-play-group"
+                                        value={selectedGroupId ?? ""}
+                                        onChange={(event) => event.target.value && onSelectGroup(event.target.value)}
+                                        className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm font-normal"
+                                    >
+                                        {groups.map((entry) => (
+                                            <option key={entry.id} value={entry.id}>
+                                                {entry.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="block text-sm font-semibold" htmlFor="mobile-group-character">
+                                    <span className="mb-1 block">Sheet</span>
+                                    <select
+                                        id="mobile-group-character"
+                                        value={currentCharacterIndex}
+                                        onChange={(event) => setCurrentCharacter(Number(event.target.value))}
+                                        className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm font-normal"
+                                    >
+                                        {localCharacters.map((character, index) => (
+                                            <option key={cloudIds[index] || index} value={index}>
+                                                {character.name || `Character ${index + 1}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
                             <div className="flex gap-2">
                                 <Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="New group name" />
                                 <Button disabled={!createName.trim()} onClick={createGroup}>
@@ -456,6 +500,45 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 ))}
                             </div>
                         </section>
+                        {isGameMaster && gmTarget && (
+                            <section className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-destructive/25 bg-destructive/5 p-4">
+                                <div className="min-w-48 flex-1">
+                                    <h2 className="font-semibold">GM session control</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Roll fallout without opening a sheet. {totalStress(gmTarget)} stress currently marked.
+                                    </p>
+                                </div>
+                                <label className="grid gap-1 text-sm font-medium" htmlFor="gm-fallout-character">
+                                    Character
+                                    <select
+                                        id="gm-fallout-character"
+                                        value={gmTarget.id}
+                                        onChange={(event) => setGmTargetCharacterId(event.target.value)}
+                                        className="h-9 min-w-44 rounded-md border border-input bg-background px-2 text-sm font-normal"
+                                    >
+                                        {characters.map((character) => (
+                                            <option key={character.id} value={character.id}>
+                                                {rollCharacterName(character)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <Button variant="destructive" disabled={rollingFalloutCharacterId === gmTarget.id} onClick={() => void rollFallout(gmTarget)}>
+                                    <Dices /> Roll fallout
+                                </Button>
+                            </section>
+                        )}
+                        {unassignedOwnCharacters.length > 0 && (
+                            <section className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                                <div>
+                                    <h2 className="font-semibold">Bring a sheet to the table</h2>
+                                    <p className="text-sm text-muted-foreground">Add one of your sheets so it can share rolls and appear for the GM.</p>
+                                </div>
+                                <Button onClick={() => void assignCharacter(unassignedOwnCharacters[0]!)}>
+                                    Add {rollCharacterName(unassignedOwnCharacters[0]!)}
+                                </Button>
+                            </section>
+                        )}
                         <section className="mb-6 rounded-lg bg-card/40 p-3">
                             <h2 className="font-semibold">Your characters in this group</h2>
                             {ownCharacters.length ? (
@@ -520,7 +603,7 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
 
     return (
         <section className="mt-8 rounded-lg bg-card/40 p-4">
-            <h2 className="font-bold">Recent shared rolls</h2>
+            <h2 className="font-bold">Recent table activity</h2>
             {columns.length ? (
                 <div className="mt-3 overflow-x-auto pb-1">
                     <div className="grid min-w-max grid-flow-col auto-cols-[minmax(13rem,1fr)] gap-4">
@@ -538,7 +621,11 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
                                             characterRolls.map((roll) => {
                                                 const opacity = Math.max(0, 1 - rollAge(roll.createdAt, now) / ROLL_LIFETIME_MS)
                                                 return (
-                                                    <p key={roll.id} className="transition-opacity duration-[10000ms] ease-linear" style={{ opacity }}>
+                                                    <p
+                                                        key={roll.id}
+                                                        className="transition-opacity duration-[10000ms] ease-linear motion-reduce:transition-none"
+                                                        style={{ opacity }}
+                                                    >
                                                         Rolled {roll.dice} for {roll.label}: <span className="font-bold text-primary">{roll.result}</span>
                                                     </p>
                                                 )
@@ -553,7 +640,7 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
                     </div>
                 </div>
             ) : (
-                <p className="mt-2 text-sm text-muted-foreground">Shared rolls will appear here.</p>
+                <p className="mt-2 text-sm text-muted-foreground">Shared rolls and fallout outcomes will appear here.</p>
             )}
         </section>
     )
@@ -579,13 +666,20 @@ function CharacterCard({
     const data = character.data
     return (
         <article
-            className={`group flex h-full cursor-pointer flex-col rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
+            className={`group flex h-full cursor-pointer flex-col rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none ${getClassCardTheme(data.characterClass)}`}
             onClick={onOpen}
         >
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <p className="text-xs uppercase tracking-widest text-primary">{own ? "Your character" : (character.nickname ?? "Player")}</p>
+                    <p className="flex items-center gap-1 text-xs uppercase tracking-widest text-primary">
+                        <Circle
+                            className={`size-2 ${character.isOnline ? "fill-emerald-500 text-emerald-500" : "fill-muted-foreground/50 text-muted-foreground/50"}`}
+                        />
+                        {own ? "Your character" : (character.nickname ?? "Player")}
+                        {character.isOnline ? " online" : " away"}
+                    </p>
                     <h2 className="text-2xl font-black">{character.name || "Unnamed hiveborn"}</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">Sheet updated {relativeTime(character.updatedAt)}</p>
                 </div>
                 <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
             </div>

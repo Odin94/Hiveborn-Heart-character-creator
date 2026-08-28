@@ -1,5 +1,6 @@
 import "./App.css"
 import CharacterSheet from "./hiveborn/character_sheet/character_sheet"
+import { useCharacterStore } from "./hiveborn/character_sheet/character_states"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { JSONDownloadButton, JSONUploadButton, PDFDownloadButton, ResetButton } from "./hiveborn/character_sheet/components/character_buttons"
@@ -18,6 +19,7 @@ import { useCloudCharacterSync } from "./hooks/useCloudCharacterSync"
 import GroupOverview from "./hiveborn/play_mode/group_overview"
 import { toast } from "sonner"
 import { Outlet, useNavigate } from "@tanstack/react-router"
+import { Undo2 } from "lucide-react"
 
 type AuthState = ReturnType<typeof useAuth>
 const AuthContext = createContext<AuthState | null>(null)
@@ -61,6 +63,8 @@ function App() {
 export function CharacterSheetPage() {
     const auth = useAppAuth()
     const navigate = useNavigate()
+    const undoCharacterChange = useCharacterStore.use.undoCharacterChange()
+    const characterHistory = useCharacterStore.use.characterHistory()
 
     return (
         <div className="relative min-h-screen bg-background pb-28 sm:pb-0">
@@ -140,6 +144,17 @@ export function CharacterSheetPage() {
                     <JSONDownloadButton />
                     <JSONUploadButton />
                     <ResetButton />
+                    <Button
+                        className="rounded-t-none"
+                        variant="secondary"
+                        disabled={characterHistory.length === 0}
+                        onClick={() => {
+                            undoCharacterChange()
+                            toast.success("Restored the previous sheet change")
+                        }}
+                    >
+                        <Undo2 /> Undo recent change
+                    </Button>
 
                     {/* TODOdin: Add a button that opens a history pane that keeps character-states from the past (in case you accidentally overwrite) */}
                 </div>

@@ -7,7 +7,7 @@ import { characterDataSchema } from "../characterData.js"
 import { db, schema } from "../db/index.js"
 import { authenticateUser } from "../middleware/auth.js"
 import { trackEvent } from "../utils/tracker.js"
-import { broadcastGroupEvent, broadcastUserCharacterChange } from "../websocket/liveGroups.js"
+import { broadcastGroupEvent, broadcastUserCharacterChange, onlineGroupMemberIds } from "../websocket/liveGroups.js"
 
 const groupInput = z.object({ name: z.string().trim().min(2).max(80) })
 const idInput = z.object({ id: z.string().min(1) })
@@ -172,6 +172,7 @@ async function groupOverview(groupId: string) {
     const group = await db.select().from(schema.groups).where(eq(schema.groups.id, groupId)).get()
     if (!group) return undefined
     const members = await db.select().from(schema.groupMembers).where(eq(schema.groupMembers.groupId, groupId))
+    const onlineMemberIds = new Set(onlineGroupMemberIds(groupId))
     const userIds = members.map((member) => member.userId)
     const users = userIds.length ? await db.select().from(schema.users).where(inArray(schema.users.id, userIds)) : []
     const characters = userIds.length
@@ -195,6 +196,7 @@ async function groupOverview(groupId: string) {
                 nickname: user?.nickname ?? null,
                 joinedAt: member.joinedAt,
                 isGameMaster: member.isGameMaster,
+                isOnline: onlineMemberIds.has(member.userId),
                 characters: characters
                     .filter((character) => character.userId === member.userId && assignmentsByCharacterId.has(character.id))
                     .map((character) => ({

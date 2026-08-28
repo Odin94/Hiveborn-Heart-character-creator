@@ -58,6 +58,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
     const retryTimer = useRef<number | undefined>(undefined)
     const generation = useRef(0)
     const activeAccountId = useRef<string | undefined>(undefined)
+    const saveFailureNotified = useRef(false)
     const runSync = useRef<() => void>(() => {})
 
     runSync.current = () => {
@@ -104,6 +105,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
                     knownIds.current = nextIds.filter(Boolean)
                     if (nextIds.some((id, index) => id !== snapshot.ids[index])) setCloudCharacterIds(nextIds)
                     failedSnapshot = null
+                    saveFailureNotified.current = false
                 }
             } catch (error) {
                 const snapshot = failedSnapshot
@@ -118,6 +120,10 @@ export function useCloudCharacterSync(accountId: string | undefined) {
                     // snapshot already contains the failed changes, so prefer it.
                     pendingSync.current ??= snapshot
                     console.warn("Hiveborn cloud character sync will retry", error)
+                    if (!saveFailureNotified.current) {
+                        saveFailureNotified.current = true
+                        toast.error("Could not save your sheet. We’ll keep retrying while you stay signed in.")
+                    }
                     retryTimer.current = window.setTimeout(() => {
                         retryTimer.current = undefined
                         runSync.current()

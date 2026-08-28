@@ -1303,6 +1303,15 @@ button:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
     .heart-dice-sheet-overlay-die,
     .heart-dice-stage-sheet-overlay .heart-d4-rolling,
     .heart-dice-stage-sheet-overlay .heart-d6-rolling,
