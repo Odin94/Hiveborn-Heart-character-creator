@@ -11,6 +11,13 @@
     }
 }
 
+@media (min-width: 1536px) {
+    #root {
+        max-width: 1536px;
+        padding: 1.5rem;
+    }
+}
+
 .logo {
     height: 6em;
     padding: 1.5em;

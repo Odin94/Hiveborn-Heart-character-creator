@@ -133,6 +133,17 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
             {/* Mobile/Tablet version - Bottom (screens < 2100px) */}
             {!isLargeScreen && (
                 <div className="flex flex-col mt-5">
+                    <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="fixed right-4 bottom-4 z-40 h-12 w-12 rounded-full shadow-xl sm:hidden"
+                        title="Open dice roller"
+                        aria-label="Open dice roller"
+                        onClick={() => setDiceRollerOpen(true)}
+                    >
+                        <Dices size={20} />
+                    </Button>
                     {/* Caret button - always visible at bottom */}
                     <div className="flex justify-center py-4">
                         <button
