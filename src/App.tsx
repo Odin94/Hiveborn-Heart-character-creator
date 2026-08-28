@@ -66,7 +66,7 @@ export function CharacterSheetPage() {
         <div className="relative min-h-screen bg-background pb-28 sm:pb-0">
             <CookieConsent variant="small" />
             <Dialog>
-                <div className="container relative mx-auto max-w-screen-xl text-foreground lg:px-20">
+                <div className="container relative mx-auto max-w-screen-xl text-foreground lg:px-20 2xl:max-w-screen-2xl">
                     <nav className="relative z-10 mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 px-2 text-sm lg:absolute lg:top-2 lg:left-24 lg:mb-0 lg:flex-nowrap lg:justify-start lg:px-0">
                         <a href="https://odin-matthias.de/" target="_blank" className="underline">
                             /Odin's Site/
@@ -132,7 +132,7 @@ export function CharacterSheetPage() {
                 </DialogContent>
             </Dialog>
 
-            <div className="container mx-auto max-w-screen-xl lg:px-20">
+            <div className="container mx-auto max-w-screen-xl lg:px-20 2xl:max-w-screen-2xl">
                 <div className="mt-0 flex flex-wrap justify-center gap-2 px-2 pb-4 lg:h-10 lg:justify-start lg:gap-8 lg:pl-4 lg:pb-0">
                     <PDFDownloadButton />
                     <JSONDownloadButton />

@@ -162,6 +162,7 @@ const DiceRoller = () => {
     }
 
     const handleDragStart = (event: PointerEvent<HTMLDivElement>) => {
+        if (window.matchMedia("(max-width: 639px)").matches) return
         if (event.button !== 0) return
         dragRef.current = {
             pointerId: event.pointerId,
@@ -174,6 +175,7 @@ const DiceRoller = () => {
     }
 
     const handleDragMove = (event: PointerEvent<HTMLDivElement>) => {
+        if (window.matchMedia("(max-width: 639px)").matches) return
         const drag = dragRef.current
         if (!drag || drag.pointerId !== event.pointerId) return
         setDragOffset({
@@ -204,7 +206,7 @@ const DiceRoller = () => {
             }
         >
             <div
-                className="mb-4 flex cursor-move touch-none items-start justify-between gap-4 border-b border-primary/15 pb-3"
+                className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex cursor-default touch-auto items-start justify-between gap-4 border-b border-primary/15 bg-background px-5 pt-5 pb-3 sm:cursor-move sm:touch-none"
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
