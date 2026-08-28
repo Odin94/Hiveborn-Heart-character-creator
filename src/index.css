@@ -1288,3 +1288,14 @@ button:hover {
         --die-size: 58px;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .heart-dice-sheet-overlay-die,
+    .heart-dice-stage-sheet-overlay .heart-d4-rolling,
+    .heart-dice-stage-sheet-overlay .heart-d6-rolling,
+    .heart-dice-stage-sheet-overlay .heart-d8-rolling,
+    .heart-dice-stage-sheet-overlay .heart-d10-rolling,
+    .heart-dice-stage-sheet-overlay .heart-d12-rolling {
+        animation: none;
+    }
+}

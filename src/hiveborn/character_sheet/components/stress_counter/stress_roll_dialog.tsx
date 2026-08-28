@@ -110,7 +110,8 @@ const StressRollDialog = ({
             </Dialog>
 
             {pendingRoll && (
-                <div className="pointer-events-none fixed inset-0 z-[70]" aria-live="polite">
+                <div className="pointer-events-none fixed inset-0 z-[70]" role="status">
+                    <span className="sr-only">Rolling d{pendingRoll.die.sides}</span>
                     <DiceScene dice={[pendingRoll.die]} rolling presentation="sheet-overlay" />
                 </div>
             )}

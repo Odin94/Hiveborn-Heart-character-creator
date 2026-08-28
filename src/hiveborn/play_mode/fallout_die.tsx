@@ -209,7 +209,7 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
 
     const outcome = fallout ? `${fallout[0].toUpperCase()}${fallout.slice(1)} fallout` : "No fallout"
     return (
-        <div className="pointer-events-none fixed inset-0 z-50" role="status" aria-live="assertive">
+        <div className="fixed inset-0 z-50" role="status" aria-live="assertive">
             <div ref={stageRef} className="relative h-full w-full overflow-hidden">
                 <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
                 <div className="absolute inset-x-0 top-8 px-6 text-center drop-shadow-md">

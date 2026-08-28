@@ -6,7 +6,11 @@ const DiceScene = ({ dice, rolling, presentation = "inline" }: { dice: DieRoll[]
     const isSheetOverlay = presentation === "sheet-overlay"
 
     return (
-        <div className={cn("heart-dice-stage", isSheetOverlay && "heart-dice-stage-sheet-overlay")} aria-label="Animated 3D dice roll">
+        <div
+            className={cn("heart-dice-stage", isSheetOverlay && "heart-dice-stage-sheet-overlay")}
+            aria-label={isSheetOverlay ? undefined : "Animated 3D dice roll"}
+            aria-hidden={isSheetOverlay || undefined}
+        >
             <div
                 className={cn(
                     "heart-dice-row",
