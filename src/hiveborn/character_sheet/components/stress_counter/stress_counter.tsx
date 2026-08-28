@@ -14,6 +14,7 @@ const StressCounter = () => {
     const protections = useCharacterStore.use.protections()
     const setProtections = useCharacterStore.use.setProtections()
     const [resistanceToRoll, setResistanceToRoll] = useState<Resistance | null>(null)
+    const [stressRollInProgress, setStressRollInProgress] = useState(false)
 
     const gridClass = "grid grid-cols-[4.75rem_minmax(0,1fr)] gap-x-2 gap-y-1 text-left sm:grid-cols-[1fr_2fr_1fr] sm:gap-2"
     return (
@@ -30,7 +31,8 @@ const StressCounter = () => {
                         <TooltipTrigger asChild>
                             <button
                                 type="button"
-                                className="text-left font-bold hover:underline focus-visible:underline"
+                                className="text-left font-bold hover:underline focus-visible:underline disabled:cursor-not-allowed disabled:opacity-60"
+                                disabled={stressRollInProgress}
                                 onClick={() => setResistanceToRoll(resistance)}
                             >
                                 {resistance.toUpperCase()}
@@ -48,7 +50,7 @@ const StressCounter = () => {
                 </div>
             ))}
 
-            <StressRollDialog resistance={resistanceToRoll} onClose={() => setResistanceToRoll(null)} />
+            <StressRollDialog resistance={resistanceToRoll} onClose={() => setResistanceToRoll(null)} onRollingChange={setStressRollInProgress} />
         </div>
     )
 }

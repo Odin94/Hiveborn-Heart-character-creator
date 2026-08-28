@@ -12,6 +12,8 @@ import { type DieRoll, type DieSize } from "../dice_roller/types"
 type PendingStressRoll = {
     resistance: Resistance
     die: DieRoll
+    characterIndex: number
+    protection: number
 }
 
 const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`
@@ -27,7 +29,15 @@ const StressDieButton = ({ size, onClick }: { size: DieSize; onClick: () => void
     </Button>
 )
 
-const StressRollDialog = ({ resistance, onClose }: { resistance: Resistance | null; onClose: () => void }) => {
+const StressRollDialog = ({
+    resistance,
+    onClose,
+    onRollingChange,
+}: {
+    resistance: Resistance | null
+    onClose: () => void
+    onRollingChange: (rolling: boolean) => void
+}) => {
     const [pendingRoll, setPendingRoll] = useState<PendingStressRoll | null>(null)
     const finishTimer = useRef<number | undefined>(undefined)
     const hideTimer = useRef<number | undefined>(undefined)
@@ -44,21 +54,40 @@ const StressRollDialog = ({ resistance, onClose }: { resistance: Resistance | nu
         if (!resistance || pendingRoll) return
 
         const die = rollDice(1, size)[0]
-        setPendingRoll({ resistance, die })
+        const { currentCharacterIndex, protections } = useCharacterStore.getState()
+        const roll = { resistance, die, characterIndex: currentCharacterIndex, protection: protections[resistance] }
+        setPendingRoll(roll)
+        onRollingChange(true)
         onClose()
 
         finishTimer.current = window.setTimeout(() => {
-            const { protections, stress, setStress } = useCharacterStore.getState()
-            const protection = protections[resistance]
-            const requestedStress = Math.max(0, die.value - protection)
-            const addedStress = Math.min(10 - stress[resistance], requestedStress)
+            const { characters, setStressForCharacter } = useCharacterStore.getState()
+            const character = characters[roll.characterIndex]
+            const finishAnimation = () => {
+                setPendingRoll(null)
+                onRollingChange(false)
+            }
 
-            if (addedStress > 0) setStress({ ...stress, [resistance]: stress[resistance] + addedStress })
+            if (!character) {
+                toast.error("Could not add stress because the character sheet no longer exists")
+                hideTimer.current = window.setTimeout(finishAnimation, 1000)
+                return
+            }
 
-            const resistanceName = capitalize(resistance)
-            toast(`Rolled ${die.value}, added ${addedStress} ${resistanceName} stress`)
+            const requestedStress = Math.max(0, roll.die.value - roll.protection)
+            const addedStress = Math.min(10 - character.stress[roll.resistance], requestedStress)
 
-            hideTimer.current = window.setTimeout(() => setPendingRoll(null), 1000)
+            if (addedStress > 0) {
+                setStressForCharacter(roll.characterIndex, {
+                    ...character.stress,
+                    [roll.resistance]: character.stress[roll.resistance] + addedStress,
+                })
+            }
+
+            const resistanceName = capitalize(roll.resistance)
+            toast(`Rolled ${roll.die.value}, added ${addedStress} ${resistanceName} stress`)
+
+            hideTimer.current = window.setTimeout(finishAnimation, 1000)
         }, 1600)
     }
 

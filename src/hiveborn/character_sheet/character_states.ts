@@ -36,6 +36,7 @@ export type CharacterState = {
     setDomains: (domains: Domains) => void
     setProtections: (protections: Record<Resistance, number>) => void
     setStress: (stress: Record<Resistance, number>) => void
+    setStressForCharacter: (index: number, stress: Record<Resistance, number>) => void
 
     addCharacter: (name?: string) => void
     removeCharacter: (index: number) => void
@@ -54,34 +55,39 @@ export const useCharacterStore = createSelectors(
                     return state.characters[state.currentCharacterIndex] || getEmptyCharacter()
                 }
 
-                const updateCurrentCharacter = (updates: Partial<Character>) => {
+                const updateCharacter = (index: number, updates: Partial<Character>) => {
                     const state = get()
                     const newCharacters = [...state.characters]
-                    const currentIndex = state.currentCharacterIndex
 
-                    if (!newCharacters[currentIndex]) {
-                        newCharacters[currentIndex] = getEmptyCharacter()
+                    if (!newCharacters[index]) {
+                        newCharacters[index] = getEmptyCharacter()
                     }
 
-                    newCharacters[currentIndex] = { ...newCharacters[currentIndex], ...updates }
+                    newCharacters[index] = { ...newCharacters[index], ...updates }
 
-                    const updatedCharacter = newCharacters[currentIndex]
+                    const updatedCharacter = newCharacters[index]
                     set({
                         characters: newCharacters,
-                        name: updatedCharacter.name,
-                        characterClass: updatedCharacter.characterClass,
-                        calling: updatedCharacter.calling,
-                        activeBeats: updatedCharacter.activeBeats,
-                        equipment: updatedCharacter.equipment,
-                        resources: updatedCharacter.resources,
-                        abilities: updatedCharacter.abilities,
-                        fallout: updatedCharacter.fallout,
-                        skills: updatedCharacter.skills,
-                        domains: updatedCharacter.domains,
-                        protections: updatedCharacter.protections,
-                        stress: updatedCharacter.stress,
+                        ...(index === state.currentCharacterIndex
+                            ? {
+                                  name: updatedCharacter.name,
+                                  characterClass: updatedCharacter.characterClass,
+                                  calling: updatedCharacter.calling,
+                                  activeBeats: updatedCharacter.activeBeats,
+                                  equipment: updatedCharacter.equipment,
+                                  resources: updatedCharacter.resources,
+                                  abilities: updatedCharacter.abilities,
+                                  fallout: updatedCharacter.fallout,
+                                  skills: updatedCharacter.skills,
+                                  domains: updatedCharacter.domains,
+                                  protections: updatedCharacter.protections,
+                                  stress: updatedCharacter.stress,
+                              }
+                            : {}),
                     })
                 }
+
+                const updateCurrentCharacter = (updates: Partial<Character>) => updateCharacter(get().currentCharacterIndex, updates)
 
                 return {
                     characters: [getEmptyCharacter()],
@@ -112,11 +118,12 @@ export const useCharacterStore = createSelectors(
                     setSkills: (skills) => updateCurrentCharacter({ skills }),
                     setDomains: (domains) => updateCurrentCharacter({ domains }),
                     setProtections: (protections) => updateCurrentCharacter({ protections }),
-                    setStress: (stress) => {
-                        const currentStress = getCurrentCharacter().stress
+                    setStressForCharacter: (index, stress) => {
+                        const currentStress = get().characters[index]?.stress ?? getEmptyCharacter().stress
                         const lastStressResistance = (Object.keys(stress) as Resistance[]).find((resistance) => stress[resistance] > currentStress[resistance])
-                        updateCurrentCharacter({ stress, ...(lastStressResistance ? { lastStressResistance } : {}) })
+                        updateCharacter(index, { stress, ...(lastStressResistance ? { lastStressResistance } : {}) })
                     },
+                    setStress: (stress) => get().setStressForCharacter(get().currentCharacterIndex, stress),
 
                     addCharacter: () => {
                         const state = get()
