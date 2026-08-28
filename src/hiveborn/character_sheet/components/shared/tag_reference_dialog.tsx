@@ -19,9 +19,18 @@ type TagReferenceDialogProps = {
     primarySourceLabel: string
     secondaryText?: string
     secondarySourceLabel?: string
+    relevantOnly?: boolean
 }
 
-export const TagReferenceDialog = ({ title, tags, primaryText, primarySourceLabel, secondaryText = "", secondarySourceLabel }: TagReferenceDialogProps) => {
+export const TagReferenceDialog = ({
+    title,
+    tags,
+    primaryText,
+    primarySourceLabel,
+    secondaryText = "",
+    secondarySourceLabel,
+    relevantOnly = false,
+}: TagReferenceDialogProps) => {
     const [search, setSearch] = useState("")
     const searchInputRef = useRef<HTMLInputElement>(null)
     const searchableCharacterText = useMemo(
@@ -46,7 +55,7 @@ export const TagReferenceDialog = ({ title, tags, primaryText, primarySourceLabe
             }),
         [primarySourceLabel, secondarySourceLabel, searchableCharacterText, tags],
     )
-    const filteredRows = tagRows.filter(({ searchBlob }) => searchBlob.includes(normalizedSearch))
+    const filteredRows = tagRows.filter(({ searchBlob, isRelevant }) => (!relevantOnly || isRelevant) && searchBlob.includes(normalizedSearch))
 
     const redirectTypingToSearch = (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return
@@ -88,7 +97,7 @@ export const TagReferenceDialog = ({ title, tags, primaryText, primarySourceLabe
             <ScrollArea className="min-h-0 flex-1 pr-3">
                 {filteredRows.length === 0 ? (
                     <div className="tag-reference-empty rounded-md border border-dashed border-red-900/30 p-6 text-center text-sm text-muted-foreground">
-                        No tags match "{search}".
+                        {relevantOnly && !normalizedSearch ? "This character has no matching tags." : `No tags match "${search}".`}
                     </div>
                 ) : (
                     <div className="grid gap-2 pb-1">

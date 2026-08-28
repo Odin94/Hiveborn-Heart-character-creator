@@ -1,12 +1,16 @@
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
 import ThemeToggle from "@/components/theme-toggle"
 import { api, API_URL, tokenStorage, type CloudCharacter, type GroupCharacter, type PlayGroup, type User } from "@/lib/api"
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
+import { ReadOnlyStressCounter } from "@/hiveborn/character_sheet/components/stress_counter/stress_counter"
+import { TagReferenceDialog, type ReferenceTag } from "@/hiveborn/character_sheet/components/shared/tag_reference_dialog"
+import { equipmentTags } from "@/hiveborn/game_data/equipment_tags"
+import { resourceTags } from "@/hiveborn/game_data/resource_tags"
 import { resistances } from "@/hiveborn/game_data/resistances"
 import FalloutDie from "./fallout_die"
 import { BookOpen, ChevronLeft, Dices, Plus, Sparkles, Users } from "lucide-react"
@@ -22,6 +26,7 @@ type LiveGroupEvent =
     | { type: "roll.shared" | "fallout.rolled" | "group.members.updated" }
 
 const lastGroupStorageKey = (userId: string) => `hiveborn-last-play-group:${window.location.origin}:${userId}`
+const otherPlayersBeatsStorageKey = (userId: string) => `hiveborn-show-other-players-beats:${window.location.origin}:${userId}`
 const ROLL_LIFETIME_MS = 10 * 60 * 1_000
 const ROLL_FADE_TICK_MS = 10 * 1_000
 
@@ -42,6 +47,11 @@ const classCardThemes: Record<string, string> = {
 }
 
 const getClassCardTheme = (characterClass: string) => classCardThemes[characterClass] ?? "bg-card"
+
+const selectedFeaturesMarkdown = (features: Record<string, { hasSkill?: boolean; hasDomain?: boolean; knacks: string }>) => {
+    const selectedFeatures = Object.entries(features).filter(([, feature]) => feature.hasSkill || feature.hasDomain)
+    return selectedFeatures.map(([name, feature]) => `- **${name}**${feature.knacks ? ` — ${feature.knacks}` : ""}`).join("\n") || "—"
+}
 
 function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: LiveGroupEvent): PlayGroup[] {
     if (event.type !== "character.updated" && event.type !== "character.deleted") return groups
@@ -75,6 +85,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [falloutRoll, setFalloutRoll] = useState<FalloutRoll | null>(null)
     const [rollingFalloutCharacterId, setRollingFalloutCharacterId] = useState<string | null>(null)
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
+    const [showOtherPlayersBeats, setShowOtherPlayersBeats] = useState(() => localStorage.getItem(otherPlayersBeatsStorageKey(user.id)) === "true")
     const setActiveGroupId = usePlayModeStore((state) => state.setActiveGroupId)
     const isGameMaster = usePlayModeStore((state) => state.isGameMaster)
     const setGameMaster = usePlayModeStore((state) => state.setGameMaster)
@@ -198,14 +209,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         }
         setSelectedCharacter(character)
     }
-    const updateBeatVisibility = async (character: GroupCharacter, showBeats: boolean) => {
-        if (!group) return
-        try {
-            await api.updateBeatVisibility(group.id, character.id, showBeats)
-            await refresh()
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Could not update beat visibility")
-        }
+    const setOtherPlayersBeats = (showBeats: boolean) => {
+        setShowOtherPlayersBeats(showBeats)
+        localStorage.setItem(otherPlayersBeatsStorageKey(user.id), String(showBeats))
     }
     const rollFallout = async (character: CharacterWithOwner) => {
         if (!group) return
@@ -282,6 +288,14 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                         </span>
                     </label>
                 )}
+                <label className="mt-2 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm">
+                    <Checkbox checked={showOtherPlayersBeats} onCheckedChange={(checked) => setOtherPlayersBeats(checked === true)} />
+                    <span>
+                        Show other players’ beats
+                        <br />
+                        <small className="text-muted-foreground">Only visible to you on this device.</small>
+                    </span>
+                </label>
             </aside>
             <main className="min-w-0 flex-1 p-5 sm:p-8">
                 <div className="mb-6 flex items-center justify-between gap-3 md:hidden">
@@ -305,6 +319,14 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                         </span>
                     </label>
                 )}
+                <label className="mb-4 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm md:hidden">
+                    <Checkbox checked={showOtherPlayersBeats} onCheckedChange={(checked) => setOtherPlayersBeats(checked === true)} />
+                    <span>
+                        Show other players’ beats
+                        <br />
+                        <small className="text-muted-foreground">Only visible to you on this device.</small>
+                    </span>
+                </label>
                 {!group ? (
                     <section className="mx-auto mt-20 max-w-md text-center">
                         <h1 className="text-3xl font-bold">{groups.length ? "Choose a play group" : "Start a play group"}</h1>
@@ -381,25 +403,6 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                                 >
                                                     {assigned ? "Remove" : "Add"}
                                                 </Button>
-                                                {assigned && (
-                                                    <label className="flex cursor-pointer items-center gap-2 pr-2 text-xs">
-                                                        <Checkbox
-                                                            checked={
-                                                                group.members
-                                                                    .find((member) => member.id === user.id)
-                                                                    ?.characters.find((assignedCharacter) => assignedCharacter.id === character.id)
-                                                                    ?.showBeats ?? true
-                                                            }
-                                                            onCheckedChange={(checked) => {
-                                                                const assignedCharacter = group.members
-                                                                    .find((member) => member.id === user.id)
-                                                                    ?.characters.find((entry) => entry.id === character.id)
-                                                                if (assignedCharacter) void updateBeatVisibility(assignedCharacter, checked === true)
-                                                            }}
-                                                        />
-                                                        Show beats
-                                                    </label>
-                                                )}
                                             </div>
                                         )
                                     })}
@@ -418,7 +421,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                     rollingFallout={rollingFalloutCharacterId === character.id}
                                     onOpen={() => openCharacter(character)}
                                     onFallout={() => void rollFallout(character)}
-                                    showBeats={character.showBeats}
+                                    showBeats={character.ownerId === user.id || showOtherPlayersBeats}
                                 />
                             ))}
                         </section>
@@ -426,7 +429,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     </>
                 )}
             </main>
-            <CharacterSheetModal character={selectedCharacter} onClose={() => setSelectedCharacter(null)} />
+            <CharacterSheetModal character={selectedCharacter} showBeats={showOtherPlayersBeats} onClose={() => setSelectedCharacter(null)} />
             {falloutRoll && <FalloutDie {...falloutRoll} value={falloutRoll.roll} />}
         </div>
     )
@@ -499,7 +502,7 @@ function CharacterCard({
     const data = character.data
     return (
         <article
-            className={`group cursor-pointer rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
+            className={`group flex h-full cursor-pointer flex-col rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${getClassCardTheme(data.characterClass)}`}
             onClick={onOpen}
         >
             <div className="flex items-start justify-between gap-3">
@@ -547,7 +550,7 @@ function CharacterCard({
                     <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
                 </div>
             )}
-            <div className="mt-4 flex gap-2" onClick={(event) => event.stopPropagation()}>
+            <div className="mt-auto flex gap-2 pt-4" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (
                     <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout}>
                         <Dices /> Roll fallout
@@ -561,65 +564,68 @@ function CharacterCard({
     )
 }
 
-function CharacterSheetModal({ character, onClose }: { character: CharacterWithOwner | null; onClose: () => void }) {
+function CharacterSheetModal({ character, showBeats, onClose }: { character: CharacterWithOwner | null; showBeats: boolean; onClose: () => void }) {
     return (
         <Dialog open={Boolean(character)} onOpenChange={(open) => !open && onClose()}>
             {character && (
-                <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl">
+                <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-6xl overflow-y-auto p-0 sm:max-w-6xl">
                     <DialogHeader className="sticky top-0 z-10 border-b bg-background p-6">
                         <DialogTitle className="text-3xl">{character.name || "Unnamed hiveborn"}</DialogTitle>
                         <DialogDescription>{character.nickname ?? "Group player"}’s read-only character sheet</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-6 p-6 md:grid-cols-2">
                         <SheetSection title="Identity">
-                            <p>
-                                <b>Class:</b> {character.data.characterClass || "—"}
-                            </p>
-                            <p>
-                                <b>Calling:</b> {character.data.calling || "—"}
-                            </p>
-                            <p>
-                                <b>Active beats:</b>
-                            </p>
-                            <p className="whitespace-pre-wrap">{character.data.activeBeats || "—"}</p>
+                            <div>
+                                <p className="font-bold">Class</p>
+                                <Markdown>{character.data.characterClass || "—"}</Markdown>
+                            </div>
+                            <div>
+                                <p className="font-bold">Calling</p>
+                                <Markdown>{character.data.calling || "—"}</Markdown>
+                            </div>
+                            {showBeats && (
+                                <div>
+                                    <p className="font-bold">Active beats</p>
+                                    <Markdown>{character.data.activeBeats || "—"}</Markdown>
+                                </div>
+                            )}
                         </SheetSection>
                         <SheetSection title="Stress & protections">
-                            <div className="grid grid-cols-2 gap-2">
-                                {resistances.map((resistance) => (
-                                    <p key={resistance}>
-                                        <b>{resistance.toUpperCase()}:</b> {character.data.stress[resistance]} stress / {character.data.protections[resistance]}{" "}
-                                        protection
-                                    </p>
-                                ))}
-                            </div>
+                            <ReadOnlyStressCounter stress={character.data.stress} protections={character.data.protections} />
                         </SheetSection>
                         <SheetSection title="Fallout">
                             <Markdown>{character.data.fallout || "None recorded"}</Markdown>
                         </SheetSection>
                         <SheetSection title="Abilities">
-                            <p className="whitespace-pre-wrap">{character.data.abilities || "—"}</p>
+                            <Markdown>{character.data.abilities || "—"}</Markdown>
                         </SheetSection>
                         <SheetSection title="Skills">
-                            <p className="whitespace-pre-wrap">
-                                {Object.entries(character.data.skills)
-                                    .filter(([, skill]) => skill.hasSkill)
-                                    .map(([skill, details]) => `${skill}${details.knacks ? ` — ${details.knacks}` : ""}`)
-                                    .join("\n") || "—"}
-                            </p>
+                            <Markdown>{selectedFeaturesMarkdown(character.data.skills)}</Markdown>
                         </SheetSection>
                         <SheetSection title="Domains">
-                            <p className="whitespace-pre-wrap">
-                                {Object.entries(character.data.domains)
-                                    .filter(([, domain]) => domain.hasDomain)
-                                    .map(([domain, details]) => `${domain}${details.knacks ? ` — ${details.knacks}` : ""}`)
-                                    .join("\n") || "—"}
-                            </p>
+                            <Markdown>{selectedFeaturesMarkdown(character.data.domains)}</Markdown>
                         </SheetSection>
-                        <SheetSection title="Equipment">
-                            <p className="whitespace-pre-wrap">{character.data.equipment || "—"}</p>
+                        <SheetSection
+                            title="Equipment"
+                            tagReference={{
+                                title: "EQUIPMENT TAGS IN USE",
+                                tags: equipmentTags,
+                                primaryText: character.data.equipment,
+                                primarySourceLabel: "Equipment",
+                            }}
+                        >
+                            <Markdown>{character.data.equipment || "—"}</Markdown>
                         </SheetSection>
-                        <SheetSection title="Resources">
-                            <p className="whitespace-pre-wrap">{character.data.resources || "—"}</p>
+                        <SheetSection
+                            title="Resources"
+                            tagReference={{
+                                title: "RESOURCE TAGS IN USE",
+                                tags: resourceTags,
+                                primaryText: character.data.resources,
+                                primarySourceLabel: "Resources",
+                            }}
+                        >
+                            <Markdown>{character.data.resources || "—"}</Markdown>
                         </SheetSection>
                     </div>
                 </DialogContent>
@@ -628,11 +634,44 @@ function CharacterSheetModal({ character, onClose }: { character: CharacterWithO
     )
 }
 
-function SheetSection({ title, children }: { title: string; children: React.ReactNode }) {
+type TagReference = {
+    title: string
+    tags: ReferenceTag[]
+    primaryText: string
+    primarySourceLabel: string
+}
+
+function SheetSection({ title, children, tagReference }: { title: string; children: React.ReactNode; tagReference?: TagReference }) {
+    const heading = (
+        <h3 className="flex min-h-10 items-center justify-between gap-3 bg-red-900 px-3 py-2 font-black tracking-wide text-white">
+            {title.toUpperCase()}
+            {tagReference && (
+                <DialogTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0 text-white hover:bg-red-800 hover:text-white"
+                        aria-label={`View ${title.toLowerCase()} tags in use`}
+                        title={`View ${title.toLowerCase()} tags in use`}
+                    >
+                        <BookOpen className="size-5" />
+                    </Button>
+                </DialogTrigger>
+            )}
+        </h3>
+    )
+
     return (
-        <section className="rounded-lg border border-border p-4">
-            <h3 className="mb-3 font-black tracking-wide text-primary">{title}</h3>
-            <div className="space-y-2 text-sm">{children}</div>
+        <section className="overflow-hidden border border-border bg-background/35 text-left">
+            {tagReference ? (
+                <Dialog>
+                    {heading}
+                    <TagReferenceDialog {...tagReference} relevantOnly />
+                </Dialog>
+            ) : (
+                heading
+            )}
+            <div className="space-y-3 p-4 text-sm">{children}</div>
         </section>
     )
 }
