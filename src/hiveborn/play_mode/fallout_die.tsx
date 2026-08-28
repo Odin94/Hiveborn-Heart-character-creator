@@ -209,17 +209,14 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
 
     const outcome = fallout ? `${fallout[0].toUpperCase()}${fallout.slice(1)} fallout` : "No fallout"
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/78 px-5 py-8 backdrop-blur-sm" role="status" aria-live="assertive">
-            <div
-                ref={stageRef}
-                className="relative h-[min(28rem,74dvh)] w-full max-w-xl overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-rose-950/60 via-background to-amber-950/30 shadow-2xl"
-            >
+        <div className="pointer-events-none fixed inset-0 z-50" role="status" aria-live="assertive">
+            <div ref={stageRef} className="relative h-full w-full overflow-hidden">
                 <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
-                <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-background/80 to-transparent px-6 py-5 text-center">
+                <div className="absolute inset-x-0 top-8 px-6 text-center drop-shadow-md">
                     <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Fallout roll</p>
                     <h2 className="mt-1 text-2xl font-black">{characterName}</h2>
                 </div>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent px-6 pb-6 pt-16 text-center">
+                <div className="absolute inset-x-0 bottom-10 px-6 text-center drop-shadow-md">
                     {webglUnavailable || settled ? (
                         <>
                             {webglUnavailable && <p className="text-5xl font-black text-primary">{value}</p>}
