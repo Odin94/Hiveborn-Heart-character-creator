@@ -116,17 +116,19 @@ export function CharacterSheetPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Copyright notice</DialogTitle>
-                        <DialogDescription className="text-muted-foreground text-sm">
-                            <p>
-                                <em>Hiveborn</em> is an independent production by <em>Odin</em> and is not affiliated with Rowan, Rook and Decard. It is
-                                published under the RR&D Community License. Heart is copyright Rowan, Rook and Decard.
-                            </p>
-                            <p className="mt-5">
-                                You can find out more and support these games at{" "}
-                                <a href="https://rowanrookanddecard.com" target="_blank">
-                                    rowanrookanddecard.com
-                                </a>
-                            </p>
+                        <DialogDescription asChild>
+                            <div className="text-muted-foreground text-sm">
+                                <p>
+                                    <em>Hiveborn</em> is an independent production by <em>Odin</em> and is not affiliated with Rowan, Rook and Decard. It is
+                                    published under the RR&D Community License. Heart is copyright Rowan, Rook and Decard.
+                                </p>
+                                <p className="mt-5">
+                                    You can find out more and support these games at{" "}
+                                    <a href="https://rowanrookanddecard.com" target="_blank">
+                                        rowanrookanddecard.com
+                                    </a>
+                                </p>
+                            </div>
                         </DialogDescription>
                     </DialogHeader>
                 </DialogContent>
