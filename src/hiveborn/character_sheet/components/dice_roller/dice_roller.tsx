@@ -35,6 +35,7 @@ const DiceRoller = () => {
     const characters = useCharacterStore.use.characters()
     const activeGroupId = usePlayModeStore((state) => state.activeGroupId)
     const activeGroupName = usePlayModeStore((state) => state.activeGroupName)
+    const activeGroupCharacterIds = usePlayModeStore((state) => state.activeGroupCharacterIds)
     const shareRolls = usePlayModeStore((state) => state.shareRolls)
     const setShareRolls = usePlayModeStore((state) => state.setShareRolls)
     const [activeTab, setActiveTab] = useState<RollerTab>("skill-domain")
@@ -50,6 +51,7 @@ const DiceRoller = () => {
     const trainedDomains = useMemo(() => domains.filter((domain) => characterDomains[domain]?.hasDomain), [characterDomains])
     const cloudCharacterId = cloudCharacterIds[currentCharacterIndex]
     const characterName = characters[currentCharacterIndex]?.name || `Character ${currentCharacterIndex + 1}`
+    const canShareRoll = Boolean(activeGroupId && cloudCharacterId && activeGroupCharacterIds.includes(cloudCharacterId))
 
     const diceCount = useMemo(() => {
         const skillDie = selectedSkill && characterSkills[selectedSkill]?.hasSkill ? 1 : 0
@@ -122,7 +124,7 @@ const DiceRoller = () => {
         rollTimeoutRef.current = window.setTimeout(() => {
             setRolling(false)
             setResult(getResult(resultValue))
-            if (activeGroupId && shareRolls && cloudCharacterId) {
+            if (shareRolls && canShareRoll && activeGroupId && cloudCharacterId) {
                 const label = [selectedSkill, selectedDomain].filter(Boolean).join(" + ") || "Heart roll"
                 void api
                     .shareRoll(activeGroupId, {
@@ -145,7 +147,7 @@ const DiceRoller = () => {
         setRolling(true)
         rollTimeoutRef.current = window.setTimeout(() => {
             setRolling(false)
-            if (activeGroupId && shareRolls && cloudCharacterId)
+            if (shareRolls && canShareRoll && activeGroupId && cloudCharacterId)
                 void api
                     .shareRoll(activeGroupId, {
                         characterId: cloudCharacterId,
@@ -265,12 +267,14 @@ const DiceRoller = () => {
             )}
 
             <label className="mt-4 flex cursor-pointer items-center gap-2 rounded border border-primary/20 p-3 text-sm">
-                <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!activeGroupId || !cloudCharacterId} />
+                <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!canShareRoll} />
                 <span>
-                    {activeGroupId && cloudCharacterId
-                        ? `Share as ${characterName} in ${activeGroupName ?? "your active group"}`
-                        : "Share this roll with my group"}
-                    {!activeGroupId ? " — choose a play group first." : !cloudCharacterId ? " — wait for this sheet to sync, then add it to the group." : ""}
+                    {canShareRoll ? `Share as ${characterName} in ${activeGroupName ?? "your active group"}` : "Share this roll with my group"}
+                    {!activeGroupId
+                        ? " — choose a play group first."
+                        : !cloudCharacterId
+                          ? " — wait for this sheet to sync, then add it to the group."
+                          : " — add this sheet to the active group first."}
                 </span>
             </label>
 

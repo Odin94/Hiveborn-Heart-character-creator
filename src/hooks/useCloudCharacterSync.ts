@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { API_URL, api, tokenStorage, type ApiRequestError, type CloudCharacter } from "@/lib/api"
+import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import type { Character } from "@/hiveborn/game_data/character"
 
@@ -150,6 +151,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             (localStorage.getItem(syncedAccountStorageKey) && localStorage.getItem(syncedAccountStorageKey) !== accountId)
         if (!accountId) {
             setCloudCharacters([], [], [])
+            usePlayModeStore.getState().setActiveGroup(null)
             knownIds.current = []
             previousAccountId.current = undefined
             return () => {
@@ -160,6 +162,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             // Do this before the network request so an old account's persisted
             // sheets never flash while the next account is loading.
             setCloudCharacters([], [], [])
+            usePlayModeStore.getState().setActiveGroup(null)
             knownIds.current = []
         }
 
