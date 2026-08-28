@@ -9,6 +9,9 @@ export const protectionMaximum = 5
 export type CharacterState = {
     characters: Character[]
     cloudCharacterIds: string[]
+    cloudCharacterVersions: number[]
+    /** Last server-confirmed data, used to make conflict-safe field patches. */
+    cloudCharacterBases: Character[]
     currentCharacterIndex: number
 
     name: string
@@ -41,8 +44,10 @@ export type CharacterState = {
     addCharacter: (name?: string) => void
     removeCharacter: (index: number) => void
     setCurrentCharacter: (index: number) => void
-    setCloudCharacters: (characters: Character[], ids: string[]) => void
+    setCloudCharacters: (characters: Character[], ids: string[], versions: number[]) => void
     setCloudCharacterIds: (ids: string[]) => void
+    applyRemoteCloudCharacter: (id: string, character: Character, version: number) => void
+    completeCloudCharacterSync: (id: string, snapshot: Character, character: Character, version: number) => void
     getCharacterData: () => Character
 }
 
@@ -91,7 +96,9 @@ export const useCharacterStore = createSelectors(
 
                 return {
                     characters: [getEmptyCharacter()],
-                    cloudCharacterIds: [],
+                    cloudCharacterIds: [""],
+                    cloudCharacterVersions: [0],
+                    cloudCharacterBases: [getEmptyCharacter()],
                     currentCharacterIndex: 0,
 
                     name: getEmptyCharacter().name,
@@ -130,6 +137,9 @@ export const useCharacterStore = createSelectors(
                         const newCharacter = { ...getEmptyCharacter() }
                         set({
                             characters: [...state.characters, newCharacter],
+                            cloudCharacterIds: [...state.cloudCharacterIds, ""],
+                            cloudCharacterVersions: [...state.cloudCharacterVersions, 0],
+                            cloudCharacterBases: [...state.cloudCharacterBases, newCharacter],
                             currentCharacterIndex: state.characters.length,
                             name: newCharacter.name,
                             characterClass: newCharacter.characterClass,
@@ -154,6 +164,8 @@ export const useCharacterStore = createSelectors(
                         set({
                             characters: newCharacters,
                             cloudCharacterIds: newCloudCharacterIds,
+                            cloudCharacterVersions: state.cloudCharacterVersions.filter((_, i) => i !== index),
+                            cloudCharacterBases: state.cloudCharacterBases.filter((_, i) => i !== index),
                             currentCharacterIndex: Math.max(0, newIndex),
                             name: character.name,
                             characterClass: character.characterClass,
@@ -190,11 +202,13 @@ export const useCharacterStore = createSelectors(
                             })
                         }
                     },
-                    setCloudCharacters: (characters, cloudCharacterIds) => {
+                    setCloudCharacters: (characters, cloudCharacterIds, cloudCharacterVersions) => {
                         const character = characters[0] || getEmptyCharacter()
                         set({
                             characters: characters.length ? characters : [getEmptyCharacter()],
                             cloudCharacterIds,
+                            cloudCharacterVersions,
+                            cloudCharacterBases: characters,
                             currentCharacterIndex: 0,
                             name: character.name,
                             characterClass: character.characterClass,
@@ -211,6 +225,80 @@ export const useCharacterStore = createSelectors(
                         })
                     },
                     setCloudCharacterIds: (cloudCharacterIds) => set({ cloudCharacterIds }),
+                    applyRemoteCloudCharacter: (id, remoteCharacter, version) => {
+                        const state = get()
+                        const index = state.cloudCharacterIds.indexOf(id)
+                        if (index < 0) return
+                        const localCharacter = state.characters[index]
+                        const baseCharacter = state.cloudCharacterBases[index]
+                        // Preserve an edit that has not reached the server yet. The sync layer
+                        // will rebase its field-level patch against this newer server version.
+                        if (!localCharacter || !baseCharacter || JSON.stringify(localCharacter) !== JSON.stringify(baseCharacter)) return
+
+                        const characters = [...state.characters]
+                        const cloudCharacterBases = [...state.cloudCharacterBases]
+                        const cloudCharacterVersions = [...state.cloudCharacterVersions]
+                        characters[index] = remoteCharacter
+                        cloudCharacterBases[index] = remoteCharacter
+                        cloudCharacterVersions[index] = version
+                        const isCurrentCharacter = index === state.currentCharacterIndex
+                        set({
+                            characters,
+                            cloudCharacterBases,
+                            cloudCharacterVersions,
+                            ...(isCurrentCharacter
+                                ? {
+                                      name: remoteCharacter.name,
+                                      characterClass: remoteCharacter.characterClass,
+                                      calling: remoteCharacter.calling,
+                                      activeBeats: remoteCharacter.activeBeats,
+                                      equipment: remoteCharacter.equipment,
+                                      resources: remoteCharacter.resources,
+                                      abilities: remoteCharacter.abilities,
+                                      fallout: remoteCharacter.fallout,
+                                      skills: remoteCharacter.skills,
+                                      domains: remoteCharacter.domains,
+                                      protections: remoteCharacter.protections,
+                                      stress: remoteCharacter.stress,
+                                  }
+                                : {}),
+                        })
+                    },
+                    completeCloudCharacterSync: (id, snapshot, remoteCharacter, version) => {
+                        const state = get()
+                        const index = state.cloudCharacterIds.indexOf(id)
+                        if (index < 0) return
+                        const characters = [...state.characters]
+                        const cloudCharacterBases = [...state.cloudCharacterBases]
+                        const cloudCharacterVersions = [...state.cloudCharacterVersions]
+                        const shouldApplyServerData = JSON.stringify(characters[index]) === JSON.stringify(snapshot)
+                        if (shouldApplyServerData) characters[index] = remoteCharacter
+                        cloudCharacterBases[index] = remoteCharacter
+                        cloudCharacterVersions[index] = version
+                        const isCurrentCharacter = index === state.currentCharacterIndex
+                        const currentCharacter = characters[index] || getEmptyCharacter()
+                        set({
+                            characters,
+                            cloudCharacterBases,
+                            cloudCharacterVersions,
+                            ...(isCurrentCharacter
+                                ? {
+                                      name: currentCharacter.name,
+                                      characterClass: currentCharacter.characterClass,
+                                      calling: currentCharacter.calling,
+                                      activeBeats: currentCharacter.activeBeats,
+                                      equipment: currentCharacter.equipment,
+                                      resources: currentCharacter.resources,
+                                      abilities: currentCharacter.abilities,
+                                      fallout: currentCharacter.fallout,
+                                      skills: currentCharacter.skills,
+                                      domains: currentCharacter.domains,
+                                      protections: currentCharacter.protections,
+                                      stress: currentCharacter.stress,
+                                  }
+                                : {}),
+                        })
+                    },
                     getCharacterData: () => getCurrentCharacter(),
                 }
             },

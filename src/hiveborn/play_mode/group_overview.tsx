@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
 import ThemeToggle from "@/components/theme-toggle"
-import { api, API_URL, tokenStorage, type CloudCharacter, type GroupCharacter, type PlayGroup, type User } from "@/lib/api"
+import { api, API_URL, tokenStorage, type CloudCharacter, type GroupCharacter, type PlayGroup, type PlayGroupInvitation, type User } from "@/lib/api"
 import { usePlayModeStore } from "@/lib/playMode"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { ReadOnlyStressCounter } from "@/hiveborn/character_sheet/components/stress_counter/stress_counter"
@@ -78,6 +78,7 @@ function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: L
 export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
     const [ownCharacters, setOwnCharacters] = useState<CloudCharacter[]>([])
+    const [invitations, setInvitations] = useState<PlayGroupInvitation[]>([])
     const [createName, setCreateName] = useState("")
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
@@ -87,15 +88,15 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const [showOtherPlayersBeats, setShowOtherPlayersBeats] = useState(() => localStorage.getItem(otherPlayersBeatsStorageKey(user.id)) === "true")
     const setActiveGroupId = usePlayModeStore((state) => state.setActiveGroupId)
-    const isGameMaster = usePlayModeStore((state) => state.isGameMaster)
-    const setGameMaster = usePlayModeStore((state) => state.setGameMaster)
     const cloudIds = useCharacterStore.use.cloudCharacterIds()
     const setCurrentCharacter = useCharacterStore.use.setCurrentCharacter()
+    const applyRemoteCloudCharacter = useCharacterStore.use.applyRemoteCloudCharacter()
 
     const refresh = useCallback(async () => {
         try {
             const [nextGroups, nextCharacters] = await Promise.all([api.groups(), api.characters()])
             setGroups(nextGroups.groups)
+            setInvitations(nextGroups.invitations)
             setOwnCharacters(nextCharacters.characters)
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Could not load play groups")
@@ -135,6 +136,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 try {
                     const event = JSON.parse(message.data) as LiveGroupEvent
                     setGroups((current) => applyLiveCharacterUpdate(current, group.id, event))
+                    if (event.type === "character.updated" && event.userId === user.id) {
+                        applyRemoteCloudCharacter(event.character.id, event.character.data, event.character.version)
+                    }
                 } catch {
                     // A malformed live event never prevents the authoritative refresh below.
                 }
@@ -152,7 +156,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             if (reconnectTimer) window.clearTimeout(reconnectTimer)
             socket?.close()
         }
-    }, [group?.id, refresh])
+    }, [applyRemoteCloudCharacter, group?.id, refresh, user.id])
 
     const createGroup = async () => {
         try {
@@ -170,10 +174,34 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         try {
             await api.invite(group.id, inviteNickname)
             setInviteNickname("")
-            await refresh()
-            toast.success("Player added to the group")
+            toast.success("Invitation sent")
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Could not invite that player")
+        }
+    }
+    const respondToInvitation = async (invitation: PlayGroupInvitation, accept: boolean) => {
+        try {
+            if (accept) {
+                const acceptedGroup = await api.acceptInvitation(invitation.group.id)
+                await refresh()
+                onSelectGroup(acceptedGroup.id)
+                toast.success(`Joined ${acceptedGroup.name}`)
+            } else {
+                await api.declineInvitation(invitation.group.id)
+                await refresh()
+                toast.success("Invitation declined")
+            }
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not update invitation")
+        }
+    }
+    const assignGameMaster = async (memberId: string, isGameMaster: boolean) => {
+        if (!group) return
+        try {
+            await api.setGameMaster(group.id, memberId, isGameMaster)
+            await refresh()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not update game master")
         }
     }
     const assignCharacter = async (character: CloudCharacter) => {
@@ -238,6 +266,8 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const characters: CharacterWithOwner[] =
         group?.members.flatMap((member) => member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname }))) ?? []
     const assignedOwnCharacterIds = new Set(group?.members.find((member) => member.id === user.id)?.characters.map((character) => character.id) ?? [])
+    const isGameMaster = group?.members.find((member) => member.id === user.id)?.isGameMaster ?? false
+    const isGroupOwner = group?.ownerId === user.id
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const hasFadingRolls = visibleRolls.length > 0
     useEffect(() => {
@@ -277,9 +307,6 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                         <Plus /> Create group
                     </Button>
                 </div>
-                <label className="mt-8 flex cursor-pointer items-center gap-2 rounded border border-primary/20 p-3 text-sm">
-                    <Checkbox checked={isGameMaster} onCheckedChange={(checked) => setGameMaster(checked === true)} /> I’m the game master
-                </label>
                 {isGameMaster && (
                     <label className="mt-2 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm">
                         <Checkbox checked={autoUpdateStress} onCheckedChange={(checked) => setAutoUpdateStress(checked === true)} />
@@ -302,9 +329,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     </Button>
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
-                        <label className="flex cursor-pointer items-center gap-2 rounded border border-primary/20 px-3 py-2 text-sm">
-                            <Checkbox checked={isGameMaster} onCheckedChange={(checked) => setGameMaster(checked === true)} /> I’m the GM
-                        </label>
+                        {isGameMaster && <span className="rounded border border-primary/20 px-3 py-2 text-sm">You’re a GM</span>}
                     </div>
                 </div>
                 {isGameMaster && (
@@ -321,6 +346,29 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     <Checkbox checked={showOtherPlayersBeats} onCheckedChange={(checked) => setOtherPlayersBeats(checked === true)} />
                     <span>Show me other players’ beats</span>
                 </label>
+                {invitations.length > 0 && (
+                    <section className="mb-6 rounded-lg border border-primary/25 bg-card/40 p-4">
+                        <h2 className="font-bold">Play group invitations</h2>
+                        <div className="mt-3 space-y-3">
+                            {invitations.map((invitation) => (
+                                <div key={invitation.group.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-background/40 p-3">
+                                    <p className="text-sm">
+                                        <span className="font-semibold">{invitation.group.name}</span>
+                                        {invitation.invitedByNickname ? ` — invited by ${invitation.invitedByNickname}` : ""}
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => void respondToInvitation(invitation, false)}>
+                                            Decline
+                                        </Button>
+                                        <Button size="sm" onClick={() => void respondToInvitation(invitation, true)}>
+                                            Accept
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
                 {!group ? (
                     <section className="mx-auto mt-20 max-w-md text-center">
                         <h1 className="text-3xl font-bold">{groups.length ? "Choose a play group" : "Start a play group"}</h1>
@@ -379,6 +427,27 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                             </Button>
                         </section>
                         <section className="mb-6 rounded-lg bg-card/40 p-3">
+                            <h2 className="font-semibold">Game masters</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                {isGroupOwner
+                                    ? "Choose any number of members, or leave the group without a GM."
+                                    : "Only the group owner can assign game masters."}
+                            </p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {group.members.map((member) => (
+                                    <label key={member.id} className="flex items-center gap-2 rounded-md border bg-background/40 px-3 py-2 text-sm">
+                                        <Checkbox
+                                            checked={member.isGameMaster}
+                                            disabled={!isGroupOwner}
+                                            onCheckedChange={(checked) => void assignGameMaster(member.id, checked === true)}
+                                        />
+                                        {member.nickname ?? "Player"}
+                                        {member.id === group.ownerId ? " (owner)" : ""}
+                                    </label>
+                                ))}
+                            </div>
+                        </section>
+                        <section className="mb-6 rounded-lg bg-card/40 p-3">
                             <h2 className="font-semibold">Your characters in this group</h2>
                             {ownCharacters.length ? (
                                 <div className="mt-3 flex flex-wrap gap-2">
@@ -430,12 +499,15 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
 }
 
 function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwner[]; rolls: PlayGroup["rolls"]; now: number }) {
-    const knownCharacterNames = new Set(characters.map(rollCharacterName))
-    const formerCharacterNames = [...new Set(rolls.map((roll) => roll.characterName).filter((name) => !knownCharacterNames.has(name)))]
-    const columns = [
-        ...characters.map((character) => ({ id: character.id, name: rollCharacterName(character) })),
-        ...formerCharacterNames.map((name) => ({ id: `former-${name}`, name })),
-    ]
+    const knownCharacterIds = new Set(characters.map((character) => character.id))
+    const formerCharacters = [
+        ...new Map(
+            rolls
+                .filter((roll) => !roll.characterId || !knownCharacterIds.has(roll.characterId))
+                .map((roll) => [roll.characterId ?? `legacy-${roll.characterName}`, roll.characterName]),
+        ).entries(),
+    ].map(([id, name]) => ({ id, name }))
+    const columns = [...characters.map((character) => ({ id: character.id, name: rollCharacterName(character) })), ...formerCharacters]
 
     return (
         <section className="mt-8 rounded-lg bg-card/40 p-4">
@@ -444,7 +516,9 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
                 <div className="mt-3 overflow-x-auto pb-1">
                     <div className="grid min-w-max grid-flow-col auto-cols-[minmax(13rem,1fr)] gap-4">
                         {columns.map((column) => {
-                            const characterRolls = rolls.filter((roll) => roll.characterName === column.name)
+                            const characterRolls = rolls.filter(
+                                (roll) => roll.characterId === column.id || (!roll.characterId && column.id === `legacy-${roll.characterName}`),
+                            )
                             return (
                                 <section key={column.id} className="min-h-28 rounded-md bg-background/35 p-3">
                                     <h3 className="truncate text-sm font-bold" title={column.name}>

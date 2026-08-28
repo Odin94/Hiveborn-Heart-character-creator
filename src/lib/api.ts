@@ -4,15 +4,25 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3003"
 const TOKEN_KEY = "hiveborn-auth-token"
 
 export type User = { id: string; email: string; firstName: string | null; lastName: string | null; nickname: string | null }
-export type CloudCharacter = { id: string; name: string; data: Character; updatedAt: string }
+export type CloudCharacter = { id: string; name: string; data: Character; version: number; updatedAt: string }
 export type GroupCharacter = CloudCharacter
+export type PlayGroupInvitation = { group: Pick<PlayGroup, "id" | "name" | "ownerId" | "createdAt">; invitedByNickname: string | null; createdAt: string }
 export type PlayGroup = {
     id: string
     name: string
     ownerId: string
     createdAt: string
-    members: Array<{ id: string; nickname: string | null; joinedAt: string; characters: GroupCharacter[] }>
-    rolls: Array<{ id: string; userId: string; characterName: string; label: string; dice: string; result: string; createdAt: string }>
+    members: Array<{ id: string; nickname: string | null; joinedAt: string; isGameMaster: boolean; characters: GroupCharacter[] }>
+    rolls: Array<{
+        id: string
+        userId: string
+        characterId: string | null
+        characterName: string
+        label: string
+        dice: string
+        result: string
+        createdAt: string
+    }>
 }
 
 export const tokenStorage = {
@@ -48,20 +58,22 @@ export const api = {
     updateProfile: (nickname: string) => request<User>("/auth/me", { method: "PUT", body: JSON.stringify({ nickname }) }),
     logout: () => request<{ success: boolean }>("/auth/logout", { method: "POST" }),
     characters: () => request<{ characters: CloudCharacter[] }>("/characters"),
-    createCharacter: (character: Character) =>
-        request<CloudCharacter>("/characters", { method: "POST", body: JSON.stringify({ name: character.name, data: character }) }),
-    updateCharacter: (id: string, character: Character) =>
-        request<CloudCharacter>(`/characters/${id}`, { method: "PUT", body: JSON.stringify({ name: character.name, data: character }) }),
+    createCharacter: (character: Character) => request<CloudCharacter>("/characters", { method: "POST", body: JSON.stringify({ data: character }) }),
+    updateCharacter: (id: string, payload: { baseVersion: number; baseData: Character; changes: Partial<Character> }) =>
+        request<CloudCharacter>(`/characters/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
     deleteCharacter: (id: string) => request<{ success: boolean }>(`/characters/${id}`, { method: "DELETE" }),
-    groups: () => request<{ groups: PlayGroup[] }>("/play-groups"),
+    groups: () => request<{ groups: PlayGroup[]; invitations: PlayGroupInvitation[] }>("/play-groups"),
     createGroup: (name: string) => request<PlayGroup>("/play-groups", { method: "POST", body: JSON.stringify({ name }) }),
-    invite: (groupId: string, nickname: string) =>
-        request<PlayGroup>(`/play-groups/${groupId}/invitations`, { method: "POST", body: JSON.stringify({ nickname }) }),
+    invite: (groupId: string, nickname: string) => request(`/play-groups/${groupId}/invitations`, { method: "POST", body: JSON.stringify({ nickname }) }),
+    acceptInvitation: (groupId: string) => request<PlayGroup>(`/play-groups/${groupId}/invitations/accept`, { method: "POST" }),
+    declineInvitation: (groupId: string) => request<{ success: boolean }>(`/play-groups/${groupId}/invitations`, { method: "DELETE" }),
+    setGameMaster: (groupId: string, userId: string, isGameMaster: boolean) =>
+        request<PlayGroup>(`/play-groups/${groupId}/members/${userId}/game-master`, { method: "PUT", body: JSON.stringify({ isGameMaster }) }),
     assignCharacter: (groupId: string, characterId: string) =>
         request<PlayGroup>(`/play-groups/${groupId}/characters`, { method: "POST", body: JSON.stringify({ characterId }) }),
     removeCharacterFromGroup: (groupId: string, characterId: string) =>
         request<{ success: boolean }>(`/play-groups/${groupId}/characters/${characterId}`, { method: "DELETE" }),
-    shareRoll: (groupId: string, payload: { label: string; dice: string; result: string; characterName: string }) =>
+    shareRoll: (groupId: string, payload: { label: string; dice: string; result: string; characterId: string }) =>
         request(`/play-groups/${groupId}/rolls`, { method: "POST", body: JSON.stringify(payload) }),
     falloutRoll: (groupId: string, payload: { characterId: string; applyStressUpdate: boolean }) =>
         request<{

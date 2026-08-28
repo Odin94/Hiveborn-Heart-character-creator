@@ -66,8 +66,28 @@ export const groupMembers = sqliteTable(
         joinedAt: integer("joined_at", { mode: "timestamp" })
             .notNull()
             .default(sql`(unixepoch())`),
+        isGameMaster: integer("is_game_master", { mode: "boolean" }).notNull().default(false),
     },
     (table) => ({ pk: primaryKey({ columns: [table.groupId, table.userId] }), userIdx: index("group_members_user_idx").on(table.userId) }),
+)
+
+export const groupInvitations = sqliteTable(
+    "play_group_invitations",
+    {
+        groupId: text("group_id")
+            .notNull()
+            .references(() => groups.id, { onDelete: "cascade" }),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        invitedByUserId: text("invited_by_user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        createdAt: integer("created_at", { mode: "timestamp" })
+            .notNull()
+            .default(sql`(unixepoch())`),
+    },
+    (table) => ({ pk: primaryKey({ columns: [table.groupId, table.userId] }), userIdx: index("group_invitations_user_idx").on(table.userId) }),
 )
 
 export const groupCharacterAssignments = sqliteTable(
@@ -98,6 +118,7 @@ export const rollEvents = sqliteTable("roll_events", {
     userId: text("user_id")
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
+    characterId: text("character_id").references(() => characters.id, { onDelete: "set null" }),
     characterName: text("character_name").notNull(),
     label: text("label").notNull(),
     dice: text("dice").notNull(),
