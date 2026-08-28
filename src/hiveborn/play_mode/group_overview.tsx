@@ -292,11 +292,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 )}
                 <label className="mt-2 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm">
                     <Checkbox checked={showOtherPlayersBeats} onCheckedChange={(checked) => setOtherPlayersBeats(checked === true)} />
-                    <span>
-                        Show other players’ beats
-                        <br />
-                        <small className="text-muted-foreground">Only visible to you on this device.</small>
-                    </span>
+                    <span>Show me other players’ beats</span>
                 </label>
             </aside>
             <main className="min-w-0 flex-1 p-5 sm:p-8">
@@ -323,11 +319,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 )}
                 <label className="mb-4 flex cursor-pointer items-start gap-2 rounded border border-primary/20 p-3 text-sm md:hidden">
                     <Checkbox checked={showOtherPlayersBeats} onCheckedChange={(checked) => setOtherPlayersBeats(checked === true)} />
-                    <span>
-                        Show other players’ beats
-                        <br />
-                        <small className="text-muted-foreground">Only visible to you on this device.</small>
-                    </span>
+                    <span>Show me other players’ beats</span>
                 </label>
                 {!group ? (
                     <section className="mx-auto mt-20 max-w-md text-center">

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import OnPageRollOverlay from "@/components/on-page-roll-overlay"
+import { getOnPageRollFadeDelayMs, onPageRollPostAnimationLifetimeMs, OnPageRollOverlay } from "@/components/on-page-roll-overlay"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { type Resistance } from "@/hiveborn/game_data/resistances"
 import { toast } from "sonner"
@@ -16,6 +16,8 @@ type PendingStressRoll = {
     characterIndex: number
     protection: number
 }
+
+const stressRollAnimationMs = 1600
 
 const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`
 
@@ -71,7 +73,7 @@ const StressRollDialog = ({
 
             if (!character) {
                 toast.error("Could not add stress because the character sheet no longer exists")
-                hideTimer.current = window.setTimeout(finishAnimation, 1000)
+                hideTimer.current = window.setTimeout(finishAnimation, onPageRollPostAnimationLifetimeMs)
                 return
             }
 
@@ -88,8 +90,8 @@ const StressRollDialog = ({
             const resistanceName = capitalize(roll.resistance)
             toast(`Rolled ${roll.die.value}, added ${addedStress} ${resistanceName} stress`)
 
-            hideTimer.current = window.setTimeout(finishAnimation, 1000)
-        }, 1600)
+            hideTimer.current = window.setTimeout(finishAnimation, onPageRollPostAnimationLifetimeMs)
+        }, stressRollAnimationMs)
     }
 
     const resistanceName = resistance ? capitalize(resistance) : ""
@@ -111,7 +113,7 @@ const StressRollDialog = ({
             </Dialog>
 
             {pendingRoll && (
-                <OnPageRollOverlay className="z-[70]" fadeDelayMs={1600} role="status">
+                <OnPageRollOverlay className="z-[70]" fadeDelayMs={getOnPageRollFadeDelayMs(stressRollAnimationMs)} role="status">
                     <span className="sr-only">Rolling d{pendingRoll.die.sides}</span>
                     <DiceScene dice={[pendingRoll.die]} rolling presentation="sheet-overlay" />
                 </OnPageRollOverlay>
