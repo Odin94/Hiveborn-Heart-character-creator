@@ -303,9 +303,17 @@ export async function groupRoutes(fastify: FastifyInstance) {
         // deliberately) submit a chosen fallout outcome from a modified client.
         const roll = randomInt(1, 13)
         const fallout = roll < totalStress ? (roll >= 7 ? "major" : "minor") : null
+        let stressUpdate: { type: "all" } | { type: "resistance"; resistance: string } | null = null
         if (fallout && parsed.data.applyStressUpdate) {
-            if (fallout === "major") for (const key of Object.keys(data.stress ?? {})) data.stress![key] = 0
-            else if (data.lastStressResistance && data.stress) data.stress[data.lastStressResistance] = 0
+            if (fallout === "major" && data.stress) {
+                for (const key of Object.keys(data.stress)) data.stress[key] = 0
+                stressUpdate = { type: "all" }
+            } else if (data.lastStressResistance && data.stress) {
+                data.stress[data.lastStressResistance] = 0
+                stressUpdate = { type: "resistance", resistance: data.lastStressResistance }
+            }
+        }
+        if (stressUpdate) {
             const [updatedCharacter] = await db
                 .update(schema.characters)
                 .set({ data: JSON.stringify(data), updatedAt: new Date(), version: character.version + 1 })
@@ -320,10 +328,25 @@ export async function groupRoutes(fastify: FastifyInstance) {
             totalStress,
             roll,
             fallout,
-            stressUpdated: Boolean(fallout && parsed.data.applyStressUpdate),
+            stressUpdated: Boolean(stressUpdate),
+            stressUpdate,
             lastStressResistance: data.lastStressResistance ?? null,
         }
-        broadcastGroupEvent(params.data.id, { type: "fallout.rolled", result })
+        const outcome = fallout ? `${fallout[0].toUpperCase()}${fallout.slice(1)} fallout` : "No fallout"
+        const updateSummary = stressUpdate?.type === "all" ? "set all stress to 0" : stressUpdate ? `set ${stressUpdate.resistance} stress to 0` : ""
+        const [sharedRoll] = await db
+            .insert(schema.rollEvents)
+            .values({
+                id: nanoid(),
+                groupId: params.data.id,
+                userId: request.userId!,
+                characterName: character.name || "Unnamed hiveborn",
+                label: "Fallout",
+                dice: "d12",
+                result: updateSummary ? `${outcome} — ${updateSummary}` : outcome,
+            })
+            .returning()
+        broadcastGroupEvent(params.data.id, { type: "roll.shared", roll: sharedRoll })
         trackEvent("group_fallout_rolled", request.userId!, { fallout: fallout ?? "none", auto_updated: result.stressUpdated })
         return result
     })
