@@ -2,6 +2,9 @@ import * as THREE from "three"
 import { useEffect, useRef, useState } from "react"
 import OnPageRollOverlay from "@/components/on-page-roll-overlay"
 
+export const falloutRollAnimationMs = 1600
+export const falloutRollOverlayLifetimeMs = 2600
+
 type Face = {
     value: number
     normal: THREE.Vector3
@@ -174,7 +177,7 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         resize()
 
         const frame = (now: number) => {
-            const progress = Math.min((now - startedAt) / 2350, 1)
+            const progress = Math.min((now - startedAt) / falloutRollAnimationMs, 1)
             const travel = smoothstep(progress)
             const base = initial.clone().slerp(target, travel)
             const spin = new THREE.Quaternion().setFromAxisAngle(spinAxis, Math.PI * 2 * 4 * smoothstep(progress))
@@ -210,7 +213,7 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
 
     const outcome = fallout ? `${fallout[0].toUpperCase()}${fallout.slice(1)} fallout` : "No fallout"
     return (
-        <OnPageRollOverlay className="z-50" fadeDelayMs={2600} blockInteraction role="status" aria-live="assertive">
+        <OnPageRollOverlay className="z-50" fadeDelayMs={falloutRollAnimationMs} blockInteraction role="status" aria-live="assertive">
             <div ref={stageRef} className="relative h-full w-full overflow-hidden">
                 <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
                 <div className="absolute inset-x-0 top-8 px-6 text-center drop-shadow-md">
