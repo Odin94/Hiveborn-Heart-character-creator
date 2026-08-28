@@ -30,7 +30,8 @@ const DiceRoller = () => {
     const setRisk = useDiceRollerStore.use.setRisk()
     const characterSkills = useCharacterStore.use.skills()
     const characterDomains = useCharacterStore.use.domains()
-    const characterName = useCharacterStore.use.name()
+    const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
+    const cloudCharacterIds = useCharacterStore.use.cloudCharacterIds()
     const activeGroupId = usePlayModeStore((state) => state.activeGroupId)
     const shareRolls = usePlayModeStore((state) => state.shareRolls)
     const setShareRolls = usePlayModeStore((state) => state.setShareRolls)
@@ -45,6 +46,7 @@ const DiceRoller = () => {
     const rollTimeoutRef = useRef<number | undefined>(undefined)
     const trainedSkills = useMemo(() => skills.filter((skill) => characterSkills[skill]?.hasSkill), [characterSkills])
     const trainedDomains = useMemo(() => domains.filter((domain) => characterDomains[domain]?.hasDomain), [characterDomains])
+    const cloudCharacterId = cloudCharacterIds[currentCharacterIndex]
 
     const diceCount = useMemo(() => {
         const skillDie = selectedSkill && characterSkills[selectedSkill]?.hasSkill ? 1 : 0
@@ -117,11 +119,11 @@ const DiceRoller = () => {
         rollTimeoutRef.current = window.setTimeout(() => {
             setRolling(false)
             setResult(getResult(resultValue))
-            if (activeGroupId && shareRolls) {
+            if (activeGroupId && shareRolls && cloudCharacterId) {
                 const label = [selectedSkill, selectedDomain].filter(Boolean).join(" + ") || "Heart roll"
                 void api
                     .shareRoll(activeGroupId, {
-                        characterName: characterName || "Unnamed hiveborn",
+                        characterId: cloudCharacterId,
                         label,
                         dice: `${diceCount}d10`,
                         result: String(resultValue),
@@ -140,10 +142,10 @@ const DiceRoller = () => {
         setRolling(true)
         rollTimeoutRef.current = window.setTimeout(() => {
             setRolling(false)
-            if (activeGroupId && shareRolls)
+            if (activeGroupId && shareRolls && cloudCharacterId)
                 void api
                     .shareRoll(activeGroupId, {
-                        characterName: characterName || "Unnamed hiveborn",
+                        characterId: cloudCharacterId,
                         label: "Free roll",
                         dice: `${freeDiceCount}d${freeDieSize}`,
                         result: nextDice.map((die) => die.value).join(", "),
@@ -260,8 +262,11 @@ const DiceRoller = () => {
             )}
 
             <label className="mt-4 flex cursor-pointer items-center gap-2 rounded border border-primary/20 p-3 text-sm">
-                <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!activeGroupId} />
-                <span>Share this roll with my group{!activeGroupId ? " (choose a play group first)" : ""}</span>
+                <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!activeGroupId || !cloudCharacterId} />
+                <span>
+                    Share this roll with my group
+                    {!activeGroupId ? " (choose a play group first)" : !cloudCharacterId ? " (wait for this sheet to sync)" : ""}
+                </span>
             </label>
 
             <Button type="button" size="lg" className="mt-2 h-14 w-full text-lg font-black tracking-wide" disabled={rolling} onClick={handleRoll}>

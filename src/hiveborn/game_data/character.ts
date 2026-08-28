@@ -69,8 +69,8 @@ export const characterSchema = z.object({
     fallout: z.string(),
     domains: z.record(z.enum(domains), domainSchema).transform(ensureCompleteDomainRecord),
     skills: z.record(z.enum(skills), skillSchema).transform(ensureCompleteSkillRecord),
-    protections: z.record(z.enum(resistances), z.number()).transform(ensureCompleteResistanceRecord),
-    stress: z.record(z.enum(resistances), z.number()).transform(ensureCompleteResistanceRecord),
+    protections: z.record(z.enum(resistances), z.number().int().min(0).max(5)).transform(ensureCompleteResistanceRecord),
+    stress: z.record(z.enum(resistances), z.number().int().min(0).max(10)).transform(ensureCompleteResistanceRecord),
     lastStressResistance: z.enum(resistances).optional().default("blood"),
 })
 
