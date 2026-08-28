@@ -5,7 +5,7 @@ const TOKEN_KEY = "hiveborn-auth-token"
 
 export type User = { id: string; email: string; firstName: string | null; lastName: string | null; nickname: string | null }
 export type CloudCharacter = { id: string; name: string; data: Character; updatedAt: string }
-export type GroupCharacter = CloudCharacter & { showBeats: boolean }
+export type GroupCharacter = CloudCharacter
 export type PlayGroup = {
     id: string
     name: string
@@ -61,11 +61,6 @@ export const api = {
         request<PlayGroup>(`/play-groups/${groupId}/characters`, { method: "POST", body: JSON.stringify({ characterId }) }),
     removeCharacterFromGroup: (groupId: string, characterId: string) =>
         request<{ success: boolean }>(`/play-groups/${groupId}/characters/${characterId}`, { method: "DELETE" }),
-    updateBeatVisibility: (groupId: string, characterId: string, showBeats: boolean) =>
-        request<{ showBeats: boolean }>(`/play-groups/${groupId}/characters/${characterId}`, {
-            method: "PATCH",
-            body: JSON.stringify({ showBeats }),
-        }),
     shareRoll: (groupId: string, payload: { label: string; dice: string; result: string; characterName: string }) =>
         request(`/play-groups/${groupId}/rolls`, { method: "POST", body: JSON.stringify(payload) }),
     falloutRoll: (groupId: string, payload: { characterId: string; applyStressUpdate: boolean }) =>
