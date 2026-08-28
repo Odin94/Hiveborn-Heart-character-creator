@@ -264,7 +264,7 @@ const DiceRoller = () => {
                 <span>Share this roll with my group{!activeGroupId ? " (choose a play group first)" : ""}</span>
             </label>
 
-            <Button type="button" size="lg" className="h-14 w-full text-lg font-black tracking-wide" disabled={rolling} onClick={handleRoll}>
+            <Button type="button" size="lg" className="mt-2 h-14 w-full text-lg font-black tracking-wide" disabled={rolling} onClick={handleRoll}>
                 ROLL
             </Button>
 
