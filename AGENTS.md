@@ -1,5 +1,11 @@
 # Hiveborn Agent Guide
 
+## Git Workflow
+
+- Commit changes continuously as you work, grouping related edits into meaningful commits rather than leaving work uncommitted until the end.
+- If you are working in a worktree, rebase your completed work onto `main` before handing it off.
+- If you are already on `main`, keep changes and commits directly on `main`; do not create a separate integration branch.
+
 ## Local Play Mode Login
 
 When Hiveborn is running locally, use the **/Local test sign-in/** link in the top navigation to enter Play Mode without WorkOS setup. It only appears for `localhost` and `127.0.0.1`, and the backend rejects the endpoint in production or for non-local hosts.
