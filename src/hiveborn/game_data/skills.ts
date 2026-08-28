@@ -8,6 +8,19 @@ import { RiKnifeBloodLine } from "react-icons/ri"
 
 export const skills = ["compel", "delve", "discern", "endure", "evade", "hunt", "kill", "mend", "sneak"] as const
 export type SkillKey = (typeof skills)[number]
+
+export const skillDescriptions: Record<SkillKey, string> = {
+    compel: "Get someone to do what you want through threats, lies, flattery, or reason.",
+    delve: "Press into dangerous or unknown territory.",
+    discern: "Understand the world using information you can access.",
+    endure: "Resist the Heart's effects on body and mind.",
+    evade: "Escape someone or something that is tracking you down.",
+    hunt: "Track down someone or something trying to escape you.",
+    kill: "End lives with weapons or your bare hands.",
+    mend: "Repair what is broken, or build something new.",
+    sneak: "Hide yourself or something from others' attention.",
+}
+
 export const isSkill = (maybeSkill: string | SkillKey): maybeSkill is SkillKey => {
     return skills.includes(maybeSkill as SkillKey)
 }

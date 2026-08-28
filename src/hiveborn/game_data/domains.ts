@@ -9,6 +9,18 @@ import { ReactNode } from "react"
 
 export const domains = ["cursed", "desolate", "haven", "occult", "religion", "technology", "warren", "wild"] as const
 export type DomainKey = (typeof domains)[number]
+
+export const domainDescriptions: Record<DomainKey, string> = {
+    cursed: "Dangerous places marked by the Heart.",
+    desolate: "Wastelands and abandoned towns.",
+    haven: "Settlements where people live, work, and form communities.",
+    occult: "Hidden knowledge and black magic.",
+    religion: "Gods and things worshipped like gods.",
+    technology: "Machines, buildings, and devices.",
+    warren: "Cramped, dense corridors.",
+    wild: "Wilderness, vegetation, and animals.",
+}
+
 export const isDomain = (maybeDomain: string | DomainKey): maybeDomain is DomainKey => {
     return domains.includes(maybeDomain as DomainKey)
 }
