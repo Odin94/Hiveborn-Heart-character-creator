@@ -19,11 +19,11 @@ type PendingStressRoll = {
 const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`
 
 const StressDieButton = ({ size, onClick }: { size: DieSize; onClick: () => void }) => (
-    <Button type="button" variant="outline" className="h-16 justify-between px-3" onClick={onClick}>
+    <Button type="button" variant="outline" className="h-20 justify-between px-4" onClick={onClick}>
         <span className="font-bold">d{size}</span>
-        <span className="relative h-10 w-10 shrink-0 overflow-hidden" aria-hidden="true">
-            <span className="absolute top-0 left-4 scale-[0.28] origin-top-left">
-                <AnimatedDie die={{ id: size, value: size, sides: size, removed: false }} rolling={false} index={0} />
+        <span className="relative h-12 w-16 shrink-0 overflow-visible" aria-hidden="true">
+            <span className="absolute top-0 left-4 scale-[0.32] origin-top-left">
+                <AnimatedDie die={{ id: size, value: size === 8 ? 2 : size, sides: size, removed: false }} rolling={false} index={0} />
             </span>
         </span>
     </Button>
@@ -110,8 +110,8 @@ const StressRollDialog = ({
             </Dialog>
 
             {pendingRoll && (
-                <div className="pointer-events-none fixed top-1/2 left-1/2 z-[70] w-[min(18rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-primary/25 bg-background/95 p-3 shadow-2xl backdrop-blur-sm">
-                    <DiceScene dice={[pendingRoll.die]} rolling />
+                <div className="pointer-events-none fixed inset-0 z-[70]" aria-live="polite">
+                    <DiceScene dice={[pendingRoll.die]} rolling presentation="sheet-overlay" />
                 </div>
             )}
         </>
