@@ -3,8 +3,9 @@ import { persist } from "zustand/middleware"
 
 type PlayModeState = {
     activeGroupId: string | null
+    activeGroupName: string | null
     shareRolls: boolean
-    setActiveGroupId: (id: string | null) => void
+    setActiveGroup: (group: { id: string; name: string } | null) => void
     setShareRolls: (shareRolls: boolean) => void
 }
 
@@ -12,8 +13,9 @@ export const usePlayModeStore = create<PlayModeState>()(
     persist(
         (set) => ({
             activeGroupId: null,
+            activeGroupName: null,
             shareRolls: true,
-            setActiveGroupId: (activeGroupId) => set({ activeGroupId }),
+            setActiveGroup: (group) => set({ activeGroupId: group?.id ?? null, activeGroupName: group?.name ?? null }),
             setShareRolls: (shareRolls) => set({ shareRolls }),
         }),
         { name: "hiveborn-play-mode" },

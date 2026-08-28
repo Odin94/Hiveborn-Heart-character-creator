@@ -7,6 +7,7 @@ import { isAllowedFrontendOrigin, isLocalhostHost, isLoopbackAddress } from "../
 
 const subscribers = new Map<string, Set<WebSocket>>()
 const userSubscribers = new Map<string, Set<WebSocket>>()
+const onlineMembers = new Map<string, Map<string, number>>()
 
 type CharacterChange = {
     character?: Record<string, unknown> & { id?: string }
@@ -26,6 +27,10 @@ export function broadcastUserEvent(userId: string, event: Record<string, unknown
     if (!sockets) return
     const payload = JSON.stringify(event)
     for (const socket of sockets) if (socket.readyState === socket.OPEN) socket.send(payload)
+}
+
+export function onlineGroupMemberIds(groupId: string) {
+    return [...(onlineMembers.get(groupId)?.keys() ?? [])]
 }
 
 export async function broadcastUserCharacterChange(userId: string, change: CharacterChange = {}) {
@@ -82,9 +87,21 @@ export async function registerLiveGroupRoutes(fastify: FastifyInstance) {
         const groupSubscribers = subscribers.get(params.id) ?? new Set<WebSocket>()
         groupSubscribers.add(socket)
         subscribers.set(params.id, groupSubscribers)
+        const members = onlineMembers.get(params.id) ?? new Map<string, number>()
+        const previousConnections = members.get(user.id) ?? 0
+        members.set(user.id, previousConnections + 1)
+        onlineMembers.set(params.id, members)
+        if (!previousConnections) broadcastGroupEvent(params.id, { type: "member.presence", userId: user.id, online: true })
         socket.on("close", () => {
             groupSubscribers.delete(socket)
             if (!groupSubscribers.size) subscribers.delete(params.id!)
+            const connectionCount = (members.get(user.id) ?? 1) - 1
+            if (connectionCount > 0) members.set(user.id, connectionCount)
+            else {
+                members.delete(user.id)
+                broadcastGroupEvent(params.id!, { type: "member.presence", userId: user.id, online: false })
+            }
+            if (!members.size) onlineMembers.delete(params.id!)
         })
     })
 }

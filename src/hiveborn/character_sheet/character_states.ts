@@ -9,6 +9,8 @@ const cloneCharacter = (character: Character) => structuredClone(character)
 
 export type CharacterState = {
     characters: Character[]
+    /** Local snapshots for a bounded, offline-friendly undo action. */
+    characterHistory: Character[][]
     cloudCharacterIds: string[]
     cloudCharacterVersions: number[]
     /** Last server-confirmed data, used to make conflict-safe field patches. */
@@ -49,6 +51,7 @@ export type CharacterState = {
     setCloudCharacterIds: (ids: string[]) => void
     applyRemoteCloudCharacter: (id: string, character: Character, version: number) => void
     completeCloudCharacterSync: (id: string, snapshot: Character, character: Character, version: number) => void
+    undoCharacterChange: () => void
     getCharacterData: () => Character
 }
 
@@ -64,6 +67,7 @@ export const useCharacterStore = createSelectors(
                 const updateCharacter = (index: number, updates: Partial<Character>) => {
                     const state = get()
                     const newCharacters = [...state.characters]
+                    const previousCharacters = state.characters.map(cloneCharacter)
 
                     if (!newCharacters[index]) {
                         newCharacters[index] = getEmptyCharacter()
@@ -74,6 +78,7 @@ export const useCharacterStore = createSelectors(
                     const updatedCharacter = newCharacters[index]
                     set({
                         characters: newCharacters,
+                        characterHistory: [...state.characterHistory, previousCharacters].slice(-12),
                         ...(index === state.currentCharacterIndex
                             ? {
                                   name: updatedCharacter.name,
@@ -97,6 +102,7 @@ export const useCharacterStore = createSelectors(
 
                 return {
                     characters: [getEmptyCharacter()],
+                    characterHistory: [],
                     cloudCharacterIds: [""],
                     cloudCharacterVersions: [0],
                     cloudCharacterBases: [getEmptyCharacter()],
@@ -138,6 +144,7 @@ export const useCharacterStore = createSelectors(
                         const newCharacter = { ...getEmptyCharacter() }
                         set({
                             characters: [...state.characters, newCharacter],
+                            characterHistory: [...state.characterHistory, state.characters.map(cloneCharacter)].slice(-12),
                             cloudCharacterIds: [...state.cloudCharacterIds, ""],
                             cloudCharacterVersions: [...state.cloudCharacterVersions, 0],
                             cloudCharacterBases: [...state.cloudCharacterBases, cloneCharacter(newCharacter)],
@@ -164,6 +171,7 @@ export const useCharacterStore = createSelectors(
                         const character = newCharacters[newIndex] || getEmptyCharacter()
                         set({
                             characters: newCharacters,
+                            characterHistory: [...state.characterHistory, state.characters.map(cloneCharacter)].slice(-12),
                             cloudCharacterIds: newCloudCharacterIds,
                             cloudCharacterVersions: state.cloudCharacterVersions.filter((_, i) => i !== index),
                             cloudCharacterBases: state.cloudCharacterBases.filter((_, i) => i !== index),
@@ -208,6 +216,7 @@ export const useCharacterStore = createSelectors(
                         const character = nextCharacters[0]!
                         set({
                             characters: nextCharacters,
+                            characterHistory: [],
                             cloudCharacterIds: characters.length ? cloudCharacterIds : [""],
                             cloudCharacterVersions: characters.length ? cloudCharacterVersions : [0],
                             cloudCharacterBases: nextCharacters.map(cloneCharacter),
@@ -246,6 +255,7 @@ export const useCharacterStore = createSelectors(
                         const isCurrentCharacter = index === state.currentCharacterIndex
                         set({
                             characters,
+                            characterHistory: [...state.characterHistory, state.characters.map(cloneCharacter)].slice(-12),
                             cloudCharacterBases,
                             cloudCharacterVersions,
                             ...(isCurrentCharacter
@@ -299,6 +309,30 @@ export const useCharacterStore = createSelectors(
                                       stress: currentCharacter.stress,
                                   }
                                 : {}),
+                        })
+                    },
+                    undoCharacterChange: () => {
+                        const state = get()
+                        const previousCharacters = state.characterHistory[state.characterHistory.length - 1]
+                        if (!previousCharacters) return
+                        const index = Math.min(state.currentCharacterIndex, previousCharacters.length - 1)
+                        const character = previousCharacters[index] || getEmptyCharacter()
+                        set({
+                            characters: previousCharacters.map(cloneCharacter),
+                            characterHistory: state.characterHistory.slice(0, -1),
+                            currentCharacterIndex: Math.max(0, index),
+                            name: character.name,
+                            characterClass: character.characterClass,
+                            calling: character.calling,
+                            activeBeats: character.activeBeats,
+                            equipment: character.equipment,
+                            resources: character.resources,
+                            abilities: character.abilities,
+                            fallout: character.fallout,
+                            skills: character.skills,
+                            domains: character.domains,
+                            protections: character.protections,
+                            stress: character.stress,
                         })
                     },
                     getCharacterData: () => getCurrentCharacter(),
