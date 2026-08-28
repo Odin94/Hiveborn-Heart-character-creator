@@ -105,6 +105,15 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     useEffect(() => {
         void refresh()
     }, [refresh])
+    useEffect(() => {
+        const refreshOnFocus = () => void refresh()
+        window.addEventListener("focus", refreshOnFocus)
+        const interval = window.setInterval(refreshOnFocus, 15_000)
+        return () => {
+            window.removeEventListener("focus", refreshOnFocus)
+            window.clearInterval(interval)
+        }
+    }, [refresh])
 
     const group = groups.find((entry) => entry.id === selectedGroupId) ?? null
     useEffect(() => {

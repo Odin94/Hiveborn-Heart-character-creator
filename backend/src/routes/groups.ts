@@ -434,8 +434,9 @@ export async function groupRoutes(fastify: FastifyInstance) {
             const [updatedCharacter] = await db
                 .update(schema.characters)
                 .set({ data: JSON.stringify(data), updatedAt: new Date(), version: character.version + 1 })
-                .where(eq(schema.characters.id, character.id))
+                .where(and(eq(schema.characters.id, character.id), eq(schema.characters.version, character.version)))
                 .returning()
+            if (!updatedCharacter) return reply.code(409).send({ error: "Character changed while rolling fallout; please roll again" })
             await broadcastUserCharacterChange(character.userId, {
                 character: { ...updatedCharacter!, data },
             })

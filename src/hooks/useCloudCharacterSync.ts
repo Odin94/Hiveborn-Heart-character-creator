@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
-import { api } from "@/lib/api"
+import { toast } from "sonner"
+import { API_URL, api, tokenStorage, type ApiRequestError, type CloudCharacter } from "@/lib/api"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import type { Character } from "@/hiveborn/game_data/character"
 
@@ -29,6 +30,7 @@ const characterFields = [
 ] as const satisfies ReadonlyArray<keyof Character>
 
 const isEqual = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right)
+const syncedAccountStorageKey = `hiveborn-cloud-character-account:${window.location.origin}`
 
 const getChanges = (base: Character, character: Character): Partial<Character> => {
     const changes = {} as Partial<Character>
@@ -47,6 +49,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
     const setCloudCharacters = useCharacterStore.use.setCloudCharacters()
     const setCloudCharacterIds = useCharacterStore.use.setCloudCharacterIds()
     const completeCloudCharacterSync = useCharacterStore.use.completeCloudCharacterSync()
+    const applyRemoteCloudCharacter = useCharacterStore.use.applyRemoteCloudCharacter()
     const ready = useRef(false)
     const previousAccountId = useRef<string | undefined>(undefined)
     const knownIds = useRef<string[]>([])
@@ -105,15 +108,24 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             } catch (error) {
                 const snapshot = failedSnapshot
                 if (snapshot && snapshot.accountId === activeAccountId.current && snapshot.generation === generation.current) {
+                    if ((error as Partial<ApiRequestError>).status === 409) {
+                        // A same-field edit cannot be merged safely. Keep the local work in
+                        // the editor, but never hammer the server or overwrite the remote edit.
+                        toast.error("A field changed on another device. Reload this sheet to use the newer version.")
+                        return
+                    }
                     // Do not lose player edits when a connection briefly drops. A newer
                     // snapshot already contains the failed changes, so prefer it.
                     pendingSync.current ??= snapshot
                     console.warn("Hiveborn cloud character sync will retry", error)
-                    retryTimer.current = window.setTimeout(runSync.current, 2_000)
+                    retryTimer.current = window.setTimeout(() => {
+                        retryTimer.current = undefined
+                        runSync.current()
+                    }, 2_000)
                 }
             } finally {
                 syncing.current = false
-                if (pendingSync.current) runSync.current()
+                if (pendingSync.current && !retryTimer.current) runSync.current()
             }
         })()
     }
@@ -126,10 +138,24 @@ export function useCloudCharacterSync(accountId: string | undefined) {
         ready.current = false
         pendingSync.current = null
         if (retryTimer.current) window.clearTimeout(retryTimer.current)
-        if (!accountId)
+        retryTimer.current = undefined
+        const accountChanged =
+            (previousAccountId.current && previousAccountId.current !== accountId) ||
+            (localStorage.getItem(syncedAccountStorageKey) && localStorage.getItem(syncedAccountStorageKey) !== accountId)
+        if (!accountId) {
+            setCloudCharacters([], [], [])
+            knownIds.current = []
+            previousAccountId.current = undefined
             return () => {
                 cancelled = true
             }
+        }
+        if (accountChanged) {
+            // Do this before the network request so an old account's persisted
+            // sheets never flash while the next account is loading.
+            setCloudCharacters([], [], [])
+            knownIds.current = []
+        }
 
         void (async () => {
             const remote = await api.characters()
@@ -141,7 +167,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
                     remote.characters.map((character) => character.version),
                 )
                 knownIds.current = remote.characters.map((character) => character.id)
-            } else if (previousAccountId.current && previousAccountId.current !== accountId) {
+            } else if (accountChanged) {
                 // Local storage is shared by browser users. Never seed a newly
                 // signed-in account with the previous account's cached sheets.
                 setCloudCharacters([], [], [])
@@ -157,6 +183,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
                 knownIds.current = created.map((character) => character.id)
             }
             previousAccountId.current = accountId
+            localStorage.setItem(syncedAccountStorageKey, accountId)
             ready.current = true
         })().catch(() => {
             if (!cancelled && activeAccountId.current === accountId && generation.current === nextGeneration) ready.current = false
@@ -168,6 +195,39 @@ export function useCloudCharacterSync(accountId: string | undefined) {
         // Local sheets should seed only the first account authenticated in this browser.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountId])
+
+    useEffect(() => {
+        if (!accountId || !tokenStorage.get()) return
+        let closed = false
+        let socket: WebSocket | undefined
+        let reconnectTimer: number | undefined
+        const connect = () => {
+            const url = new URL(API_URL)
+            url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
+            url.pathname = "/characters/live"
+            url.searchParams.set("token", tokenStorage.get()!)
+            socket = new WebSocket(url)
+            socket.onmessage = (message) => {
+                try {
+                    const event = JSON.parse(message.data) as { type?: string; character?: CloudCharacter }
+                    if (event.type === "character.updated" && event.character) {
+                        applyRemoteCloudCharacter(event.character.id, event.character.data, event.character.version)
+                    }
+                } catch {
+                    // A malformed live event is ignored; the next save/load remains authoritative.
+                }
+            }
+            socket.onclose = (event) => {
+                if (!closed && event.code !== 1008) reconnectTimer = window.setTimeout(connect, 1_500)
+            }
+        }
+        connect()
+        return () => {
+            closed = true
+            if (reconnectTimer) window.clearTimeout(reconnectTimer)
+            socket?.close()
+        }
+    }, [accountId, applyRemoteCloudCharacter])
 
     useEffect(() => {
         if (!accountId || !ready.current) return

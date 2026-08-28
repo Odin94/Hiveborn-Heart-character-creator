@@ -23,10 +23,11 @@ export const useApplyStaticBonuses = () => {
         }
         setSkills(updatedSkills)
 
+        const updatedProtections = { ...zustandProtections }
         for (const { resistance, amount } of protections) {
-            zustandProtections[resistance] = Math.min(zustandProtections[resistance] + amount, protectionMaximum)
+            updatedProtections[resistance] = Math.min(updatedProtections[resistance] + amount, protectionMaximum)
         }
-        setProtections({ ...zustandProtections })
+        setProtections(updatedProtections)
     }
     return applyStaticBonuses
 }

@@ -4,6 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3003"
 const TOKEN_KEY = "hiveborn-auth-token"
 
 export type User = { id: string; email: string; firstName: string | null; lastName: string | null; nickname: string | null }
+export type ApiRequestError = Error & { status: number; details: Record<string, unknown> }
 export type CloudCharacter = { id: string; name: string; data: Character; version: number; updatedAt: string }
 export type GroupCharacter = CloudCharacter
 export type PlayGroupInvitation = { group: Pick<PlayGroup, "id" | "name" | "ownerId" | "createdAt">; invitedByNickname: string | null; createdAt: string }
@@ -41,8 +42,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (refreshed) tokenStorage.set(refreshed)
     if (!response.ok) {
         const detail = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
-        const error = new Error(detail.message ?? detail.error ?? `Request failed (${response.status})`) as Error & { status: number }
+        const error = new Error(detail.message ?? detail.error ?? `Request failed (${response.status})`) as ApiRequestError
         error.status = response.status
+        error.details = detail
         throw error
     }
     return response.json() as Promise<T>
