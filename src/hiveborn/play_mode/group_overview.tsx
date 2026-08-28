@@ -12,7 +12,7 @@ import { TagReferenceDialog, type ReferenceTag } from "@/hiveborn/character_shee
 import { equipmentTags } from "@/hiveborn/game_data/equipment_tags"
 import { resourceTags } from "@/hiveborn/game_data/resource_tags"
 import { resistances } from "@/hiveborn/game_data/resistances"
-import FalloutDie from "./fallout_die"
+import FalloutDie, { falloutRollOverlayLifetimeMs } from "./fallout_die"
 import { BookOpen, ChevronLeft, Dices, Plus, Sparkles, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -219,7 +219,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         try {
             const result = await api.falloutRoll(group.id, { characterId: character.id, applyStressUpdate: autoUpdateStress })
             setFalloutRoll({ characterName: rollCharacterName(character), roll: result.roll, fallout: result.fallout })
-            await new Promise<void>((resolve) => window.setTimeout(resolve, 3_600))
+            await new Promise<void>((resolve) => window.setTimeout(resolve, falloutRollOverlayLifetimeMs))
             const message = result.fallout
                 ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${result.stressUpdated ? " — stress updated" : ""}`
                 : `${character.name}: no fallout (${result.roll} vs ${result.totalStress} stress)`
