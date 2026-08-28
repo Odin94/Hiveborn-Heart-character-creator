@@ -6,11 +6,18 @@ import { createSelectors } from "../../lib/selectors"
 
 export const protectionMaximum = 5
 const cloneCharacter = (character: Character) => structuredClone(character)
+type CharacterHistoryEntry = {
+    characters: Character[]
+    cloudCharacterIds: string[]
+    cloudCharacterVersions: number[]
+    cloudCharacterBases: Character[]
+    currentCharacterIndex: number
+}
 
 export type CharacterState = {
     characters: Character[]
     /** Local snapshots for a bounded, offline-friendly undo action. */
-    characterHistory: Character[][]
+    characterHistory: CharacterHistoryEntry[]
     cloudCharacterIds: string[]
     cloudCharacterVersions: number[]
     /** Last server-confirmed data, used to make conflict-safe field patches. */
@@ -59,6 +66,13 @@ export const useCharacterStore = createSelectors(
     create<CharacterState>()(
         persist(
             (set, get) => {
+                const characterSnapshot = (state: CharacterState): CharacterHistoryEntry => ({
+                    characters: state.characters.map(cloneCharacter),
+                    cloudCharacterIds: [...state.cloudCharacterIds],
+                    cloudCharacterVersions: [...state.cloudCharacterVersions],
+                    cloudCharacterBases: state.cloudCharacterBases.map(cloneCharacter),
+                    currentCharacterIndex: state.currentCharacterIndex,
+                })
                 const getCurrentCharacter = () => {
                     const state = get()
                     return state.characters[state.currentCharacterIndex] || getEmptyCharacter()
@@ -67,7 +81,7 @@ export const useCharacterStore = createSelectors(
                 const updateCharacter = (index: number, updates: Partial<Character>) => {
                     const state = get()
                     const newCharacters = [...state.characters]
-                    const previousCharacters = state.characters.map(cloneCharacter)
+                    const previousState = characterSnapshot(state)
 
                     if (!newCharacters[index]) {
                         newCharacters[index] = getEmptyCharacter()
@@ -78,7 +92,7 @@ export const useCharacterStore = createSelectors(
                     const updatedCharacter = newCharacters[index]
                     set({
                         characters: newCharacters,
-                        characterHistory: [...state.characterHistory, previousCharacters].slice(-12),
+                        characterHistory: [...state.characterHistory, previousState].slice(-12),
                         ...(index === state.currentCharacterIndex
                             ? {
                                   name: updatedCharacter.name,
@@ -144,7 +158,7 @@ export const useCharacterStore = createSelectors(
                         const newCharacter = { ...getEmptyCharacter() }
                         set({
                             characters: [...state.characters, newCharacter],
-                            characterHistory: [...state.characterHistory, state.characters.map(cloneCharacter)].slice(-12),
+                            characterHistory: [...state.characterHistory, characterSnapshot(state)].slice(-12),
                             cloudCharacterIds: [...state.cloudCharacterIds, ""],
                             cloudCharacterVersions: [...state.cloudCharacterVersions, 0],
                             cloudCharacterBases: [...state.cloudCharacterBases, cloneCharacter(newCharacter)],
@@ -171,7 +185,7 @@ export const useCharacterStore = createSelectors(
                         const character = newCharacters[newIndex] || getEmptyCharacter()
                         set({
                             characters: newCharacters,
-                            characterHistory: [...state.characterHistory, state.characters.map(cloneCharacter)].slice(-12),
+                            characterHistory: [...state.characterHistory, characterSnapshot(state)].slice(-12),
                             cloudCharacterIds: newCloudCharacterIds,
                             cloudCharacterVersions: state.cloudCharacterVersions.filter((_, i) => i !== index),
                             cloudCharacterBases: state.cloudCharacterBases.filter((_, i) => i !== index),
@@ -255,7 +269,6 @@ export const useCharacterStore = createSelectors(
                         const isCurrentCharacter = index === state.currentCharacterIndex
                         set({
                             characters,
-                            characterHistory: [...state.characterHistory, state.characters.map(cloneCharacter)].slice(-12),
                             cloudCharacterBases,
                             cloudCharacterVersions,
                             ...(isCurrentCharacter
@@ -313,13 +326,16 @@ export const useCharacterStore = createSelectors(
                     },
                     undoCharacterChange: () => {
                         const state = get()
-                        const previousCharacters = state.characterHistory[state.characterHistory.length - 1]
-                        if (!previousCharacters) return
-                        const index = Math.min(state.currentCharacterIndex, previousCharacters.length - 1)
-                        const character = previousCharacters[index] || getEmptyCharacter()
+                        const previousState = state.characterHistory[state.characterHistory.length - 1]
+                        if (!previousState) return
+                        const index = Math.min(previousState.currentCharacterIndex, previousState.characters.length - 1)
+                        const character = previousState.characters[index] || getEmptyCharacter()
                         set({
-                            characters: previousCharacters.map(cloneCharacter),
+                            characters: previousState.characters.map(cloneCharacter),
                             characterHistory: state.characterHistory.slice(0, -1),
+                            cloudCharacterIds: [...previousState.cloudCharacterIds],
+                            cloudCharacterVersions: [...previousState.cloudCharacterVersions],
+                            cloudCharacterBases: previousState.cloudCharacterBases.map(cloneCharacter),
                             currentCharacterIndex: Math.max(0, index),
                             name: character.name,
                             characterClass: character.characterClass,
@@ -340,6 +356,9 @@ export const useCharacterStore = createSelectors(
             },
             {
                 name: "hiveborn-character-storage",
+                // History is an in-session safety net, not durable character data. Keeping
+                // it out of localStorage prevents a long editing session from exhausting it.
+                partialize: ({ characterHistory: _characterHistory, ...state }) => state,
             },
         ),
     ),

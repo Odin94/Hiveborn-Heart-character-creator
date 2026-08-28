@@ -14,7 +14,7 @@ import { resourceTags } from "@/hiveborn/game_data/resource_tags"
 import { resistances } from "@/hiveborn/game_data/resistances"
 import FalloutDie, { falloutRollOverlayLifetimeMs } from "./fallout_die"
 import { BookOpen, ChevronLeft, Circle, Dices, Plus, Sparkles, Users } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
@@ -100,6 +100,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [rollingFalloutCharacterId, setRollingFalloutCharacterId] = useState<string | null>(null)
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const [showOtherPlayersBeats, setShowOtherPlayersBeats] = useState(() => localStorage.getItem(otherPlayersBeatsStorageKey(user.id)) === "true")
+    const refreshTimer = useRef<number | undefined>(undefined)
     const setActiveGroup = usePlayModeStore((state) => state.setActiveGroup)
     const cloudIds = useCharacterStore.use.cloudCharacterIds()
     const localCharacters = useCharacterStore.use.characters()
@@ -117,9 +118,21 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             toast.error(error instanceof Error ? error.message : "Could not load play groups")
         }
     }, [])
+    const scheduleRefresh = useCallback(() => {
+        if (refreshTimer.current) return
+        refreshTimer.current = window.setTimeout(() => {
+            refreshTimer.current = undefined
+            void refresh()
+        }, 350)
+    }, [refresh])
     useEffect(() => {
         void refresh()
     }, [refresh])
+    useEffect(() => {
+        return () => {
+            if (refreshTimer.current) window.clearTimeout(refreshTimer.current)
+        }
+    }, [])
     useEffect(() => {
         const refreshOnFocus = () => void refresh()
         window.addEventListener("focus", refreshOnFocus)
@@ -133,6 +146,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const group = groups.find((entry) => entry.id === selectedGroupId) ?? null
     const activeGroupId = group?.id ?? null
     const activeGroupName = group?.name ?? null
+    const activeGroupCharacterIdsKey =
+        group?.members
+            .find((member) => member.id === user.id)
+            ?.characters.map((character) => character.id)
+            .join(",") ?? ""
     useEffect(() => {
         if (selectedGroupId || groups.length === 0) return
         const rememberedGroupId = localStorage.getItem(lastGroupStorageKey(user.id))
@@ -142,8 +160,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     useEffect(() => {
         // Do not retain a group from a previous account/session. A stale group
         // id would make rolls appear shareable until the API rejected them.
-        setActiveGroup(activeGroupId && activeGroupName ? { id: activeGroupId, name: activeGroupName } : null)
-    }, [activeGroupId, activeGroupName, setActiveGroup])
+        setActiveGroup(
+            activeGroupId && activeGroupName
+                ? { id: activeGroupId, name: activeGroupName, characterIds: activeGroupCharacterIdsKey ? activeGroupCharacterIdsKey.split(",") : [] }
+                : null,
+        )
+    }, [activeGroupCharacterIdsKey, activeGroupId, activeGroupName, setActiveGroup])
     useEffect(() => {
         if (group) localStorage.setItem(lastGroupStorageKey(user.id), group.id)
     }, [group, user.id])
@@ -168,7 +190,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 } catch {
                     // A malformed live event never prevents the authoritative refresh below.
                 }
-                void refresh()
+                scheduleRefresh()
             }
             socket.onclose = (event) => {
                 // Authentication and membership failures will not recover by
@@ -182,7 +204,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             if (reconnectTimer) window.clearTimeout(reconnectTimer)
             socket?.close()
         }
-    }, [applyRemoteCloudCharacter, group?.id, refresh, user.id])
+    }, [applyRemoteCloudCharacter, group?.id, scheduleRefresh, user.id])
 
     const createGroup = async () => {
         try {
@@ -293,7 +315,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         group?.members.flatMap((member) =>
             member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname, isOnline: member.isOnline })),
         ) ?? []
-    const assignedOwnCharacterIds = new Set(group?.members.find((member) => member.id === user.id)?.characters.map((character) => character.id) ?? [])
+    const assignedOwnCharacterIds = new Set(activeGroupCharacterIdsKey ? activeGroupCharacterIdsKey.split(",") : [])
     const unassignedOwnCharacters = ownCharacters.filter((character) => !assignedOwnCharacterIds.has(character.id))
     const isGameMaster = group?.members.find((member) => member.id === user.id)?.isGameMaster ?? false
     const isGroupOwner = group?.ownerId === user.id
@@ -506,6 +528,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                     <h2 className="font-semibold">GM session control</h2>
                                     <p className="text-sm text-muted-foreground">
                                         Roll fallout without opening a sheet. {totalStress(gmTarget)} stress currently marked.
+                                        {totalStress(gmTarget) === 0 ? " Mark stress before rolling." : ""}
                                     </p>
                                 </div>
                                 <label className="grid gap-1 text-sm font-medium" htmlFor="gm-fallout-character">
@@ -523,7 +546,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                         ))}
                                     </select>
                                 </label>
-                                <Button variant="destructive" disabled={rollingFalloutCharacterId === gmTarget.id} onClick={() => void rollFallout(gmTarget)}>
+                                <Button
+                                    variant="destructive"
+                                    disabled={rollingFalloutCharacterId === gmTarget.id || totalStress(gmTarget) === 0}
+                                    onClick={() => void rollFallout(gmTarget)}
+                                >
                                     <Dices /> Roll fallout
                                 </Button>
                             </section>
@@ -723,7 +750,7 @@ function CharacterCard({
             )}
             <div className="mt-auto flex gap-2 pt-4" onClick={(event) => event.stopPropagation()}>
                 {gameMaster && (
-                    <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout}>
+                    <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout || totalStress(character) === 0}>
                         <Dices /> Roll fallout
                     </Button>
                 )}
