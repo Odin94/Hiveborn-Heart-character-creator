@@ -220,8 +220,10 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             const result = await api.falloutRoll(group.id, { characterId: character.id, applyStressUpdate: autoUpdateStress })
             setFalloutRoll({ characterName: rollCharacterName(character), roll: result.roll, fallout: result.fallout })
             await new Promise<void>((resolve) => window.setTimeout(resolve, falloutRollOverlayLifetimeMs))
+            const stressUpdate =
+                result.stressUpdate?.type === "all" ? "set all stress to 0" : result.stressUpdate ? `set ${result.stressUpdate.resistance} stress to 0` : null
             const message = result.fallout
-                ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${result.stressUpdated ? " — stress updated" : ""}`
+                ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${stressUpdate ? ` — ${stressUpdate}` : ""}`
                 : `${character.name}: no fallout (${result.roll} vs ${result.totalStress} stress)`
             toast(result.fallout ? message : message)
             await refresh()

@@ -70,6 +70,7 @@ export const api = {
             roll: number
             fallout: "minor" | "major" | null
             stressUpdated: boolean
+            stressUpdate: { type: "all" } | { type: "resistance"; resistance: string } | null
             lastStressResistance: string | null
         }>(`/play-groups/${groupId}/fallout-rolls`, { method: "POST", body: JSON.stringify(payload) }),
 }
