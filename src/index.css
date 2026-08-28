@@ -349,6 +349,15 @@ button:hover {
         }
     }
 
+    @keyframes heart-roll-fade-out {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
     @keyframes heart-loading-bounce {
         0%,
         80%,
@@ -496,6 +505,10 @@ button:hover {
         overflow: visible;
         perspective: 1800px;
         position: relative;
+    }
+
+    .heart-roll-fade-out {
+        animation: heart-roll-fade-out var(--roll-fade-duration, 1000ms) ease-out var(--roll-fade-delay, 0ms) forwards;
     }
 
     .dark .heart-dice-stage-sheet-overlay {

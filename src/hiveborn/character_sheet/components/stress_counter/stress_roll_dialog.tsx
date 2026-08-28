@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import OnPageRollOverlay from "@/components/on-page-roll-overlay"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { type Resistance } from "@/hiveborn/game_data/resistances"
 import { toast } from "sonner"
@@ -110,10 +111,10 @@ const StressRollDialog = ({
             </Dialog>
 
             {pendingRoll && (
-                <div className="pointer-events-none fixed inset-0 z-[70]" role="status">
+                <OnPageRollOverlay className="z-[70]" fadeDelayMs={1600} role="status">
                     <span className="sr-only">Rolling d{pendingRoll.die.sides}</span>
                     <DiceScene dice={[pendingRoll.die]} rolling presentation="sheet-overlay" />
-                </div>
+                </OnPageRollOverlay>
             )}
         </>
     )
