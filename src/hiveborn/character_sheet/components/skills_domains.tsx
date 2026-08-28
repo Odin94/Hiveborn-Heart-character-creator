@@ -1,11 +1,11 @@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { domains } from "@/hiveborn/game_data/domains"
-import { skills } from "@/hiveborn/game_data/skills"
+import { domainDescriptions, domains } from "@/hiveborn/game_data/domains"
+import { skillDescriptions, skills } from "@/hiveborn/game_data/skills"
 import { useCharacterStore } from "../character_states"
 import { Domain, Skill } from "../../game_data/character"
 import { useDiceRollerStore } from "../dice_roller_state"
-import { cn } from "@/lib/utils"
+import SkillDomainTooltip from "./skill_domain_tooltip"
 
 const SkillsDomains = () => {
     const existingSkills = useCharacterStore.use.skills()
@@ -40,16 +40,12 @@ const SkillsDomains = () => {
                         }}
                         className="mr-3"
                     />
-                    <button
-                        type="button"
-                        className={cn(
-                            "min-w-0 rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
-                            selectedSkill === skill && "bg-red-900 text-white hover:bg-red-900",
-                        )}
-                        onClick={() => pickSkill(skill)}
-                    >
-                        {skill.toUpperCase()}
-                    </button>
+                    <SkillDomainTooltip
+                        description={skillDescriptions[skill]}
+                        isSelected={selectedSkill === skill}
+                        label={skill.toUpperCase()}
+                        onSelect={() => pickSkill(skill)}
+                    />
                 </div>
                 <div className={`ml-2 ${colClass} sm:ml-4`}>
                     <Input
@@ -84,16 +80,12 @@ const SkillsDomains = () => {
                         }}
                         className="mr-3"
                     />
-                    <button
-                        type="button"
-                        className={cn(
-                            "min-w-0 rounded-sm px-1 text-left font-bold hover:bg-red-900/10",
-                            selectedDomain === domain && "bg-red-900 text-white hover:bg-red-900",
-                        )}
-                        onClick={() => pickDomain(domain)}
-                    >
-                        {domain.toUpperCase()}
-                    </button>
+                    <SkillDomainTooltip
+                        description={domainDescriptions[domain]}
+                        isSelected={selectedDomain === domain}
+                        label={domain.toUpperCase()}
+                        onSelect={() => pickDomain(domain)}
+                    />
                 </div>
                 <div className={`ml-2 ${colClass} sm:ml-4`}>
                     <Input
