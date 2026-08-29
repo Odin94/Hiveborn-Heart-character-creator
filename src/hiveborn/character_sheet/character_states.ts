@@ -5,7 +5,11 @@ import { Resistance } from "../game_data/resistances"
 import { createSelectors } from "../../lib/selectors"
 
 export const protectionMaximum = 5
+const UNDO_CHECKPOINT_DEBOUNCE_MS = 750
+const textCharacterFields = ["name", "characterClass", "calling", "activeBeats", "equipment", "resources", "abilities", "fallout"] as const
+
 const cloneCharacter = (character: Character) => structuredClone(character)
+type TextCharacterField = (typeof textCharacterFields)[number]
 type CharacterHistoryEntry = {
     characters: Character[]
     cloudCharacterIds: string[]
@@ -66,6 +70,7 @@ export const useCharacterStore = createSelectors(
     create<CharacterState>()(
         persist(
             (set, get) => {
+                let latestTextCheckpoint: { index: number; field: TextCharacterField; changedAt: number } | null = null
                 const characterSnapshot = (state: CharacterState): CharacterHistoryEntry => ({
                     characters: state.characters.map(cloneCharacter),
                     cloudCharacterIds: [...state.cloudCharacterIds],
@@ -78,21 +83,42 @@ export const useCharacterStore = createSelectors(
                     return state.characters[state.currentCharacterIndex] || getEmptyCharacter()
                 }
 
+                const getTextField = (updates: Partial<Character>): TextCharacterField | undefined => {
+                    const fields = Object.keys(updates) as Array<keyof Character>
+                    const field = fields[0]
+                    return fields.length === 1 && textCharacterFields.includes(field as TextCharacterField) ? (field as TextCharacterField) : undefined
+                }
+
+                const updateHistory = (state: CharacterState, index: number, updates: Partial<Character>) => {
+                    const field = getTextField(updates)
+                    const changedAt = Date.now()
+                    const continuesTextEdit =
+                        field &&
+                        latestTextCheckpoint?.index === index &&
+                        latestTextCheckpoint.field === field &&
+                        changedAt - latestTextCheckpoint.changedAt < UNDO_CHECKPOINT_DEBOUNCE_MS
+
+                    latestTextCheckpoint = field ? { index, field, changedAt } : null
+                    return continuesTextEdit ? state.characterHistory : [...state.characterHistory, characterSnapshot(state)].slice(-12)
+                }
+
                 const updateCharacter = (index: number, updates: Partial<Character>) => {
                     const state = get()
                     const newCharacters = [...state.characters]
-                    const previousState = characterSnapshot(state)
 
                     if (!newCharacters[index]) {
                         newCharacters[index] = getEmptyCharacter()
                     }
 
-                    newCharacters[index] = { ...newCharacters[index], ...updates }
+                    const currentCharacter = newCharacters[index]!
+                    if (Object.entries(updates).every(([field, value]) => Object.is(currentCharacter[field as keyof Character], value))) return
+
+                    newCharacters[index] = { ...currentCharacter, ...updates }
 
                     const updatedCharacter = newCharacters[index]
                     set({
                         characters: newCharacters,
-                        characterHistory: [...state.characterHistory, previousState].slice(-12),
+                        characterHistory: updateHistory(state, index, updates),
                         ...(index === state.currentCharacterIndex
                             ? {
                                   name: updatedCharacter.name,
@@ -156,6 +182,7 @@ export const useCharacterStore = createSelectors(
                     addCharacter: () => {
                         const state = get()
                         const newCharacter = { ...getEmptyCharacter() }
+                        latestTextCheckpoint = null
                         set({
                             characters: [...state.characters, newCharacter],
                             characterHistory: [...state.characterHistory, characterSnapshot(state)].slice(-12),
@@ -183,6 +210,7 @@ export const useCharacterStore = createSelectors(
                         const newCloudCharacterIds = state.cloudCharacterIds.filter((_, i) => i !== index)
                         const newIndex = Math.min(state.currentCharacterIndex, newCharacters.length - 1)
                         const character = newCharacters[newIndex] || getEmptyCharacter()
+                        latestTextCheckpoint = null
                         set({
                             characters: newCharacters,
                             characterHistory: [...state.characterHistory, characterSnapshot(state)].slice(-12),
@@ -208,6 +236,7 @@ export const useCharacterStore = createSelectors(
                         const state = get()
                         if (index >= 0 && index < state.characters.length) {
                             const character = state.characters[index] || getEmptyCharacter()
+                            latestTextCheckpoint = null
                             set({
                                 currentCharacterIndex: index,
                                 name: character.name,
@@ -228,6 +257,7 @@ export const useCharacterStore = createSelectors(
                     setCloudCharacters: (characters, cloudCharacterIds, cloudCharacterVersions) => {
                         const nextCharacters = characters.length ? characters.map(cloneCharacter) : [getEmptyCharacter()]
                         const character = nextCharacters[0]!
+                        latestTextCheckpoint = null
                         set({
                             characters: nextCharacters,
                             characterHistory: [],
@@ -267,6 +297,7 @@ export const useCharacterStore = createSelectors(
                         cloudCharacterBases[index] = cloneCharacter(remoteCharacter)
                         cloudCharacterVersions[index] = version
                         const isCurrentCharacter = index === state.currentCharacterIndex
+                        latestTextCheckpoint = null
                         set({
                             characters,
                             cloudCharacterBases,
@@ -302,6 +333,7 @@ export const useCharacterStore = createSelectors(
                         cloudCharacterVersions[index] = version
                         const isCurrentCharacter = index === state.currentCharacterIndex
                         const currentCharacter = characters[index] || getEmptyCharacter()
+                        latestTextCheckpoint = null
                         set({
                             characters,
                             cloudCharacterBases,
@@ -330,6 +362,7 @@ export const useCharacterStore = createSelectors(
                         if (!previousState) return
                         const index = Math.min(previousState.currentCharacterIndex, previousState.characters.length - 1)
                         const character = previousState.characters[index] || getEmptyCharacter()
+                        latestTextCheckpoint = null
                         set({
                             characters: previousState.characters.map(cloneCharacter),
                             characterHistory: state.characterHistory.slice(0, -1),
