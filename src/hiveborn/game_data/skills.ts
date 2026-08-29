@@ -16,7 +16,7 @@ export const skillDescriptions: Record<SkillKey, string> = {
     endure: "Resist the Heart's effects on body and mind.",
     evade: "Escape someone or something that is tracking you down.",
     hunt: "Track down someone or something trying to escape you.",
-    kill: "End lives with weapons or your bare hands.",
+    kill: "Fight or destroy things",
     mend: "Repair what is broken, or build something new.",
     sneak: "Hide yourself or something from others' attention.",
 }
