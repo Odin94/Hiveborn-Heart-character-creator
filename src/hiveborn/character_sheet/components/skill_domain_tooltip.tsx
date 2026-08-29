@@ -48,6 +48,9 @@ const SkillDomainTooltip = ({ description, isSelected, label, onSelect }: SkillD
                 onFocus={(event) => {
                     if (event.currentTarget.matches(":focus-visible")) setIsOpen(true)
                 }}
+                onPointerEnter={(event) => {
+                    if (event.pointerType !== "touch") setIsOpen(true)
+                }}
                 onKeyDown={(event) => {
                     if (event.key === "Escape") setIsOpen(false)
                 }}
