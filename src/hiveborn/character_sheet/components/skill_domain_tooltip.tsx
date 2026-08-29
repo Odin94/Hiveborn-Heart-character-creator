@@ -28,12 +28,12 @@ const SkillDomainTooltip = ({ description, isSelected, label, onSelect }: SkillD
     }
 
     return (
-        <span className="relative inline-flex min-w-0">
+        <span className="relative inline-flex shrink-0">
             <button
                 type="button"
                 aria-describedby={isOpen ? descriptionId : undefined}
                 className={cn(
-                    "min-w-0 select-none rounded-sm px-1 text-left font-bold touch-manipulation hover:bg-red-900/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-900",
+                    "select-none rounded-sm px-1 text-left font-bold touch-manipulation hover:bg-red-900/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-900",
                     isSelected && "bg-red-900 text-white hover:bg-red-900",
                 )}
                 onBlur={() => setIsOpen(false)}
