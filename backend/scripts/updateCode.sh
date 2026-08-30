@@ -29,6 +29,12 @@ if [ ! -d "$BACKEND_DIR" ]; then
     exit 1
 fi
 
+if [ "$EUID" -eq 0 ]; then
+    # Previous manual updates may have created Git objects or dependencies as root.
+    # The service user must own the full application directory before it can update.
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+fi
+
 run_app "
     set -euo pipefail
     cd '$BACKEND_DIR'
