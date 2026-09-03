@@ -76,12 +76,17 @@ Before the first deploy, add these **repository Actions secrets** in GitHub:
 - `HETZNER_DEPLOY_SSH_PRIVATE_KEY`: a dedicated Ed25519 private key authorized
   for the `hiveborn` user on the server. Generate one with
   `ssh-keygen -t ed25519 -f hiveborn-github-deploy -C hiveborn-github-deploy`;
-  on the server, create `/opt/hiveborn/.ssh` with mode `0700` and add its `.pub`
-  file to `authorized_keys` with mode `0600` (both owned by `hiveborn`); paste
-  the private-key file into this secret.
+  on the server, create `/opt/hiveborn/.ssh` with mode `0700`, then append the
+  public-key line prefixed with
+  `command=\"/opt/hiveborn/backend/scripts/updateCode.sh\",restrict ` to
+  `/opt/hiveborn/.ssh/authorized_keys`. Make the directory and file owned by
+  `hiveborn` with modes `0700` and `0600`, respectively. The restriction allows
+  only this deployment command—no shell, TTY, port forwarding, agent
+  forwarding, or X11 forwarding. Paste the private-key file into this secret.
 - `HETZNER_DEPLOY_SSH_KNOWN_HOSTS`: the server's trusted host key. From an
-  administrator-controlled machine, run `ssh-keyscan -H 46.224.62.32` and copy its output into this
-  secret. Verify the resulting fingerprint against
+  administrator-controlled machine, run
+  `ssh-keyscan -t ed25519 -H 46.224.62.32` and copy its output into this secret.
+  Verify the resulting fingerprint against
   `/etc/ssh/ssh_host_ed25519_key.pub` before trusting it.
 - `HETZNER_DEPLOY_USER`: `hiveborn`.
 

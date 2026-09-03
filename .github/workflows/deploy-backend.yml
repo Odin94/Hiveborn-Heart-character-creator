@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - backend/**
+      - '!backend/README.md'
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,7 @@ jobs:
   deploy:
     name: Deploy to Hetzner
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Configure SSH
         env:
@@ -41,6 +43,9 @@ jobs:
           ssh \
             -i ~/.ssh/id_ed25519 \
             -o BatchMode=yes \
+            -o ConnectTimeout=30 \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             -o StrictHostKeyChecking=yes \
             -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" \
             "$DEPLOY_USER@46.224.62.32" \
