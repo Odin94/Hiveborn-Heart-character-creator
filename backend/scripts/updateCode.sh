@@ -7,6 +7,30 @@ BACKEND_DIR="$APP_DIR/backend"
 APP_NAME="hiveborn-backend"
 HEALTH_URL="https://api-hiveborn.odin-matthias.de/health"
 DATABASE_FILE="data/hiveborn.sqlite"
+EXPECTED_REVISION="${1:-}"
+
+# SSH keys used by GitHub Actions are restricted with a forced command. sshd
+# discards the argument in that mode, but preserves it here so deployments can
+# still verify that they are building the commit which triggered the workflow.
+if [ -z "$EXPECTED_REVISION" ] && [ -n "${SSH_ORIGINAL_COMMAND:-}" ]; then
+    case "$SSH_ORIGINAL_COMMAND" in
+        "/opt/hiveborn/backend/scripts/updateCode.sh "*)
+            EXPECTED_REVISION="${SSH_ORIGINAL_COMMAND#/opt/hiveborn/backend/scripts/updateCode.sh }"
+            ;;
+        "/opt/hiveborn/backend/scripts/updateCode.sh")
+            ;;
+        *)
+            echo "Refusing unexpected forced SSH command."
+            exit 1
+            ;;
+    esac
+fi
+
+if [ -n "$EXPECTED_REVISION" ] && ! [[ "$EXPECTED_REVISION" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "Expected revision must be a 40-character lowercase Git commit SHA."
+    exit 1
+fi
+export EXPECTED_REVISION
 
 run_app() {
     if [ "$(id -un)" = "$APP_USER" ]; then
@@ -55,6 +79,14 @@ run_app "
 
     git pull --ff-only
     echo 'Pulled latest code from git'
+
+    if [ -n "\$EXPECTED_REVISION" ]; then
+        DEPLOYED_REVISION=\"\$(git rev-parse HEAD)\"
+        if [ \"\$DEPLOYED_REVISION\" != \"\$EXPECTED_REVISION\" ]; then
+            echo \"Refusing to deploy \$DEPLOYED_REVISION; expected \$EXPECTED_REVISION.\"
+            exit 1
+        fi
+    fi
 
     corepack enable
     corepack pnpm install --frozen-lockfile --reporter=append-only
