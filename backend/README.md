@@ -69,7 +69,9 @@ Pushes to `main` that change `backend/**` automatically run
 [`deploy-backend.yml`](../.github/workflows/deploy-backend.yml). The workflow
 connects to `46.224.62.32` and runs the same `updateCode.sh` deployment script.
 Deployments are serialized so concurrent pushes cannot update the checkout at
-the same time. It can also be run manually from the Actions tab.
+the same time. Each run verifies that the checkout matches the commit which
+triggered it, rather than silently deploying a newer `main` revision. It can
+also be run manually from the Actions tab.
 
 Before the first deploy, add these **repository Actions secrets** in GitHub:
 

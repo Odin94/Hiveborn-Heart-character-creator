@@ -38,6 +38,7 @@ jobs:
       - name: Run the production update script
         env:
           DEPLOY_USER: ${{ secrets.HETZNER_DEPLOY_USER }}
+          EXPECTED_REVISION: ${{ github.sha }}
         run: |
           test -n "$DEPLOY_USER"
           ssh \
@@ -49,4 +50,4 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" \
             "$DEPLOY_USER@46.224.62.32" \
-            /opt/hiveborn/backend/scripts/updateCode.sh
+            /opt/hiveborn/backend/scripts/updateCode.sh "$EXPECTED_REVISION"
