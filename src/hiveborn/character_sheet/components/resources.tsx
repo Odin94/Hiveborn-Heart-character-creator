@@ -15,7 +15,7 @@ const Resources = () => {
         <div>
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog>
-                    <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
+                    <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
                         RESOURCES
                         <DialogTrigger asChild>
                             <Button

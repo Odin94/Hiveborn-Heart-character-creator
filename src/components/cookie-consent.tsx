@@ -37,7 +37,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
             setIsOpen(false)
             setTimeout(() => {
                 setHide(true)
-            }, 700)
+            }, 180)
             try {
                 posthog.opt_in_capturing()
             } catch (error) {
@@ -50,7 +50,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
             setIsOpen(false)
             setTimeout(() => {
                 setHide(true)
-            }, 700)
+            }, 180)
             try {
                 posthog.opt_out_capturing()
             } catch (error) {
@@ -73,7 +73,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
                     setIsOpen(false)
                     setTimeout(() => {
                         setHide(true)
-                    }, 700)
+                    }, 180)
                 }
             } catch (error) {
                 console.warn("Cookie consent error:", error)
@@ -82,7 +82,11 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
 
         if (hide) return null
 
-        const containerClasses = cn("fixed z-50 transition-all duration-700", !isOpen ? "translate-y-full opacity-0" : "translate-y-0 opacity-100", className)
+        const containerClasses = cn(
+            "fixed z-50 transition-[transform,opacity] duration-[180ms] ease-out",
+            !isOpen ? "translate-y-full opacity-0 ease-in" : "translate-y-0 opacity-100",
+            className,
+        )
 
         const commonWrapperProps = {
             ref,

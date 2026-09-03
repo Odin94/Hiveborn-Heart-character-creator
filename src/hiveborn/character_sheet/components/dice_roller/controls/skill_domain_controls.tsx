@@ -42,7 +42,7 @@ const SkillDomainControls = ({
                 <label className="grid gap-1 text-sm font-semibold">
                     Skill
                     <select
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
+                        className="form-select h-10 px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                         value={selectedSkill}
                         disabled={rolling}
                         onChange={(event) => setSelectedSkill(event.target.value as typeof selectedSkill)}
@@ -59,7 +59,7 @@ const SkillDomainControls = ({
                 <label className="grid gap-1 text-sm font-semibold">
                     Domain
                     <select
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
+                        className="form-select h-10 px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                         value={selectedDomain}
                         disabled={rolling}
                         onChange={(event) => setSelectedDomain(event.target.value as typeof selectedDomain)}
@@ -79,16 +79,17 @@ const SkillDomainControls = ({
                 </label>
             </div>
 
-            <div className="my-4 grid grid-cols-3 overflow-hidden rounded-md border border-primary/25">
+            <div className="segmented-control my-4 grid grid-cols-3 overflow-hidden rounded-md border">
                 {risks.map((riskOption) => (
                     <button
                         key={riskOption.value}
                         type="button"
                         className={cn(
                             "h-10 border-r border-primary/20 text-sm font-semibold last:border-r-0 disabled:cursor-not-allowed disabled:opacity-60",
-                            risk === riskOption.value ? "bg-primary text-primary-foreground" : "bg-background text-primary hover:bg-accent",
+                            risk === riskOption.value ? "bg-primary text-primary-foreground" : "bg-transparent",
                         )}
                         disabled={rolling}
+                        aria-pressed={risk === riskOption.value}
                         onClick={() => setRisk(riskOption.value)}
                     >
                         {riskOption.label}

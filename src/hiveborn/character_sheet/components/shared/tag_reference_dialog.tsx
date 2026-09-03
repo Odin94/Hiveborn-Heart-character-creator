@@ -96,7 +96,7 @@ export const TagReferenceDialog = ({
 
             <ScrollArea className="min-h-0 flex-1 pr-3">
                 {filteredRows.length === 0 ? (
-                    <div className="tag-reference-empty rounded-md border border-dashed border-red-900/30 p-6 text-center text-sm text-muted-foreground">
+                    <div className="tag-reference-empty animate-in fade-in zoom-in-90 rounded-md border border-dashed border-red-900/30 p-6 text-center text-sm text-muted-foreground duration-150">
                         {relevantOnly && !normalizedSearch ? "This character has no matching tags." : `No tags match "${search}".`}
                     </div>
                 ) : (
@@ -105,7 +105,7 @@ export const TagReferenceDialog = ({
                             <article
                                 key={tag.name}
                                 className={cn(
-                                    "tag-reference-card rounded-md border p-3 text-left",
+                                    "tag-reference-card animate-in fade-in zoom-in-90 rounded-md border p-3 text-left duration-150",
                                     isRelevant
                                         ? "border-red-900/60 bg-red-900/10 shadow-[0_0_0_1px_rgba(127,29,29,0.18),0_0_22px_rgba(127,29,29,0.13)]"
                                         : "border-red-900/15 bg-background",
@@ -116,7 +116,7 @@ export const TagReferenceDialog = ({
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="text-sm font-black tracking-wide text-red-900">{tag.name.toUpperCase()}</h3>
                                     {relevantSources.map((source) => (
-                                        <span key={source} className="rounded-full bg-red-900 px-2 py-0.5 text-[0.68rem] font-bold text-white">
+                                        <span key={source} className="rounded-sm bg-red-900 px-2 py-0.5 text-[0.68rem] font-bold text-white">
                                             {source}
                                         </span>
                                     ))}

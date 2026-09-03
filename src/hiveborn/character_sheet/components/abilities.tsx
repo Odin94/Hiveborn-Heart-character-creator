@@ -28,7 +28,7 @@ const Abilities = () => {
         <div>
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog onOpenChange={(_open) => setPickingFromAbility(undefined)}>
-                    <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
+                    <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
                         ABILITIES <DialogTriggerWrapper />
                     </h2>
                     <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
@@ -59,7 +59,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                   .filter((ability) => ability.type === abilityType)
                   .filter((ability) => !ability.parentName)
                   .filter((ability) => !isAbilityPickedAlready(ability))
-    const selectedClassName = "border-b-0"
+    const selectedClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
 
     const getIcon = ({ staticBonuses, pickFrom }: Ability) => {
         if (pickFrom.domains.length > 0) return "🗺️ "
@@ -90,7 +90,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                 return (
                     <div
                         key={ability.name}
-                        className={`border-1 p-2 border-t-0
+                        className={`sheet-choice border p-2 border-t-0
                             ${ability.parentName ? "ml-6" : ""}
                             ${isAlreadyPickedMajor ? "border-border bg-muted text-muted-foreground hover:bg-muted" : "cursor-pointer hover:bg-accent"}
                         `}
@@ -138,13 +138,13 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                         onValueChange={setAbilityType}
                     >
                         <TabsList className="grid w-full shrink-0 grid-cols-3">
-                            <TabsTrigger value="minor" className={`border-1 ${abilityType === "minor" ? selectedClassName : ""}`}>
+                            <TabsTrigger value="minor" className={`rounded-t-md border ${abilityType === "minor" ? selectedClassName : ""}`}>
                                 Minor
                             </TabsTrigger>
-                            <TabsTrigger value="major" className={`border-1 ${abilityType === "major" ? selectedClassName : ""}`}>
+                            <TabsTrigger value="major" className={`border ${abilityType === "major" ? selectedClassName : ""}`}>
                                 Major
                             </TabsTrigger>
-                            <TabsTrigger value="zenith" className={`border-1 ${abilityType === "zenith" ? selectedClassName : ""}`}>
+                            <TabsTrigger value="zenith" className={`rounded-t-md border ${abilityType === "zenith" ? selectedClassName : ""}`}>
                                 Zenith
                             </TabsTrigger>
                         </TabsList>

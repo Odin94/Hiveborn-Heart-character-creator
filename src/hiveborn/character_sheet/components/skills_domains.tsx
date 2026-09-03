@@ -109,8 +109,8 @@ const SkillsDomains = () => {
             <div className="space-y-6 sm:hidden">
                 <div className="space-y-2">
                     <div className={mobileGridClass}>
-                        <h2 className="text-lg font-bold">SKILLS</h2>
-                        <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
+                        <h2 className="font-serif text-base font-bold tracking-wide">SKILLS</h2>
+                        <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
                     </div>
                     <div className={`${mobileGridClass} gap-y-2 text-foreground`}>
                         {skills.map((skill) => (
@@ -123,8 +123,8 @@ const SkillsDomains = () => {
 
                 <div className="space-y-2">
                     <div className={mobileGridClass}>
-                        <h2 className="text-lg font-bold">DOMAINS</h2>
-                        <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
+                        <h2 className="font-serif text-base font-bold tracking-wide">DOMAINS</h2>
+                        <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
                     </div>
                     <div className={`${mobileGridClass} gap-y-2 text-foreground`}>
                         {domains.map((domain) => (
@@ -137,10 +137,10 @@ const SkillsDomains = () => {
             </div>
 
             <div className={desktopGridClass}>
-                <h2 className="text-lg font-bold">SKILLS</h2>
-                <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
-                <h2 className="text-lg font-bold">DOMAINS</h2>
-                <h2 className="text-lg font-bold text-red-900/60 ml-4">KNACKS</h2>
+                <h2 className="font-serif text-base font-bold tracking-wide">SKILLS</h2>
+                <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
+                <h2 className="font-serif text-base font-bold tracking-wide">DOMAINS</h2>
+                <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
             </div>
             <div className={`hidden text-foreground sm:grid sm:grid-cols-4 sm:gap-1 sm:gap-y-0 grid-rows-${rowCount} size-full`}>
                 {Array.from({ length: rowCount }).map((_, i) => {
