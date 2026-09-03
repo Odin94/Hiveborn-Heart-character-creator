@@ -37,16 +37,16 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
         return (
             <div
                 key={index}
-                className={`relative group flex items-center gap-2 pl-6 py-3 w-40 rounded-r-lg cursor-pointer transition-[margin,transform,box-shadow] shadow-xl duration-500 hover:duration-200 animate-in slide-in-from-left-4 fade-in ${
+                className={`relative group flex w-40 cursor-pointer items-center gap-2 rounded-r-lg border border-primary/15 py-3 pl-6 shadow-lg transition-[margin,transform,box-shadow,background-color] duration-200 ease-out hover:duration-150 animate-in slide-in-from-left-4 fade-in ${
                     currentCharacterIndex === index
-                        ? "bg-secondary text-secondary-foreground"
-                        : "bg-secondary/40 hover:bg-secondary/60 text-secondary-foreground/80"
+                        ? "bg-secondary text-secondary-foreground shadow-primary/10"
+                        : "bg-card/80 text-secondary-foreground/80 hover:bg-secondary/60"
                 }
                 ${isLargeScreen ? "-ml-2.5 hover:ml-0" : "rounded-l-lg"}
                 `}
                 onClick={() => setCurrentCharacter(index)}
                 style={{
-                    transition: "margin 0.5s ease-in-out, transform 0.5s ease-in-out, box-shadow 0.5s ease-in-out",
+                    transition: "margin 200ms ease-out, transform 150ms ease-out, box-shadow 150ms ease-out",
                 }}
             >
                 <span className={`text-sm font-medium whitespace-nowrap`}>{truncatedName}</span>
@@ -60,7 +60,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                                 }}
                                 className={`${
                                     isLargeScreen ? "opacity-0" : "opacity-100"
-                                } group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-500 hover:text-white rounded p-1 ml-2`}
+                                } group-hover:opacity-100 rounded p-1 ml-2 transition-[background-color,opacity,transform] duration-150 hover:bg-red-500 hover:text-white active:scale-[.97]`}
                             >
                                 <X size={12} />
                             </button>
@@ -89,9 +89,9 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
 
     const renderAddCharacterButton = () => {
         return (
-            <div className="flex justify-center mt-3 transition-all duration-500 w-40">
+            <div className="mt-3 flex w-40 justify-center transition-all duration-200">
                 <div
-                    className="relative group flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-500 text-muted-foreground bg-secondary/40 hover:bg-secondary/60 hover:scale-110"
+                    className="relative group flex size-10 cursor-pointer items-center justify-center rounded-full border border-primary/15 bg-card/80 text-muted-foreground shadow-sm transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-px hover:bg-secondary hover:shadow-md active:scale-[.97]"
                     onClick={() => addCharacter()}
                 >
                     <Plus size={16} />
@@ -102,12 +102,12 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
 
     const renderDiceRollerButton = () => {
         return (
-            <div className="flex justify-center mt-3 transition-all duration-500 w-40">
+            <div className="mt-3 flex w-40 justify-center transition-all duration-200">
                 <Button
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="h-10 w-10 rounded-full shadow-lg hover:scale-110"
+                    className="size-10 rounded-full shadow-lg"
                     title="Open dice roller"
                     aria-label="Open dice roller"
                     onClick={() => setDiceRollerOpen(true)}
@@ -122,7 +122,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
         <>
             {/* Desktop version - Left side (screens >= 2100px) */}
             {isLargeScreen && (
-                <div className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-1 transition-all duration-500">
+                <div className="fixed left-0 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-1 transition-all duration-200">
                     {characters.map(renderCharacterTab)}
 
                     {renderAddCharacterButton()}
@@ -132,12 +132,12 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
 
             {/* Mobile/Tablet version - Bottom (screens < 2100px) */}
             {!isLargeScreen && (
-                <div className="flex flex-col mt-5">
+                <div className="mt-5 flex flex-col">
                     <Button
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="fixed right-4 bottom-4 z-40 h-12 w-12 rounded-full shadow-xl sm:hidden"
+                        className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 size-12 rounded-full shadow-xl sm:hidden"
                         title="Open dice roller"
                         aria-label="Open dice roller"
                         onClick={() => setDiceRollerOpen(true)}
@@ -148,7 +148,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                     <div className="flex justify-center py-4">
                         <button
                             onClick={() => setIsMobileTabsVisible(!isMobileTabsVisible)}
-                            className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:scale-110 shadow-lg"
+                            className="flex size-10 cursor-pointer items-center justify-center rounded-full border border-primary/15 bg-card/90 text-muted-foreground shadow-lg transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-px hover:bg-secondary active:scale-[.97]"
                         >
                             <ChevronDown size={16} className={`transition-transform duration-200 ${isMobileTabsVisible ? "rotate-180" : ""}`} />
                         </button>
@@ -156,7 +156,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
 
                     {/* Bottom bar - slides up/down */}
                     <div
-                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        className={`overflow-hidden transition-[max-height,opacity] duration-200 ${
                             isMobileTabsVisible ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                         }`}
                     >

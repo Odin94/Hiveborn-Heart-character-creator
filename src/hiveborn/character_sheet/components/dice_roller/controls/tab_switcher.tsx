@@ -8,16 +8,17 @@ const rollerTabs: { value: RollerTab; label: string }[] = [
 
 const TabSwitcher = ({ activeTab, rolling, setActiveTab }: { activeTab: RollerTab; rolling: boolean; setActiveTab: (tab: RollerTab) => void }) => {
     return (
-        <div className="mb-4 grid grid-cols-2 overflow-hidden rounded-md border border-primary/25">
+        <div className="segmented-control mb-4 grid grid-cols-2 overflow-hidden rounded-md border">
             {rollerTabs.map((tab) => (
                 <button
                     key={tab.value}
                     type="button"
                     className={cn(
                         "h-10 border-r border-primary/20 text-sm font-semibold last:border-r-0 disabled:cursor-not-allowed disabled:opacity-60",
-                        activeTab === tab.value ? "bg-primary text-primary-foreground" : "bg-background text-primary hover:bg-accent",
+                        activeTab === tab.value ? "bg-primary text-primary-foreground" : "bg-transparent",
                     )}
                     disabled={rolling}
+                    aria-pressed={activeTab === tab.value}
                     onClick={() => setActiveTab(tab.value)}
                 >
                     {tab.label}

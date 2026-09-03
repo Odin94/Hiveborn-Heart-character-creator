@@ -46,7 +46,7 @@ const Fallout = () => {
         <div>
             <div className="row-span-3 col-span-2 text-left mt-2">
                 <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-                    <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
+                    <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
                         FALLOUT <DialogTriggerWrapper />
                     </h2>
                     {pickerOpen ? (
@@ -82,8 +82,8 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     const fallout = useCharacterStore.use.fallout()
     const [falloutSeverity, setFalloutSeverity] = useState<FalloutSeverity>("minor")
     const [resistance, setResistance] = useState<Resistance>("blood")
-    const selectedSeverityClassName = "border-b-0"
-    const selectedResistanceClassName = "border-y-0"
+    const selectedSeverityClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
+    const selectedResistanceClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
     const isFalloutPickedAlready = (falloutOption: FalloutOption) => hasTitledEntry(fallout, falloutOption.name)
     const filteredFalloutOptions = falloutOptions
         .filter((falloutOption) => falloutOption.severity === falloutSeverity)
@@ -99,7 +99,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
                     <button
                         key={`${falloutOption.severity}-${falloutOption.resistance}-${falloutOption.name}`}
                         type="button"
-                        className="border border-t-0 p-2 text-left w-full cursor-pointer hover:bg-accent"
+                        className="sheet-choice w-full border border-t-0 p-3 text-left"
                         onClick={() => onSelect(falloutOption)}
                     >
                         <h2 className="flex items-center justify-between gap-3">

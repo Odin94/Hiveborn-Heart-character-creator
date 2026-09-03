@@ -33,7 +33,7 @@ const SkillDomainTooltip = ({ description, isSelected, label, onSelect }: SkillD
                 type="button"
                 aria-describedby={isOpen ? descriptionId : undefined}
                 className={cn(
-                    "select-none rounded-sm px-1 text-left font-bold touch-manipulation hover:bg-red-900/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-900",
+                    "select-none rounded-sm px-1 text-left font-bold touch-manipulation transition-[background-color,color,transform] duration-150 hover:bg-red-900/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-900 active:scale-[.97]",
                     isSelected && "bg-red-900 text-white hover:bg-red-900",
                 )}
                 onBlur={() => setIsOpen(false)}
@@ -97,7 +97,7 @@ const SkillDomainTooltip = ({ description, isSelected, label, onSelect }: SkillD
                 <span
                     id={descriptionId}
                     role="tooltip"
-                    className="absolute top-[calc(100%+0.45rem)] left-0 z-30 w-60 rounded-sm border border-red-900/30 bg-[#fffaf0] px-3 py-2 text-left text-xs leading-snug font-normal text-foreground shadow-[3px_3px_0_oklch(39.6%_0.141_25.723_/_0.18)] before:absolute before:-top-1 before:left-4 before:size-2 before:rotate-45 before:border-t before:border-l before:border-red-900/30 before:bg-[#fffaf0] dark:bg-card dark:before:bg-card"
+                    className="animate-in fade-in zoom-in-90 absolute top-[calc(100%+0.45rem)] left-0 z-30 w-60 origin-top-left rounded-sm border border-red-900/30 bg-[#fffaf0] px-3 py-2 text-left text-xs leading-snug font-normal text-foreground shadow-[3px_3px_0_oklch(39.6%_0.141_25.723_/_0.18)] duration-150 before:absolute before:-top-1 before:left-4 before:size-2 before:rotate-45 before:border-t before:border-l before:border-red-900/30 before:bg-[#fffaf0] dark:bg-card dark:before:bg-card"
                 >
                     <span className="mb-0.5 block text-[0.65rem] font-extrabold tracking-[0.16em] text-red-900">{label}</span>
                     {description}

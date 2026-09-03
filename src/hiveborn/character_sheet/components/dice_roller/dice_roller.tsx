@@ -204,7 +204,7 @@ const DiceRoller = () => {
             role="dialog"
             aria-modal="false"
             aria-labelledby="dice-roller-title"
-            className="hiveborn-dice-roller fixed left-1/2 top-1/2 z-[70] w-[min(720px,calc(100vw-2rem))] rounded-lg border border-primary/25 bg-background p-5 text-left text-foreground shadow-2xl"
+            className="hiveborn-dice-roller animate-in fade-in zoom-in-90 fixed left-1/2 top-1/2 z-[70] w-[min(720px,calc(100vw-2rem))] origin-center rounded-lg border border-primary/25 bg-popover p-5 text-left text-foreground shadow-2xl duration-200"
             style={
                 {
                     "--dice-drag-x": `${dragOffset.x}px`,
@@ -213,7 +213,7 @@ const DiceRoller = () => {
             }
         >
             <div
-                className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex cursor-default touch-auto items-start justify-between gap-4 border-b border-primary/15 bg-background px-5 pt-5 pb-3 sm:cursor-move sm:touch-none"
+                className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex cursor-default touch-auto items-start justify-between gap-4 border-b border-primary/15 bg-popover px-5 pt-5 pb-3 sm:cursor-move sm:touch-none"
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
@@ -266,7 +266,7 @@ const DiceRoller = () => {
                 />
             )}
 
-            <label className="mt-4 flex cursor-pointer items-center gap-2 rounded border border-primary/20 p-3 text-sm">
+            <label className="mt-4 flex cursor-pointer items-center gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm transition-colors hover:bg-primary/10">
                 <Checkbox checked={shareRolls} onCheckedChange={(checked) => setShareRolls(checked === true)} disabled={!canShareRoll} />
                 <span>
                     {canShareRoll ? `Share as ${characterName} in ${activeGroupName ?? "your active group"}` : "Share this roll with my group"}

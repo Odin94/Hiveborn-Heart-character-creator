@@ -21,7 +21,7 @@ const ActiveBeats = () => {
     return (
         <div className="row-span-3 col-span-2 text-left mt-5">
             <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-                <h2 className="relative font-bold py-2 bg-red-900 text-white pl-3">
+                <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
                     ACTIVE BEATS <DialogTriggerWrapper />
                 </h2>
                 {pickerOpen ? (
@@ -46,7 +46,7 @@ const ActiveBeats = () => {
 const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: Beat) => void }) => {
     const activeBeats = useCharacterStore.use.activeBeats()
     const [beatType, setBeatType] = useState<BeatType>("minor")
-    const selectedBeatTypeClassName = "border-b-0"
+    const selectedBeatTypeClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
     const beatOptions = isCalling(calling) ? beatsByCalling[calling] : []
     const normalizedActiveBeats = normalizeMarkdownText(activeBeats)
     const isBeatPickedAlready = (beat: Beat) => {
@@ -66,7 +66,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
                     <button
                         key={`${beat.type}-${beat.description}`}
                         type="button"
-                        className="border-1 border-t-0 px-4 py-3 text-left w-full cursor-pointer hover:bg-accent"
+                        className="sheet-choice w-full border border-t-0 px-4 py-3 text-left"
                         onClick={() => onSelect(beat)}
                     >
                         <Markdown className="text-sm">{formatRulesText(beat.description)}</Markdown>
@@ -96,7 +96,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
                     >
                         <TabsList className="grid w-full shrink-0 grid-cols-3">
                             {beatTypes.map((type) => (
-                                <TabsTrigger key={type} value={type} className={`border-1 ${beatType === type ? selectedBeatTypeClassName : ""}`}>
+                                <TabsTrigger key={type} value={type} className={`border ${beatType === type ? selectedBeatTypeClassName : ""}`}>
                                     {capitalize(type)}
                                 </TabsTrigger>
                             ))}
