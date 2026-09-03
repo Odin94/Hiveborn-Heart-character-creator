@@ -63,6 +63,31 @@ The managed Caddy site proxies to `127.0.0.1:3003`. The port is loopback-only: d
 
 For routine deploys, run `/opt/hiveborn/backend/scripts/updateCode.sh` as `root` or `hiveborn`. It creates a timestamped SQLite backup under `backend/db_backups/`, fast-forward pulls the code, installs locked dependencies, builds, migrates, restarts PM2, and verifies the public health endpoint. This script is already present and is the Hiveborn equivalent of Progeny's `updateCode.sh`.
 
+### GitHub Actions auto-deploy
+
+Pushes to `main` that change `backend/**` automatically run
+[`deploy-backend.yml`](../.github/workflows/deploy-backend.yml). The workflow
+connects to `46.224.62.32` and runs the same `updateCode.sh` deployment script.
+Deployments are serialized so concurrent pushes cannot update the checkout at
+the same time. It can also be run manually from the Actions tab.
+
+Before the first deploy, add these **repository Actions secrets** in GitHub:
+
+- `HETZNER_DEPLOY_SSH_PRIVATE_KEY`: a dedicated Ed25519 private key authorized
+  for the `hiveborn` user on the server. Generate one with
+  `ssh-keygen -t ed25519 -f hiveborn-github-deploy -C hiveborn-github-deploy`;
+  on the server, create `/opt/hiveborn/.ssh` with mode `0700` and add its `.pub`
+  file to `authorized_keys` with mode `0600` (both owned by `hiveborn`); paste
+  the private-key file into this secret.
+- `HETZNER_DEPLOY_SSH_KNOWN_HOSTS`: the server's trusted host key. From an
+  administrator-controlled machine, run `ssh-keyscan -H 46.224.62.32` and copy its output into this
+  secret. Verify the resulting fingerprint against
+  `/etc/ssh/ssh_host_ed25519_key.pub` before trusting it.
+- `HETZNER_DEPLOY_USER`: `hiveborn`.
+
+The workflow requires a pre-recorded host key and uses strict host-key checking;
+it does not accept a changed or unverified SSH host key.
+
 Useful production commands:
 
 ```bash
