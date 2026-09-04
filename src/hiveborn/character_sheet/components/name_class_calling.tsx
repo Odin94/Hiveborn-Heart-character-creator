@@ -114,63 +114,67 @@ const NameClassCalling = () => {
             {/* Name */}
             <div className="flex items-center font-bold text-left">Name</div>
             <div className="flex items-center">
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="sm:w-[90%]" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} className="w-full" />
             </div>
 
             {/* Class */}
             <div className="flex items-center font-bold text-left">Class</div>
-            <div className="flex items-center">
-                <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="sm:w-[90%]" />
-                <ClassDropdown
-                    onSelect={(characterClass: CharacterClass) => {
-                        setCharacterClass(characterClass)
-                    }}
-                    onConfirm={applyCoreTraits}
-                />
+            <div className="relative flex items-center">
+                <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="w-full pr-10" />
+                <div className="absolute right-2">
+                    <ClassDropdown
+                        onSelect={(characterClass: CharacterClass) => {
+                            setCharacterClass(characterClass)
+                        }}
+                        onConfirm={applyCoreTraits}
+                    />
+                </div>
             </div>
 
             {/* Calling */}
             <div className="flex items-center font-bold text-left">Calling</div>
-            <div className="flex items-center">
-                <Input value={calling} onChange={(e) => setCalling(e.target.value)} className="sm:w-[90%]" />
-                <CallingDropdown
-                    onSelect={(calling: Calling) => {
-                        setCalling(calling)
-                    }}
-                    onConfirm={({ previousCalling }) => {
-                        // TODOdin: Deal with people putting their ancestry in this field somehow
-                        if (isCalling(calling)) {
-                            const callingAbility = abilitiesByClassOrCalling[calling][0]
-                            const previousCallingAbility = previousCalling ? abilitiesByClassOrCalling[previousCalling][0] : null
-                            let newAbilities = previousCallingAbility ? removeTitledEntriesFromText(abilities, [previousCallingAbility.name]) : abilities
-                            if (!hasTitledEntry(newAbilities, callingAbility.name)) {
-                                newAbilities = insertAbilityIntoText(newAbilities, callingAbility)
-                            }
-                            setAbilities(newAbilities)
+            <div className="relative flex items-center">
+                <Input value={calling} onChange={(e) => setCalling(e.target.value)} className="w-full pr-10" />
+                <div className="absolute right-2">
+                    <CallingDropdown
+                        onSelect={(calling: Calling) => {
+                            setCalling(calling)
+                        }}
+                        onConfirm={({ previousCalling }) => {
+                            // TODOdin: Deal with people putting their ancestry in this field somehow
+                            if (isCalling(calling)) {
+                                const callingAbility = abilitiesByClassOrCalling[calling][0]
+                                const previousCallingAbility = previousCalling ? abilitiesByClassOrCalling[previousCalling][0] : null
+                                let newAbilities = previousCallingAbility ? removeTitledEntriesFromText(abilities, [previousCallingAbility.name]) : abilities
+                                if (!hasTitledEntry(newAbilities, callingAbility.name)) {
+                                    newAbilities = insertAbilityIntoText(newAbilities, callingAbility)
+                                }
+                                setAbilities(newAbilities)
 
-                            const newSkills = copySkills(existingSkills)
-                            const newDomains = copyDomains(existingDomains)
-                            const newProtections = { ...protections }
-                            const classTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
+                                const newSkills = copySkills(existingSkills)
+                                const newDomains = copyDomains(existingDomains)
+                                const newProtections = { ...protections }
+                                const classTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
 
-                            if (previousCallingAbility) {
-                                removeStaticBonusesFromDraft(
-                                    newSkills,
-                                    newDomains,
-                                    newProtections,
-                                    previousCallingAbility.staticBonuses,
-                                    getClassProvidedBonuses(classTraits),
-                                )
+                                if (previousCallingAbility) {
+                                    removeStaticBonusesFromDraft(
+                                        newSkills,
+                                        newDomains,
+                                        newProtections,
+                                        previousCallingAbility.staticBonuses,
+                                        getClassProvidedBonuses(classTraits),
+                                    )
+                                }
+                                applyStaticBonusesToDraft(newSkills, newDomains, newProtections, callingAbility.staticBonuses)
+                                setSkills(newSkills)
+                                setDomains(newDomains)
+                                setProtections(newProtections)
+                            } else {
+                                console.log(`Not a correct calling: '${calling}'`)
                             }
-                            applyStaticBonusesToDraft(newSkills, newDomains, newProtections, callingAbility.staticBonuses)
-                            setSkills(newSkills)
-                            setDomains(newDomains)
-                            setProtections(newProtections)
-                        } else {
-                            console.log(`Not a correct calling: '${calling}'`)
-                        }
-                    }}
-                />
+                        }}
+                    />
+                </div>
             </div>
         </div>
     )
@@ -191,7 +195,7 @@ const ClassDropdown = ({
     return (
         <Dialog>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="hover:bg-accent">
+                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none">
                     <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -289,7 +293,7 @@ const CallingDropdown = ({
     return (
         <Dialog>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="hover:bg-accent">
+                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none">
                     <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>

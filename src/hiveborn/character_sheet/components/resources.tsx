@@ -21,7 +21,7 @@ const Resources = () => {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute top-1/2 right-3 h-8 w-8 -translate-y-1/2 text-white hover:bg-red-800 hover:text-white sm:right-7"
+                                className="absolute top-1/2 right-3 h-8 w-8 -translate-y-1/2 text-white transition-[background-color,transform] hover:translate-y-[-50%] hover:bg-white/15 hover:text-white sm:right-7"
                                 aria-label="Open resource tag reference"
                                 title="Open resource tag reference"
                             >

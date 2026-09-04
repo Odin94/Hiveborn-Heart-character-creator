@@ -75,7 +75,7 @@ export const TagReferenceDialog = ({
     return (
         <DialogContent
             aria-describedby={undefined}
-            className="flex h-[min(48rem,calc(100dvh-1rem))] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-4 sm:max-h-[calc(100vh-2rem)] sm:p-6"
+            className="tag-reference-dialog data-[state=open]:duration-120 flex h-[min(48rem,calc(100dvh-1rem))] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-4 sm:max-h-[calc(100vh-2rem)] sm:p-6"
             onKeyDownCapture={redirectTypingToSearch}
         >
             <DialogHeader className="shrink-0">
@@ -111,7 +111,7 @@ export const TagReferenceDialog = ({
                                         : "border-red-900/15 bg-background",
                                 )}
                                 data-relevant={isRelevant}
-                                style={{ "--tag-delay": `${Math.min(index, 12) * 22}ms` } as CSSProperties}
+                                style={{ "--tag-delay": `${120 + Math.min(index, 8) * 7}ms` } as CSSProperties}
                             >
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="text-sm font-black tracking-wide text-red-900">{tag.name.toUpperCase()}</h3>

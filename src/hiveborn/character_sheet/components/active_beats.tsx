@@ -19,7 +19,7 @@ const ActiveBeats = () => {
     // TODOdin: Make beats line-by-line with a checkbox and store completed beats in a history somewhere
     // TODOdin: Add MAJOR/MINOR badge to beats
     return (
-        <div className="row-span-3 col-span-2 text-left mt-5">
+        <div className="sheet-section-active-focus row-span-3 col-span-2 mt-5 text-left">
             <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
                 <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
                     ACTIVE BEATS <DialogTriggerWrapper />

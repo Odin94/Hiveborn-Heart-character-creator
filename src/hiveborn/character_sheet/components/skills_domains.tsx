@@ -49,7 +49,7 @@ const SkillsDomains = () => {
                 </div>
                 <div className={`ml-2 ${colClass} sm:ml-4`}>
                     <Input
-                        className="h-8 w-full text-sm sm:w-28"
+                        className="h-8 w-full rounded-none border-x-0 border-t-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 sm:w-28"
                         value={skillKnacks}
                         onChange={(e) => {
                             const newKnacks = e.target.value
@@ -89,7 +89,7 @@ const SkillsDomains = () => {
                 </div>
                 <div className={`ml-2 ${colClass} sm:ml-4`}>
                     <Input
-                        className="h-8 w-full text-sm sm:w-28"
+                        className="h-8 w-full rounded-none border-x-0 border-t-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 sm:w-28"
                         value={domainKnacks}
                         onChange={(e) => {
                             const newKnacks = e.target.value
