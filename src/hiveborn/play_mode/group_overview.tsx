@@ -12,9 +12,10 @@ import { TagReferenceDialog, type ReferenceTag } from "@/hiveborn/character_shee
 import { equipmentTags } from "@/hiveborn/game_data/equipment_tags"
 import { resourceTags } from "@/hiveborn/game_data/resource_tags"
 import { resistances } from "@/hiveborn/game_data/resistances"
+import { falloutOptions, type Fallout as FalloutOption } from "@/hiveborn/game_data/fallout"
 import FalloutDie, { falloutRollOverlayLifetimeMs } from "./fallout_die"
-import { BookOpen, ChevronLeft, Circle, Dices, Plus, Sparkles, Users } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { BookOpen, ChevronLeft, Circle, Dices, Package, Plus, ShieldAlert, Sparkles, Users } from "lucide-react"
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { toast } from "sonner"
 
 type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
@@ -30,6 +31,7 @@ const lastGroupStorageKey = (userId: string) => `hiveborn-last-play-group:${wind
 const otherPlayersBeatsStorageKey = (userId: string) => `hiveborn-show-other-players-beats:${window.location.origin}:${userId}`
 const ROLL_LIFETIME_MS = 10 * 60 * 1_000
 const ROLL_FADE_TICK_MS = 10 * 1_000
+const FALLOUT_ROLL_MATCH_WINDOW_MS = 60_000
 
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
 const rollCharacterName = (character: Pick<CloudCharacter, "name">) => character.name || "Unnamed hiveborn"
@@ -42,6 +44,7 @@ const relativeTime = (date: string, now = Date.now()) => {
     if (minutes < 60) return `${minutes}m ago`
     return `${Math.floor(minutes / 60)}h ago`
 }
+const falloutOutcomeForRoll = (result: string) => /^(minor|major) fallout\b/i.exec(result.trim())?.[1]?.toLowerCase() as "minor" | "major" | undefined
 
 const classCardThemes: Record<string, string> = {
     Cleaver: "bg-gradient-to-br from-red-500/18 via-stone-300/18 to-card dark:from-red-950/70 dark:via-stone-900/60 dark:to-card",
@@ -95,9 +98,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [inviteNickname, setInviteNickname] = useState("")
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithOwner | null>(null)
     const [autoUpdateStress, setAutoUpdateStress] = useState(true)
-    const [gmTargetCharacterId, setGmTargetCharacterId] = useState("")
     const [falloutRoll, setFalloutRoll] = useState<FalloutRoll | null>(null)
     const [rollingFalloutCharacterId, setRollingFalloutCharacterId] = useState<string | null>(null)
+    const [falloutReferenceOpen, setFalloutReferenceOpen] = useState(false)
+    const [manualFalloutPickerOpen, setManualFalloutPickerOpen] = useState(false)
+    const [selectedFallout, setSelectedFallout] = useState<FalloutOption | null>(null)
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const [showOtherPlayersBeats, setShowOtherPlayersBeats] = useState(() => localStorage.getItem(otherPlayersBeatsStorageKey(user.id)) === "true")
     const refreshTimer = useRef<number | undefined>(undefined)
@@ -319,8 +324,62 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const unassignedOwnCharacters = ownCharacters.filter((character) => !assignedOwnCharacterIds.has(character.id))
     const isGameMaster = group?.members.find((member) => member.id === user.id)?.isGameMaster ?? false
     const isGroupOwner = group?.ownerId === user.id
-    const gmTarget = characters.find((character) => character.id === gmTargetCharacterId) ?? characters[0]
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
+    const groupEquipment = characters.map((character) => character.data.equipment).join("\n")
+    const groupResources = characters.map((character) => character.data.resources).join("\n")
+    const latestUnassignedFalloutRoll = group?.rolls.find((roll) => {
+        const outcome = falloutOutcomeForRoll(roll.result)
+        return Boolean(roll.characterId && outcome && !roll.falloutAssignedAt && rollAge(roll.createdAt, Date.now()) < FALLOUT_ROLL_MATCH_WINDOW_MS)
+    })
+    const groupCreationKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key !== "Enter" || !createName.trim()) return
+        event.preventDefault()
+        void createGroup()
+    }
+    const assignFallout = async (fallout: FalloutOption, characterId: string, rollId?: string) => {
+        if (!group) return
+        try {
+            const assignment = await api.assignFallout(group.id, {
+                characterId,
+                rollId,
+                fallout: { name: fallout.name, description: fallout.description, severity: fallout.severity },
+            })
+            setSelectedFallout(null)
+            setManualFalloutPickerOpen(false)
+            await refresh()
+            const characterName = rollCharacterName(assignment.character)
+            if (assignment.matched && rollId) {
+                toast.success(`Auto-added ${fallout.name} to ${characterName} because it matched recent fallout roll`, {
+                    action: { label: "Undo", onClick: () => void undoFalloutAssignment(rollId) },
+                })
+            } else {
+                toast.success(`Added ${fallout.name} to ${characterName}`)
+            }
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not assign fallout")
+        }
+    }
+    const undoFalloutAssignment = async (rollId: string) => {
+        if (!group) return
+        try {
+            await api.undoFalloutAssignment(group.id, rollId)
+            await refresh()
+            toast.success("Fallout assignment undone")
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not undo fallout assignment")
+        }
+    }
+    const selectFallout = (fallout: FalloutOption) => {
+        setFalloutReferenceOpen(false)
+        const recentOutcome = latestUnassignedFalloutRoll ? falloutOutcomeForRoll(latestUnassignedFalloutRoll.result) : undefined
+        const matchesRecentRoll = recentOutcome && (fallout.severity === "critical" || fallout.severity === recentOutcome)
+        if (latestUnassignedFalloutRoll?.characterId && matchesRecentRoll) {
+            void assignFallout(fallout, latestUnassignedFalloutRoll.characterId, latestUnassignedFalloutRoll.id)
+            return
+        }
+        setSelectedFallout(fallout)
+        setManualFalloutPickerOpen(true)
+    }
     const hasFadingRolls = visibleRolls.length > 0
     useEffect(() => {
         if (!hasFadingRolls) return
@@ -353,8 +412,52 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                         </button>
                     ))}
                 </div>
+                {group && (
+                    <section className="mt-6">
+                        <h2 className="mb-2 text-sm font-bold">Table references</h2>
+                        <div className="grid grid-cols-3 gap-2">
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="icon" title="Equipment tags" aria-label="Open equipment tags for this group">
+                                        <BookOpen />
+                                    </Button>
+                                </DialogTrigger>
+                                <TagReferenceDialog
+                                    title="GROUP EQUIPMENT TAGS"
+                                    tags={equipmentTags}
+                                    primaryText={groupEquipment}
+                                    primarySourceLabel="In use"
+                                />
+                            </Dialog>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="icon" title="Resource tags" aria-label="Open resource tags for this group">
+                                        <Package />
+                                    </Button>
+                                </DialogTrigger>
+                                <TagReferenceDialog title="GROUP RESOURCE TAGS" tags={resourceTags} primaryText={groupResources} primarySourceLabel="In use" />
+                            </Dialog>
+                            {isGameMaster && (
+                                <Dialog open={falloutReferenceOpen} onOpenChange={setFalloutReferenceOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="icon" title="Assign fallout" aria-label="Open fallout assignment reference">
+                                            <ShieldAlert />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <FalloutReferenceDialog onSelect={selectFallout} />
+                                </Dialog>
+                            )}
+                        </div>
+                    </section>
+                )}
                 <div className="mt-6 space-y-2">
-                    <Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="New group name" className="text-sm" />
+                    <Input
+                        value={createName}
+                        onChange={(event) => setCreateName(event.target.value)}
+                        onKeyDown={groupCreationKeyDown}
+                        placeholder="New group name"
+                        className="text-sm"
+                    />
                     <Button className="w-full" disabled={!createName.trim()} onClick={createGroup}>
                         <Plus /> Create group
                     </Button>
@@ -430,7 +533,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 : "Set your nickname in the account menu, then create a group and invite players by nickname."}
                         </p>
                         <div className="mt-6 flex gap-2">
-                            <Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="Group name" />
+                            <Input
+                                value={createName}
+                                onChange={(event) => setCreateName(event.target.value)}
+                                onKeyDown={groupCreationKeyDown}
+                                placeholder="Group name"
+                            />
                             <Button disabled={!createName.trim()} onClick={createGroup}>
                                 Create
                             </Button>
@@ -483,7 +591,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 </label>
                             </div>
                             <div className="flex gap-2">
-                                <Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="New group name" />
+                                <Input
+                                    value={createName}
+                                    onChange={(event) => setCreateName(event.target.value)}
+                                    onKeyDown={groupCreationKeyDown}
+                                    placeholder="New group name"
+                                />
                                 <Button disabled={!createName.trim()} onClick={createGroup}>
                                     <Plus /> Create
                                 </Button>
@@ -522,39 +635,6 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 ))}
                             </div>
                         </section>
-                        {isGameMaster && gmTarget && (
-                            <section className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-destructive/25 bg-destructive/5 p-4">
-                                <div className="min-w-48 flex-1">
-                                    <h2 className="font-semibold">GM session control</h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        Roll fallout without opening a sheet. {totalStress(gmTarget)} stress currently marked.
-                                        {totalStress(gmTarget) === 0 ? " Mark stress before rolling." : ""}
-                                    </p>
-                                </div>
-                                <label className="grid gap-1 text-sm font-medium" htmlFor="gm-fallout-character">
-                                    Character
-                                    <select
-                                        id="gm-fallout-character"
-                                        value={gmTarget.id}
-                                        onChange={(event) => setGmTargetCharacterId(event.target.value)}
-                                        className="h-9 min-w-44 rounded-md border border-input bg-background px-2 text-sm font-normal"
-                                    >
-                                        {characters.map((character) => (
-                                            <option key={character.id} value={character.id}>
-                                                {rollCharacterName(character)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <Button
-                                    variant="destructive"
-                                    disabled={rollingFalloutCharacterId === gmTarget.id || totalStress(gmTarget) === 0}
-                                    onClick={() => void rollFallout(gmTarget)}
-                                >
-                                    <Dices /> Roll fallout
-                                </Button>
-                            </section>
-                        )}
                         {unassignedOwnCharacters.length > 0 && (
                             <section className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
                                 <div>
@@ -612,8 +692,60 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 )}
             </main>
             <CharacterSheetModal character={selectedCharacter} showBeats={showOtherPlayersBeats} onClose={() => setSelectedCharacter(null)} />
+            <Dialog open={manualFalloutPickerOpen} onOpenChange={setManualFalloutPickerOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Assign {selectedFallout?.name ?? "fallout"}</DialogTitle>
+                        <DialogDescription>
+                            No matching unassigned fallout roll was found in the last minute. Choose the character who should receive this fallout.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-2">
+                        {characters.map((character) => (
+                            <Button
+                                key={character.id}
+                                variant="outline"
+                                className="h-auto justify-start py-3 text-left"
+                                onClick={() => selectedFallout && void assignFallout(selectedFallout, character.id)}
+                            >
+                                <span>{rollCharacterName(character)}</span>
+                                <span className="ml-auto text-xs text-muted-foreground">{totalStress(character)} stress</span>
+                            </Button>
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
             {falloutRoll && <FalloutDie {...falloutRoll} value={falloutRoll.roll} />}
         </div>
+    )
+}
+
+function FalloutReferenceDialog({ onSelect }: { onSelect: (fallout: FalloutOption) => void }) {
+    return (
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] max-w-3xl flex-col overflow-hidden">
+            <DialogHeader>
+                <DialogTitle>FALLOUT</DialogTitle>
+                <DialogDescription>Select a fallout to assign it to a character at this table.</DialogDescription>
+            </DialogHeader>
+            <div className="grid min-h-0 gap-2 overflow-y-auto pr-2 sm:grid-cols-2">
+                {falloutOptions.map((fallout) => (
+                    <button
+                        key={`${fallout.severity}-${fallout.resistance}-${fallout.name}`}
+                        type="button"
+                        className="sheet-choice rounded-md border p-3 text-left"
+                        onClick={() => onSelect(fallout)}
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <h3 className="font-bold">{fallout.name}</h3>
+                            <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                                {fallout.severity} · {fallout.resistance}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">{fallout.description}</p>
+                    </button>
+                ))}
+            </div>
+        </DialogContent>
     )
 }
 
@@ -629,7 +761,7 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
     const columns = [...characters.map((character) => ({ id: character.id, name: rollCharacterName(character) })), ...formerCharacters]
 
     return (
-        <section className="mt-8 rounded-lg bg-card/40 p-4">
+        <section className="mt-8 rounded-lg bg-card/40 p-4 text-left">
             <h2 className="font-bold">Recent table activity</h2>
             {columns.length ? (
                 <div className="mt-3 overflow-x-auto pb-1">
@@ -643,7 +775,7 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
                                     <h3 className="truncate text-sm font-bold" title={column.name}>
                                         {column.name}
                                     </h3>
-                                    <div className="mt-2 space-y-2 text-sm">
+                                    <div className="mt-2 space-y-2 text-left text-sm">
                                         {characterRolls.length ? (
                                             characterRolls.map((roll) => {
                                                 const opacity = Math.max(0, 1 - rollAge(roll.createdAt, now) / ROLL_LIFETIME_MS)

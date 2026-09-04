@@ -22,6 +22,7 @@ export type PlayGroup = {
         label: string
         dice: string
         result: string
+        falloutAssignedAt: string | null
         createdAt: string
     }>
 }
@@ -87,6 +88,16 @@ export const api = {
             stressUpdate: { type: "all" } | { type: "resistance"; resistance: string } | null
             lastStressResistance: string | null
         }>(`/play-groups/${groupId}/fallout-rolls`, { method: "POST", body: JSON.stringify(payload) }),
+    assignFallout: (
+        groupId: string,
+        payload: { characterId: string; rollId?: string; fallout: { name: string; description: string; severity: "minor" | "major" | "critical" } },
+    ) =>
+        request<{ character: CloudCharacter; matched: boolean }>(`/play-groups/${groupId}/fallout-assignments`, {
+            method: "POST",
+            body: JSON.stringify(payload),
+        }),
+    undoFalloutAssignment: (groupId: string, rollId: string) =>
+        request<{ character: CloudCharacter }>(`/play-groups/${groupId}/fallout-assignments/undo`, { method: "POST", body: JSON.stringify({ rollId }) }),
 }
 
 export { API_URL }
