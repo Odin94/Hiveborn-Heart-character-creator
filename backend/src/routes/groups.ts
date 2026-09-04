@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { randomInt } from "node:crypto"
-import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { characterDataSchema } from "../characterData.js"
@@ -21,7 +21,7 @@ const rollInput = z.object({
 const falloutUpdateInput = z.object({ characterId: z.string().min(1), applyStressUpdate: z.boolean() })
 const falloutAssignmentInput = z.object({
     characterId: z.string().min(1),
-    rollId: z.string().min(1).optional(),
+    autoAssign: z.boolean().default(false),
     fallout: z.object({
         name: z.string().trim().min(1).max(120),
         description: z.string().trim().min(1).max(10_000),
@@ -527,30 +527,29 @@ export async function groupRoutes(fastify: FastifyInstance) {
         if (!character) return reply.code(404).send({ error: "Character not found in this group" })
 
         let matchedRoll: typeof schema.rollEvents.$inferSelect | undefined
-        if (parsed.data.rollId) {
+        if (parsed.data.autoAssign) {
             matchedRoll = await db
                 .select()
                 .from(schema.rollEvents)
-                .where(
-                    and(
-                        eq(schema.rollEvents.id, parsed.data.rollId),
-                        eq(schema.rollEvents.groupId, params.data.id),
-                        eq(schema.rollEvents.characterId, parsed.data.characterId),
-                        eq(schema.rollEvents.label, "Fallout"),
-                        isNull(schema.rollEvents.falloutAssignedAt),
-                        gte(schema.rollEvents.createdAt, new Date(Date.now() - falloutRollWindowMs)),
-                    ),
-                )
+                .where(and(eq(schema.rollEvents.groupId, params.data.id), eq(schema.rollEvents.label, "Fallout")))
+                .orderBy(desc(schema.rollEvents.createdAt), desc(schema.rollEvents.id))
+                .limit(1)
                 .get()
             const outcome = matchedRoll ? falloutOutcomeForRoll(matchedRoll.result) : undefined
             const severityMatches = parsed.data.fallout.severity === "critical" || parsed.data.fallout.severity === outcome
-            if (!matchedRoll || !outcome || !severityMatches)
-                return reply.code(409).send({ error: "That fallout roll is no longer eligible for auto-assignment" })
+            const eligible =
+                matchedRoll &&
+                matchedRoll.characterId === parsed.data.characterId &&
+                !matchedRoll.falloutAssignedAt &&
+                matchedRoll.createdAt.getTime() >= Date.now() - falloutRollWindowMs &&
+                outcome &&
+                severityMatches
+            if (!eligible) return reply.code(409).send({ error: "That fallout roll is no longer eligible for auto-assignment" })
         }
 
         const data = characterDataSchema.parse(JSON.parse(character.characters.data))
         const entry = falloutEntry(parsed.data.fallout)
-        const followingText = data.fallout
+        const followingText = data.fallout.trim()
         data.fallout = data.fallout.trim() ? `${entry}\n\n${data.fallout}` : entry
         let updatedCharacter: typeof schema.characters.$inferSelect | undefined
         try {
@@ -582,7 +581,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
 
         await broadcastUserCharacterChange(character.characters.userId, { character: { ...updatedCharacter, data } })
         trackEvent("group_fallout_assigned", request.userId!, { auto_assigned: Boolean(matchedRoll), severity: parsed.data.fallout.severity })
-        return { character: { ...updatedCharacter, data }, matched: Boolean(matchedRoll) }
+        return { character: { ...updatedCharacter, data }, matched: Boolean(matchedRoll), rollId: matchedRoll?.id ?? null }
     })
 
     fastify.post("/play-groups/:id/fallout-assignments/undo", { preHandler: authenticateUser }, async (request, reply) => {

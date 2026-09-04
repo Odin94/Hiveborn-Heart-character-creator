@@ -90,9 +90,9 @@ export const api = {
         }>(`/play-groups/${groupId}/fallout-rolls`, { method: "POST", body: JSON.stringify(payload) }),
     assignFallout: (
         groupId: string,
-        payload: { characterId: string; rollId?: string; fallout: { name: string; description: string; severity: "minor" | "major" | "critical" } },
+        payload: { characterId: string; autoAssign?: boolean; fallout: { name: string; description: string; severity: "minor" | "major" | "critical" } },
     ) =>
-        request<{ character: CloudCharacter; matched: boolean }>(`/play-groups/${groupId}/fallout-assignments`, {
+        request<{ character: CloudCharacter; matched: boolean; rollId: string | null }>(`/play-groups/${groupId}/fallout-assignments`, {
             method: "POST",
             body: JSON.stringify(payload),
         }),
