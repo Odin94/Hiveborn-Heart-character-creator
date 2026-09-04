@@ -91,15 +91,14 @@ Before the first deploy, add these **repository Actions secrets** in GitHub:
   Verify the resulting fingerprint against
   `/etc/ssh/ssh_host_ed25519_key.pub` before trusting it.
 - `HETZNER_DEPLOY_USER`: `hiveborn`.
-- `DEPLOY_ALERT_SMTP_URL`, `DEPLOY_ALERT_SMTP_USERNAME`,
-  `DEPLOY_ALERT_SMTP_PASSWORD`, and `DEPLOY_ALERT_SMTP_FROM`: SMTP credentials
-  for failure notifications sent to `kammerloher.andreas@gmail.com`. For Gmail,
-  use `smtps://smtp.gmail.com:465`, the sending Gmail address, and a Google
-  App Password; the `FROM` address must be accepted by that SMTP account.
 
 The workflow requires a pre-recorded host key and uses strict host-key checking;
-it does not accept a changed or unverified SSH host key. A failed deployment
-also runs a separate, two-minute-bounded SMTP notification job.
+it does not accept a changed or unverified SSH host key. It fails when the SSH
+connection, update, build, migration, PM2 restart, or the post-restart
+`https://api-hiveborn.odin-matthias.de/health` check fails. Enable GitHub's
+email notification for failed Actions workflows to receive those failures at
+the email address on your GitHub account; no SMTP service or repository email
+secrets are needed.
 
 Useful production commands:
 
