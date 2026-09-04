@@ -100,9 +100,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const [autoUpdateStress, setAutoUpdateStress] = useState(true)
     const [falloutRoll, setFalloutRoll] = useState<FalloutRoll | null>(null)
     const [rollingFalloutCharacterId, setRollingFalloutCharacterId] = useState<string | null>(null)
-    const [falloutReferenceOpen, setFalloutReferenceOpen] = useState(false)
     const [manualFalloutPickerOpen, setManualFalloutPickerOpen] = useState(false)
     const [selectedFallout, setSelectedFallout] = useState<FalloutOption | null>(null)
+    const [assigningFallout, setAssigningFallout] = useState(false)
     const [rollAgeUpdatedAt, setRollAgeUpdatedAt] = useState(() => Date.now())
     const [showOtherPlayersBeats, setShowOtherPlayersBeats] = useState(() => localStorage.getItem(otherPlayersBeatsStorageKey(user.id)) === "true")
     const refreshTimer = useRef<number | undefined>(undefined)
@@ -327,7 +327,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const groupEquipment = characters.map((character) => character.data.equipment).join("\n")
     const groupResources = characters.map((character) => character.data.resources).join("\n")
-    const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && falloutOutcomeForRoll(roll.result)))
+    const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && roll.label === "Fallout" && falloutOutcomeForRoll(roll.result)))
     const groupCreationKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== "Enter" || !createName.trim()) return
         event.preventDefault()
@@ -335,6 +335,8 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     }
     const assignFallout = async (fallout: FalloutOption, characterId: string, rollId?: string, fallbackOnEligibilityConflict = false) => {
         if (!group) return
+        if (assigningFallout) return
+        setAssigningFallout(true)
         try {
             const assignment = await api.assignFallout(group.id, {
                 characterId,
@@ -359,6 +361,8 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 return
             }
             toast.error(error instanceof Error ? error.message : "Could not assign fallout")
+        } finally {
+            setAssigningFallout(false)
         }
     }
     const undoFalloutAssignment = async (rollId: string) => {
@@ -372,7 +376,6 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         }
     }
     const selectFallout = (fallout: FalloutOption) => {
-        setFalloutReferenceOpen(false)
         const recentOutcome = latestFalloutRoll ? falloutOutcomeForRoll(latestFalloutRoll.result) : undefined
         const matchesRecentRoll = recentOutcome && (fallout.severity === "critical" || fallout.severity === recentOutcome)
         const canAutoAssign =
@@ -420,37 +423,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     <section className="mt-6">
                         <h2 className="mb-2 text-sm font-bold">Table references</h2>
                         <div className="grid grid-cols-3 gap-2">
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon" title="Equipment tags" aria-label="Open equipment tags for this group">
-                                        <BookOpen />
-                                    </Button>
-                                </DialogTrigger>
-                                <TagReferenceDialog
-                                    title="GROUP EQUIPMENT TAGS"
-                                    tags={equipmentTags}
-                                    primaryText={groupEquipment}
-                                    primarySourceLabel="In use"
-                                />
-                            </Dialog>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon" title="Resource tags" aria-label="Open resource tags for this group">
-                                        <Package />
-                                    </Button>
-                                </DialogTrigger>
-                                <TagReferenceDialog title="GROUP RESOURCE TAGS" tags={resourceTags} primaryText={groupResources} primarySourceLabel="In use" />
-                            </Dialog>
-                            {isGameMaster && (
-                                <Dialog open={falloutReferenceOpen} onOpenChange={setFalloutReferenceOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" size="icon" title="Assign fallout" aria-label="Open fallout assignment reference">
-                                            <ShieldAlert />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <FalloutReferenceDialog onSelect={selectFallout} />
-                                </Dialog>
-                            )}
+                            <TableReferenceActions
+                                groupEquipment={groupEquipment}
+                                groupResources={groupResources}
+                                isGameMaster={isGameMaster}
+                                onSelectFallout={selectFallout}
+                            />
                         </div>
                     </section>
                 )}
@@ -605,6 +583,14 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                     <Plus /> Create
                                 </Button>
                             </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <TableReferenceActions
+                                    groupEquipment={groupEquipment}
+                                    groupResources={groupResources}
+                                    isGameMaster={isGameMaster}
+                                    onSelectFallout={selectFallout}
+                                />
+                            </div>
                         </section>
                         <section className="mb-6 flex flex-wrap items-center gap-2 rounded-lg bg-card/40 p-3">
                             <span className="font-semibold">Invite by nickname</span>
@@ -710,6 +696,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 key={character.id}
                                 variant="outline"
                                 className="h-auto justify-start py-3 text-left"
+                                disabled={assigningFallout}
                                 onClick={() => selectedFallout && void assignFallout(selectedFallout, character.id)}
                             >
                                 <span>{rollCharacterName(character)}</span>
@@ -721,6 +708,55 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             </Dialog>
             {falloutRoll && <FalloutDie {...falloutRoll} value={falloutRoll.roll} />}
         </div>
+    )
+}
+
+function TableReferenceActions({
+    groupEquipment,
+    groupResources,
+    isGameMaster,
+    onSelectFallout,
+}: {
+    groupEquipment: string
+    groupResources: string
+    isGameMaster: boolean
+    onSelectFallout: (fallout: FalloutOption) => void
+}) {
+    const [falloutReferenceOpen, setFalloutReferenceOpen] = useState(false)
+    return (
+        <>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" title="Equipment tags" aria-label="Open equipment tags for this group">
+                        <BookOpen />
+                    </Button>
+                </DialogTrigger>
+                <TagReferenceDialog title="GROUP EQUIPMENT TAGS" tags={equipmentTags} primaryText={groupEquipment} primarySourceLabel="In use" />
+            </Dialog>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" title="Resource tags" aria-label="Open resource tags for this group">
+                        <Package />
+                    </Button>
+                </DialogTrigger>
+                <TagReferenceDialog title="GROUP RESOURCE TAGS" tags={resourceTags} primaryText={groupResources} primarySourceLabel="In use" />
+            </Dialog>
+            {isGameMaster && (
+                <Dialog open={falloutReferenceOpen} onOpenChange={setFalloutReferenceOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="icon" title="Assign fallout" aria-label="Open fallout assignment reference">
+                            <ShieldAlert />
+                        </Button>
+                    </DialogTrigger>
+                    <FalloutReferenceDialog
+                        onSelect={(fallout) => {
+                            setFalloutReferenceOpen(false)
+                            onSelectFallout(fallout)
+                        }}
+                    />
+                </Dialog>
+            )}
+        </>
     )
 }
 
