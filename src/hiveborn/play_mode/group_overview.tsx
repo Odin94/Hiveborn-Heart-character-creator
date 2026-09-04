@@ -327,16 +327,13 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const groupEquipment = characters.map((character) => character.data.equipment).join("\n")
     const groupResources = characters.map((character) => character.data.resources).join("\n")
-    const latestUnassignedFalloutRoll = group?.rolls.find((roll) => {
-        const outcome = falloutOutcomeForRoll(roll.result)
-        return Boolean(roll.characterId && outcome && !roll.falloutAssignedAt && rollAge(roll.createdAt, Date.now()) < FALLOUT_ROLL_MATCH_WINDOW_MS)
-    })
+    const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && falloutOutcomeForRoll(roll.result)))
     const groupCreationKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== "Enter" || !createName.trim()) return
         event.preventDefault()
         void createGroup()
     }
-    const assignFallout = async (fallout: FalloutOption, characterId: string, rollId?: string) => {
+    const assignFallout = async (fallout: FalloutOption, characterId: string, rollId?: string, fallbackOnEligibilityConflict = false) => {
         if (!group) return
         try {
             const assignment = await api.assignFallout(group.id, {
@@ -356,6 +353,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                 toast.success(`Added ${fallout.name} to ${characterName}`)
             }
         } catch (error) {
+            if (fallbackOnEligibilityConflict && (error as { status?: number }).status === 409) {
+                setSelectedFallout(fallout)
+                setManualFalloutPickerOpen(true)
+                return
+            }
             toast.error(error instanceof Error ? error.message : "Could not assign fallout")
         }
     }
@@ -371,10 +373,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     }
     const selectFallout = (fallout: FalloutOption) => {
         setFalloutReferenceOpen(false)
-        const recentOutcome = latestUnassignedFalloutRoll ? falloutOutcomeForRoll(latestUnassignedFalloutRoll.result) : undefined
+        const recentOutcome = latestFalloutRoll ? falloutOutcomeForRoll(latestFalloutRoll.result) : undefined
         const matchesRecentRoll = recentOutcome && (fallout.severity === "critical" || fallout.severity === recentOutcome)
-        if (latestUnassignedFalloutRoll?.characterId && matchesRecentRoll) {
-            void assignFallout(fallout, latestUnassignedFalloutRoll.characterId, latestUnassignedFalloutRoll.id)
+        const canAutoAssign =
+            latestFalloutRoll && !latestFalloutRoll.falloutAssignedAt && rollAge(latestFalloutRoll.createdAt, Date.now()) < FALLOUT_ROLL_MATCH_WINDOW_MS
+        if (latestFalloutRoll?.characterId && matchesRecentRoll && canAutoAssign) {
+            void assignFallout(fallout, latestFalloutRoll.characterId, latestFalloutRoll.id, true)
             return
         }
         setSelectedFallout(fallout)
