@@ -127,7 +127,8 @@ const falloutOutcomeForRoll = (result: string) => {
     return match?.[1]?.toLowerCase() as "minor" | "major" | undefined
 }
 
-const falloutEntry = ({ name, description }: { name: string; description: string }) => `**${name}** - ${description}`
+const falloutEntry = ({ name, description }: { name: string; description: string }, assignmentId: string) =>
+    `<!-- hiveborn-fallout:${assignmentId} -->\n**${name}** - ${description}`
 
 const removeFalloutEntry = (fallout: string, entry: string) => {
     const entries = fallout.split(/\n{2,}/).map((item) => item.trim())
@@ -541,7 +542,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
         }
 
         const data = characterDataSchema.parse(JSON.parse(character.characters.data))
-        const entry = falloutEntry(parsed.data.fallout)
+        const entry = falloutEntry(parsed.data.fallout, nanoid())
         data.fallout = data.fallout.trim() ? `${entry}\n\n${data.fallout}` : entry
         let updatedCharacter: typeof schema.characters.$inferSelect | undefined
         try {
