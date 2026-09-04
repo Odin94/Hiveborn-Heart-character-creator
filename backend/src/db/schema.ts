@@ -123,6 +123,8 @@ export const rollEvents = sqliteTable("roll_events", {
     label: text("label").notNull(),
     dice: text("dice").notNull(),
     result: text("result").notNull(),
+    falloutAssignedAt: integer("fallout_assigned_at", { mode: "timestamp" }),
+    falloutAssignmentEntry: text("fallout_assignment_entry"),
     createdAt: integer("created_at", { mode: "timestamp" })
         .notNull()
         .default(sql`(unixepoch())`),

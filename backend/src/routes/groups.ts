@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { randomInt } from "node:crypto"
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { characterDataSchema } from "../characterData.js"
@@ -19,6 +19,16 @@ const rollInput = z.object({
     characterId: z.string().min(1),
 })
 const falloutUpdateInput = z.object({ characterId: z.string().min(1), applyStressUpdate: z.boolean() })
+const falloutAssignmentInput = z.object({
+    characterId: z.string().min(1),
+    rollId: z.string().min(1).optional(),
+    fallout: z.object({
+        name: z.string().trim().min(1).max(120),
+        description: z.string().trim().min(1).max(10_000),
+        severity: z.enum(["minor", "major", "critical"]),
+    }),
+})
+const falloutUndoInput = z.object({ rollId: z.string().min(1) })
 const characterAssignmentInput = z.object({ characterId: z.string().min(1) })
 const characterAssignmentParams = z.object({ id: z.string().min(1), characterId: z.string().min(1) })
 const memberParams = z.object({ id: z.string().min(1), userId: z.string().min(1) })
@@ -110,6 +120,22 @@ const groupActions = [
 
 const randomItem = <T>(items: T[]) => items[randomInt(items.length)]!
 const readableGroupId = () => `${randomItem(groupAdjectives)}-${randomItem(groupAnimals)}-${randomItem(groupActions)}`
+const falloutRollWindowMs = 60_000
+
+const falloutOutcomeForRoll = (result: string) => {
+    const match = /^(minor|major) fallout\b/i.exec(result.trim())
+    return match?.[1]?.toLowerCase() as "minor" | "major" | undefined
+}
+
+const falloutEntry = ({ name, description }: { name: string; description: string }) => `**${name}** - ${description}`
+
+const removeFalloutEntry = (fallout: string, entry: string) => {
+    const entries = fallout.split(/\n{2,}/).map((item) => item.trim())
+    const entryIndex = entries.findIndex((item) => item === entry.trim())
+    if (entryIndex < 0) return null
+    entries.splice(entryIndex, 1)
+    return entries.filter(Boolean).join("\n\n")
+}
 
 async function newGroupId() {
     for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -470,5 +496,127 @@ export async function groupRoutes(fastify: FastifyInstance) {
         broadcastGroupEvent(params.data.id, { type: "roll.shared", roll: sharedRoll })
         trackEvent("group_fallout_rolled", request.userId!, { fallout: fallout ?? "none", auto_updated: result.stressUpdated })
         return result
+    })
+
+    fastify.post("/play-groups/:id/fallout-assignments", { preHandler: authenticateUser }, async (request, reply) => {
+        const params = idInput.safeParse(request.params)
+        const parsed = falloutAssignmentInput.safeParse(request.body)
+        if (!params.success || !parsed.success) return reply.code(400).send({ error: "Invalid fallout assignment" })
+        if (!(await assertGameMaster(params.data.id, request.userId!))) return reply.code(403).send({ error: "Only assigned game masters can assign fallout" })
+
+        const character = await db
+            .select()
+            .from(schema.characters)
+            .innerJoin(schema.groupCharacterAssignments, eq(schema.groupCharacterAssignments.characterId, schema.characters.id))
+            .where(
+                and(
+                    eq(schema.characters.id, parsed.data.characterId),
+                    eq(schema.groupCharacterAssignments.groupId, params.data.id),
+                    isNull(schema.characters.deletedAt),
+                ),
+            )
+            .get()
+        if (!character) return reply.code(404).send({ error: "Character not found in this group" })
+
+        let matchedRoll: typeof schema.rollEvents.$inferSelect | undefined
+        if (parsed.data.rollId) {
+            matchedRoll = await db
+                .select()
+                .from(schema.rollEvents)
+                .where(
+                    and(
+                        eq(schema.rollEvents.id, parsed.data.rollId),
+                        eq(schema.rollEvents.groupId, params.data.id),
+                        eq(schema.rollEvents.characterId, parsed.data.characterId),
+                        eq(schema.rollEvents.label, "Fallout"),
+                        isNull(schema.rollEvents.falloutAssignedAt),
+                        gte(schema.rollEvents.createdAt, new Date(Date.now() - falloutRollWindowMs)),
+                    ),
+                )
+                .get()
+            const outcome = matchedRoll ? falloutOutcomeForRoll(matchedRoll.result) : undefined
+            const severityMatches = parsed.data.fallout.severity === "critical" || parsed.data.fallout.severity === outcome
+            if (!matchedRoll || !outcome || !severityMatches)
+                return reply.code(409).send({ error: "That fallout roll is no longer eligible for auto-assignment" })
+        }
+
+        const data = characterDataSchema.parse(JSON.parse(character.characters.data))
+        const entry = falloutEntry(parsed.data.fallout)
+        data.fallout = data.fallout.trim() ? `${entry}\n\n${data.fallout}` : entry
+        let updatedCharacter: typeof schema.characters.$inferSelect | undefined
+        try {
+            db.transaction((tx) => {
+                if (matchedRoll) {
+                    const assignedRoll = tx
+                        .update(schema.rollEvents)
+                        .set({ falloutAssignedAt: new Date(), falloutAssignmentEntry: entry })
+                        .where(and(eq(schema.rollEvents.id, matchedRoll.id), isNull(schema.rollEvents.falloutAssignedAt)))
+                        .returning()
+                        .get()
+                    if (!assignedRoll) throw new Error("Fallout roll was already assigned")
+                }
+                updatedCharacter = tx
+                    .update(schema.characters)
+                    .set({
+                        data: JSON.stringify(data),
+                        updatedAt: new Date(),
+                        version: character.characters.version + 1,
+                    })
+                    .where(and(eq(schema.characters.id, character.characters.id), eq(schema.characters.version, character.characters.version)))
+                    .returning()
+                    .get()
+                if (!updatedCharacter) throw new Error("Character changed while assigning fallout")
+            })
+        } catch {
+            return reply.code(409).send({ error: "That fallout roll or character changed; please try again" })
+        }
+
+        await broadcastUserCharacterChange(character.characters.userId, { character: { ...updatedCharacter, data } })
+        trackEvent("group_fallout_assigned", request.userId!, { auto_assigned: Boolean(matchedRoll), severity: parsed.data.fallout.severity })
+        return { character: { ...updatedCharacter, data }, matched: Boolean(matchedRoll) }
+    })
+
+    fastify.post("/play-groups/:id/fallout-assignments/undo", { preHandler: authenticateUser }, async (request, reply) => {
+        const params = idInput.safeParse(request.params)
+        const parsed = falloutUndoInput.safeParse(request.body)
+        if (!params.success || !parsed.success) return reply.code(400).send({ error: "Invalid fallout undo" })
+        if (!(await assertGameMaster(params.data.id, request.userId!)))
+            return reply.code(403).send({ error: "Only assigned game masters can undo fallout assignments" })
+
+        const roll = await db
+            .select()
+            .from(schema.rollEvents)
+            .where(and(eq(schema.rollEvents.id, parsed.data.rollId), eq(schema.rollEvents.groupId, params.data.id)))
+            .get()
+        if (!roll?.characterId || !roll.falloutAssignedAt || !roll.falloutAssignmentEntry)
+            return reply.code(404).send({ error: "Fallout assignment not found" })
+        const character = await db
+            .select()
+            .from(schema.characters)
+            .where(and(eq(schema.characters.id, roll.characterId), isNull(schema.characters.deletedAt)))
+            .get()
+        if (!character) return reply.code(404).send({ error: "Character not found" })
+
+        const data = characterDataSchema.parse(JSON.parse(character.data))
+        const fallout = removeFalloutEntry(data.fallout, roll.falloutAssignmentEntry)
+        if (fallout === null) return reply.code(409).send({ error: "The fallout entry changed and can no longer be undone automatically" })
+        data.fallout = fallout
+        let updatedCharacter: typeof schema.characters.$inferSelect | undefined
+        try {
+            db.transaction((tx) => {
+                updatedCharacter = tx
+                    .update(schema.characters)
+                    .set({ data: JSON.stringify(data), updatedAt: new Date(), version: character.version + 1 })
+                    .where(and(eq(schema.characters.id, character.id), eq(schema.characters.version, character.version)))
+                    .returning()
+                    .get()
+                if (!updatedCharacter) throw new Error("Character changed while undoing fallout")
+                tx.update(schema.rollEvents).set({ falloutAssignedAt: null, falloutAssignmentEntry: null }).where(eq(schema.rollEvents.id, roll.id)).run()
+            })
+        } catch {
+            return reply.code(409).send({ error: "Character changed while undoing fallout; please try again" })
+        }
+        await broadcastUserCharacterChange(character.userId, { character: { ...updatedCharacter, data } })
+        return { character: { ...updatedCharacter, data } }
     })
 }
