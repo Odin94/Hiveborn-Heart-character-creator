@@ -341,7 +341,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             const assignment = await api.assignFallout(group.id, {
                 characterId,
                 autoAssign,
-                fallout: { name: fallout.name, description: fallout.description, severity: fallout.severity },
+                fallout: { name: fallout.name, description: fallout.description },
             })
             setSelectedFallout(null)
             setManualFalloutPickerOpen(false)

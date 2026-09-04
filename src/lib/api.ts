@@ -88,10 +88,7 @@ export const api = {
             stressUpdate: { type: "all" } | { type: "resistance"; resistance: string } | null
             lastStressResistance: string | null
         }>(`/play-groups/${groupId}/fallout-rolls`, { method: "POST", body: JSON.stringify(payload) }),
-    assignFallout: (
-        groupId: string,
-        payload: { characterId: string; autoAssign?: boolean; fallout: { name: string; description: string; severity: "minor" | "major" | "critical" } },
-    ) =>
+    assignFallout: (groupId: string, payload: { characterId: string; autoAssign?: boolean; fallout: { name: string; description: string } }) =>
         request<{ character: CloudCharacter; matched: boolean; rollId: string | null }>(`/play-groups/${groupId}/fallout-assignments`, {
             method: "POST",
             body: JSON.stringify(payload),

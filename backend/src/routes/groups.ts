@@ -25,7 +25,6 @@ const falloutAssignmentInput = z.object({
     fallout: z.object({
         name: z.string().trim().min(1).max(120),
         description: z.string().trim().min(1).max(10_000),
-        severity: z.enum(["minor", "major", "critical"]),
     }),
 })
 const falloutUndoInput = z.object({ rollId: z.string().min(1) })
@@ -121,11 +120,31 @@ const groupActions = [
 const randomItem = <T>(items: T[]) => items[randomInt(items.length)]!
 const readableGroupId = () => `${randomItem(groupAdjectives)}-${randomItem(groupAnimals)}-${randomItem(groupActions)}`
 const falloutRollWindowMs = 60_000
+const falloutNamesBySeverity = {
+    minor: new Set(
+        "Battered|Bleeding|Disarmed|Furious|Limping|Ringing Head|Shattered|Spitting Teeth|Tired|Winded|Clouded|Creepy|Collateral Magic|Fascination|Figment|Shaken|Take the Edge Off|Vulnerable|Weird|Buboes|Conduit|Deja Vu|Exodus|Follower|Glitch|Hex-Eye|The Ravening Call|Strange Appetite|Siren Song|Broken|Collateral|Foreboding|The Hard Way|In Trouble|Long Way Round|Separated|Unlucky|Word of Mouth|Damaged|Darkness|Debtor|Empty|Half Rations|Out of Ammo|Used Up".split(
+            "|",
+        ),
+    ),
+    major: new Set(
+        "Arterial Wound|Blinded|Broken Arm|Broken Leg|Critical Injury|Downed|Exhausted|Aetheric Resonance|Addict|Delusion|Despair|Memory Holes|Phantasm|Scarred|Unsettling|Blooded|Cult|Dark Cravings|Eyes|The Life Not Lived|Meat|Mirage|The Ravening Beast|Reconfigured Physiology|Vanished|Crisis|Destroyed|Exiled|Grievance|Hell for Weather|Lost Map|Lost Property|No Way Out|Reputation|The Road Less Travelled|Unwilling Leader|In the Dark|No Rations|Services Rendered|Sold|Spoiled".split(
+            "|",
+        ),
+    ),
+    critical: new Set(
+        "Bleeding Out|Chosen|Ghost|Beast|Burst|Descent|Messiah|Petrified|The Ravening|Stranded|Abandon|Break|Obsessed|Fool's Gold|Heavy Hangs the Head|A Slow and Insidious Killer|Wrong Place|Defenceless|Pitch Black|Plummet|Starvation".split(
+            "|",
+        ),
+    ),
+} as const
 
 const falloutOutcomeForRoll = (result: string) => {
     const match = /^(minor|major) fallout\b/i.exec(result.trim())
     return match?.[1]?.toLowerCase() as "minor" | "major" | undefined
 }
+
+const falloutSeverityFor = (name: string) =>
+    Object.entries(falloutNamesBySeverity).find(([, names]) => names.has(name))?.[0] as "minor" | "major" | "critical" | undefined
 
 const falloutEntry = ({ name, description }: { name: string; description: string }) => `**${name}** - ${description}`
 
@@ -526,6 +545,8 @@ export async function groupRoutes(fastify: FastifyInstance) {
             .get()
         if (!character) return reply.code(404).send({ error: "Character not found in this group" })
 
+        const falloutSeverity = falloutSeverityFor(parsed.data.fallout.name)
+        if (!falloutSeverity) return reply.code(400).send({ error: "Unknown fallout option" })
         let matchedRoll: typeof schema.rollEvents.$inferSelect | undefined
         if (parsed.data.autoAssign) {
             matchedRoll = await db
@@ -536,7 +557,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
                 .limit(1)
                 .get()
             const outcome = matchedRoll ? falloutOutcomeForRoll(matchedRoll.result) : undefined
-            const severityMatches = parsed.data.fallout.severity === "critical" || parsed.data.fallout.severity === outcome
+            const severityMatches = falloutSeverity === "critical" || falloutSeverity === outcome
             const eligible =
                 matchedRoll &&
                 matchedRoll.characterId === parsed.data.characterId &&
@@ -580,7 +601,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
         }
 
         await broadcastUserCharacterChange(character.characters.userId, { character: { ...updatedCharacter, data } })
-        trackEvent("group_fallout_assigned", request.userId!, { auto_assigned: Boolean(matchedRoll), severity: parsed.data.fallout.severity })
+        trackEvent("group_fallout_assigned", request.userId!, { auto_assigned: Boolean(matchedRoll), severity: falloutSeverity })
         return { character: { ...updatedCharacter, data }, matched: Boolean(matchedRoll), rollId: matchedRoll?.id ?? null }
     })
 
