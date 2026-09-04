@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { eq } from "drizzle-orm"
+import { adjectives, animals, uniqueNamesGenerator } from "unique-names-generator"
 import { z } from "zod"
 import { env, hasWorkosConfiguration, isLocalhostHost, isLoopbackAddress } from "../config/env.js"
 import { workos } from "../config/workos.js"
@@ -16,7 +17,32 @@ const nicknameSchema = z.object({
         .regex(/^[a-zA-Z0-9_-]+$/, "Use letters, numbers, hyphens, or underscores"),
 })
 
-function publicUser(user: { id: string; email: string; firstName: string | null; lastName: string | null }, nickname: string | null) {
+type AuthenticatedUser = { id: string; email: string; firstName: string | null; lastName: string | null }
+
+function generateNickname() {
+    return uniqueNamesGenerator({ dictionaries: [adjectives, animals], separator: "-", style: "lowerCase" })
+}
+
+function isNicknameConflict(error: unknown) {
+    return String(error).includes("users_nickname_unique") || String(error).includes("users.nickname")
+}
+
+async function createUserWithNickname(user: AuthenticatedUser) {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        const nickname = generateNickname()
+        try {
+            await db.insert(schema.users).values({ ...user, nickname })
+            return nickname
+        } catch (error) {
+            if (isNicknameConflict(error)) continue
+            throw error
+        }
+    }
+
+    throw new Error("Could not generate a unique nickname")
+}
+
+function publicUser(user: AuthenticatedUser, nickname: string | null) {
     return { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, nickname }
 }
 
@@ -71,9 +97,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 .set({ email: result.user.email, firstName: result.user.firstName, lastName: result.user.lastName, updatedAt: new Date() })
                 .where(eq(schema.users.id, result.user.id))
         else {
-            await db
-                .insert(schema.users)
-                .values({ id: result.user.id, email: result.user.email, firstName: result.user.firstName, lastName: result.user.lastName })
+            await createUserWithNickname(result.user)
             trackEvent("account_created", result.user.id)
         }
         const user = await db.select().from(schema.users).where(eq(schema.users.id, result.user.id)).get()
@@ -98,7 +122,7 @@ export async function authRoutes(fastify: FastifyInstance) {
             trackEvent("nickname_updated", request.userId!)
             return publicUser(request.user!, updated!.nickname)
         } catch (error) {
-            if (String(error).includes("users_nickname_unique")) return reply.code(409).send({ error: "Nickname already taken" })
+            if (isNicknameConflict(error)) return reply.code(409).send({ error: "Nickname already taken" })
             throw error
         }
     })
