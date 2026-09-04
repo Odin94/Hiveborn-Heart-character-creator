@@ -327,29 +327,29 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const groupEquipment = characters.map((character) => character.data.equipment).join("\n")
     const groupResources = characters.map((character) => character.data.resources).join("\n")
-    const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && roll.label === "Fallout" && falloutOutcomeForRoll(roll.result)))
+    const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && roll.label === "Fallout"))
     const groupCreationKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== "Enter" || !createName.trim()) return
         event.preventDefault()
         void createGroup()
     }
-    const assignFallout = async (fallout: FalloutOption, characterId: string, rollId?: string, fallbackOnEligibilityConflict = false) => {
+    const assignFallout = async (fallout: FalloutOption, characterId: string, autoAssign = false, fallbackOnEligibilityConflict = false) => {
         if (!group) return
         if (assigningFallout) return
         setAssigningFallout(true)
         try {
             const assignment = await api.assignFallout(group.id, {
                 characterId,
-                rollId,
+                autoAssign,
                 fallout: { name: fallout.name, description: fallout.description, severity: fallout.severity },
             })
             setSelectedFallout(null)
             setManualFalloutPickerOpen(false)
             await refresh()
             const characterName = rollCharacterName(assignment.character)
-            if (assignment.matched && rollId) {
+            if (assignment.matched && assignment.rollId) {
                 toast.success(`Auto-added ${fallout.name} to ${characterName} because it matched recent fallout roll`, {
-                    action: { label: "Undo", onClick: () => void undoFalloutAssignment(rollId) },
+                    action: { label: "Undo", onClick: () => void undoFalloutAssignment(assignment.rollId!) },
                 })
             } else {
                 toast.success(`Added ${fallout.name} to ${characterName}`)
@@ -381,7 +381,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         const canAutoAssign =
             latestFalloutRoll && !latestFalloutRoll.falloutAssignedAt && rollAge(latestFalloutRoll.createdAt, Date.now()) < FALLOUT_ROLL_MATCH_WINDOW_MS
         if (latestFalloutRoll?.characterId && matchesRecentRoll && canAutoAssign) {
-            void assignFallout(fallout, latestFalloutRoll.characterId, latestFalloutRoll.id, true)
+            void assignFallout(fallout, latestFalloutRoll.characterId, true, true)
             return
         }
         setSelectedFallout(fallout)
