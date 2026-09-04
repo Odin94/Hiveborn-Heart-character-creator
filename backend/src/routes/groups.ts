@@ -127,15 +127,22 @@ const falloutOutcomeForRoll = (result: string) => {
     return match?.[1]?.toLowerCase() as "minor" | "major" | undefined
 }
 
-const falloutEntry = ({ name, description }: { name: string; description: string }, assignmentId: string) =>
-    `<!-- hiveborn-fallout:${assignmentId} -->\n**${name}** - ${description}`
+const falloutEntry = ({ name, description }: { name: string; description: string }) => `**${name}** - ${description}`
 
-const removeFalloutEntry = (fallout: string, entry: string) => {
-    const entries = fallout.split(/\n{2,}/).map((item) => item.trim())
-    const entryIndex = entries.findIndex((item) => item === entry.trim())
-    if (entryIndex < 0) return null
-    entries.splice(entryIndex, 1)
-    return entries.filter(Boolean).join("\n\n")
+const removeFalloutEntry = (fallout: string, entry: string, followingText: string | null) => {
+    if (followingText === "") {
+        const targetIndex = fallout.lastIndexOf(entry)
+        if (targetIndex < 0 || fallout.slice(targetIndex + entry.length).trim()) return null
+        return fallout
+            .slice(0, targetIndex)
+            .replace(/\n{2,}$/, "")
+            .trim()
+    }
+    const target = followingText ? `${entry}\n\n${followingText}` : entry
+    const targetIndex = fallout.indexOf(target)
+    if (targetIndex < 0) return null
+    const afterEntryIndex = targetIndex + entry.length
+    return `${fallout.slice(0, targetIndex)}${fallout.slice(afterEntryIndex).replace(/^\n{2}/, "")}`.trim()
 }
 
 async function newGroupId() {
@@ -210,7 +217,7 @@ async function groupOverview(groupId: string) {
         : []
     const assignments = await db.select().from(schema.groupCharacterAssignments).where(eq(schema.groupCharacterAssignments.groupId, groupId))
     const assignmentsByCharacterId = new Map(assignments.map((assignment) => [assignment.characterId, assignment]))
-    const rolls = await db.select().from(schema.rollEvents).where(eq(schema.rollEvents.groupId, groupId)).orderBy(desc(schema.rollEvents.createdAt)).limit(30)
+    const rolls = await db.select().from(schema.rollEvents).where(eq(schema.rollEvents.groupId, groupId)).orderBy(desc(schema.rollEvents.createdAt)).limit(200)
     return {
         id: group.id,
         name: group.name,
@@ -542,7 +549,8 @@ export async function groupRoutes(fastify: FastifyInstance) {
         }
 
         const data = characterDataSchema.parse(JSON.parse(character.characters.data))
-        const entry = falloutEntry(parsed.data.fallout, nanoid())
+        const entry = falloutEntry(parsed.data.fallout)
+        const followingText = data.fallout
         data.fallout = data.fallout.trim() ? `${entry}\n\n${data.fallout}` : entry
         let updatedCharacter: typeof schema.characters.$inferSelect | undefined
         try {
@@ -550,7 +558,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
                 if (matchedRoll) {
                     const assignedRoll = tx
                         .update(schema.rollEvents)
-                        .set({ falloutAssignedAt: new Date(), falloutAssignmentEntry: entry })
+                        .set({ falloutAssignedAt: new Date(), falloutAssignmentEntry: entry, falloutAssignmentFollowingText: followingText })
                         .where(and(eq(schema.rollEvents.id, matchedRoll.id), isNull(schema.rollEvents.falloutAssignedAt)))
                         .returning()
                         .get()
@@ -599,7 +607,7 @@ export async function groupRoutes(fastify: FastifyInstance) {
         if (!character) return reply.code(404).send({ error: "Character not found" })
 
         const data = characterDataSchema.parse(JSON.parse(character.data))
-        const fallout = removeFalloutEntry(data.fallout, roll.falloutAssignmentEntry)
+        const fallout = removeFalloutEntry(data.fallout, roll.falloutAssignmentEntry, roll.falloutAssignmentFollowingText)
         if (fallout === null) return reply.code(409).send({ error: "The fallout entry changed and can no longer be undone automatically" })
         data.fallout = fallout
         let updatedCharacter: typeof schema.characters.$inferSelect | undefined
@@ -612,7 +620,10 @@ export async function groupRoutes(fastify: FastifyInstance) {
                     .returning()
                     .get()
                 if (!updatedCharacter) throw new Error("Character changed while undoing fallout")
-                tx.update(schema.rollEvents).set({ falloutAssignedAt: null, falloutAssignmentEntry: null }).where(eq(schema.rollEvents.id, roll.id)).run()
+                tx.update(schema.rollEvents)
+                    .set({ falloutAssignedAt: null, falloutAssignmentEntry: null, falloutAssignmentFollowingText: null })
+                    .where(eq(schema.rollEvents.id, roll.id))
+                    .run()
             })
         } catch {
             return reply.code(409).send({ error: "Character changed while undoing fallout; please try again" })
