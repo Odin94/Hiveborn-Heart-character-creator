@@ -548,26 +548,6 @@ export async function groupRoutes(fastify: FastifyInstance) {
         const falloutSeverity = falloutSeverityFor(parsed.data.fallout.name)
         if (!falloutSeverity) return reply.code(400).send({ error: "Unknown fallout option" })
         let matchedRoll: typeof schema.rollEvents.$inferSelect | undefined
-        if (parsed.data.autoAssign) {
-            matchedRoll = await db
-                .select()
-                .from(schema.rollEvents)
-                .where(and(eq(schema.rollEvents.groupId, params.data.id), eq(schema.rollEvents.label, "Fallout")))
-                .orderBy(desc(schema.rollEvents.createdAt), desc(schema.rollEvents.id))
-                .limit(1)
-                .get()
-            const outcome = matchedRoll ? falloutOutcomeForRoll(matchedRoll.result) : undefined
-            const severityMatches = falloutSeverity === "critical" || falloutSeverity === outcome
-            const eligible =
-                matchedRoll &&
-                matchedRoll.characterId === parsed.data.characterId &&
-                !matchedRoll.falloutAssignedAt &&
-                matchedRoll.createdAt.getTime() >= Date.now() - falloutRollWindowMs &&
-                outcome &&
-                severityMatches
-            if (!eligible) return reply.code(409).send({ error: "That fallout roll is no longer eligible for auto-assignment" })
-        }
-
         const data = characterDataSchema.parse(JSON.parse(character.characters.data))
         const entry = falloutEntry(parsed.data.fallout)
         const followingText = data.fallout.trim()
@@ -575,6 +555,25 @@ export async function groupRoutes(fastify: FastifyInstance) {
         let updatedCharacter: typeof schema.characters.$inferSelect | undefined
         try {
             db.transaction((tx) => {
+                if (parsed.data.autoAssign) {
+                    matchedRoll = tx
+                        .select()
+                        .from(schema.rollEvents)
+                        .where(and(eq(schema.rollEvents.groupId, params.data.id), eq(schema.rollEvents.label, "Fallout")))
+                        .orderBy(desc(schema.rollEvents.createdAt), desc(schema.rollEvents.id))
+                        .limit(1)
+                        .get()
+                    const outcome = matchedRoll ? falloutOutcomeForRoll(matchedRoll.result) : undefined
+                    const severityMatches = falloutSeverity === "critical" || falloutSeverity === outcome
+                    const eligible =
+                        matchedRoll &&
+                        matchedRoll.characterId === parsed.data.characterId &&
+                        !matchedRoll.falloutAssignedAt &&
+                        matchedRoll.createdAt.getTime() >= Date.now() - falloutRollWindowMs &&
+                        outcome &&
+                        severityMatches
+                    if (!eligible) throw new Error("Latest fallout roll is no longer eligible")
+                }
                 if (matchedRoll) {
                     const assignedRoll = tx
                         .update(schema.rollEvents)
