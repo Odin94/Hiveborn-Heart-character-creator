@@ -17,7 +17,7 @@ const CharacterSheet = () => {
     const theme = useThemeStore((state) => state.theme)
 
     return (
-        <div className="sheet-shell grid w-full grid-cols-1 gap-4 rounded-lg border p-3 sm:gap-6 sm:p-5 md:grid-cols-2 md:grid-rows-[280px_90px_500px_330px] lg:grid-rows-[170px_90px_500px_330px]">
+        <div className="sheet-shell grid w-full grid-cols-1 gap-4 rounded-lg border p-3 sm:gap-6 sm:p-5 md:grid-cols-2 md:grid-rows-[280px_auto_500px_330px] lg:grid-rows-[170px_auto_500px_330px]">
             <div className="">
                 <img
                     src={theme === "dark" ? DarkLogo : LightLogo}
