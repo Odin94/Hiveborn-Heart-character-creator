@@ -110,7 +110,7 @@ const NameClassCalling = () => {
     }
 
     return (
-        <div className="grid size-full grid-cols-1 gap-1 sm:grid-cols-[1fr_6fr] sm:grid-rows-3">
+        <div className="grid w-full grid-cols-1 gap-x-2 gap-y-2 sm:grid-cols-[1fr_6fr]">
             {/* Name */}
             <div className="flex items-center font-bold text-left">Name</div>
             <div className="flex items-center">
