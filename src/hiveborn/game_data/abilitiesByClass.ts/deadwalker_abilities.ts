@@ -18,7 +18,7 @@ export const deadwalkerAbilities: Ability[] = [
         pickFrom: pickFrom({}),
     },
     {
-        name: "Firt under the Fingernails",
+        name: "Dirt under the Fingernails",
         description: "Gain 'Warren' domain. Dig through earth with bare hands as if you had a shovel.",
         type: "minor",
         staticBonuses: domain("warren"),
