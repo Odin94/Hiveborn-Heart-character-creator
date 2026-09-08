@@ -138,13 +138,13 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                         onValueChange={setAbilityType}
                     >
                         <TabsList className="grid w-full shrink-0 grid-cols-3">
-                            <TabsTrigger value="minor" className={`rounded-t-md border ${abilityType === "minor" ? selectedClassName : ""}`}>
+                            <TabsTrigger value="minor" className={`border ${abilityType === "minor" ? selectedClassName : ""}`}>
                                 Minor
                             </TabsTrigger>
                             <TabsTrigger value="major" className={`border ${abilityType === "major" ? selectedClassName : ""}`}>
                                 Major
                             </TabsTrigger>
-                            <TabsTrigger value="zenith" className={`rounded-t-md border ${abilityType === "zenith" ? selectedClassName : ""}`}>
+                            <TabsTrigger value="zenith" className={`border ${abilityType === "zenith" ? selectedClassName : ""}`}>
                                 Zenith
                             </TabsTrigger>
                         </TabsList>
