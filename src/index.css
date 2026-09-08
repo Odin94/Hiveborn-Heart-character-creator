@@ -108,6 +108,18 @@ button:not(:disabled):active,
     transform: scale(0.97);
 }
 
+[role="tab"] {
+    border-radius: 0;
+}
+
+[role="tab"][data-state="inactive"] {
+    color: var(--muted-foreground);
+}
+
+button[role="tab"]:not(:disabled):active {
+    transform: none;
+}
+
 .dark {
     color-scheme: dark;
     --color-red-900: oklch(0.69 0.18 25);
