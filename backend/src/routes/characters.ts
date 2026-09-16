@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { and, eq, isNull } from "drizzle-orm"
-import { nanoid } from "nanoid"
+import { saveNewCharacter, serializeCharacter } from "../db/characterPersistence.js"
 import { z } from "zod"
 import { characterDataSchema, type CharacterData } from "../characterData.js"
 import { db, schema } from "../db/index.js"
@@ -23,7 +23,7 @@ const isEqual = (left: unknown, right: unknown) => JSON.stringify(left) === JSON
 const isMergeableObjectField = (field: keyof CharacterData): field is (typeof mergeableObjectFields)[number] => mergeableObjectFields.includes(field as never)
 
 const deserialize = (character: typeof schema.characters.$inferSelect): CharacterData => characterDataSchema.parse(JSON.parse(character.data))
-const serialize = (character: typeof schema.characters.$inferSelect) => ({ ...character, data: deserialize(character) })
+const serialize = serializeCharacter
 
 function mergeCharacter(base: CharacterData, current: CharacterData, changes: Partial<CharacterData>) {
     const merged = structuredClone(current)
@@ -32,6 +32,7 @@ function mergeCharacter(base: CharacterData, current: CharacterData, changes: Pa
     for (const [field, localValue] of Object.entries(changes) as Array<[keyof CharacterData, CharacterData[keyof CharacterData]]>) {
         const baseValue = base[field]
         const currentValue = current[field]
+        if (field === "uuid") continue
         if (isEqual(currentValue, baseValue) || isEqual(currentValue, localValue)) {
             ;(merged as Record<string, unknown>)[field] = localValue
             continue
@@ -60,7 +61,12 @@ export async function characterRoutes(fastify: FastifyInstance) {
         const records = await db
             .select()
             .from(schema.characters)
-            .where(and(eq(schema.characters.userId, request.userId!), isNull(schema.characters.deletedAt)))
+            .where(
+                and(
+                    eq(schema.characters.userId, request.userId!),
+                    (request.query as { includeDeleted?: string }).includeDeleted === "true" ? undefined : isNull(schema.characters.deletedAt),
+                ),
+            )
             .orderBy(schema.characters.createdAt)
         return { characters: records.map(serialize) }
     })
@@ -68,18 +74,8 @@ export async function characterRoutes(fastify: FastifyInstance) {
     fastify.post("/characters", { preHandler: authenticateUser }, async (request, reply) => {
         const parsed = createCharacterInput.safeParse(request.body)
         if (!parsed.success) return reply.code(400).send({ error: "Invalid character", details: parsed.error.flatten() })
-        const [character] = await db
-            .insert(schema.characters)
-            .values({
-                id: nanoid(),
-                userId: request.userId!,
-                name: parsed.data.data.name.trim() || "Unnamed hiveborn",
-                data: JSON.stringify(parsed.data.data),
-                version: 1,
-            })
-            .returning()
+        const serialized = saveNewCharacter(db, request.userId!, parsed.data.data)
         trackEvent("character_created", request.userId!)
-        const serialized = serialize(character!)
         const automaticallyAssignedGroupIds = await assignSoleCharacterToAllGroups(request.userId!)
         await broadcastUserCharacterChange(request.userId!, { character: serialized })
         for (const groupId of automaticallyAssignedGroupIds) broadcastGroupEvent(groupId, { type: "group.members.updated" })
@@ -104,14 +100,17 @@ export async function characterRoutes(fastify: FastifyInstance) {
 
             const currentData = deserialize(current)
             const { data, conflicts } = mergeCharacter(parsed.data.baseData, currentData, parsed.data.changes)
-            if (current.version !== parsed.data.baseVersion && conflicts.length) {
-                return reply.code(409).send({ error: "Character has conflicting changes", character: serialize(current), conflicts })
+            if (conflicts.length) {
+                const local = characterDataSchema.parse({ ...parsed.data.baseData, ...parsed.data.changes, uuid: currentData.uuid })
+                const copy = saveNewCharacter(db, request.userId!, local)
+                await broadcastUserCharacterChange(request.userId!, { character: copy })
+                return copy
             }
 
             const [character] = await db
                 .update(schema.characters)
                 .set({ data: JSON.stringify(data), name: data.name.trim() || "Unnamed hiveborn", version: current.version + 1, updatedAt: new Date() })
-                .where(and(eq(schema.characters.id, current.id), eq(schema.characters.version, current.version)))
+                .where(and(eq(schema.characters.id, current.id), eq(schema.characters.version, current.version), isNull(schema.characters.deletedAt)))
                 .returning()
             if (!character) continue
 
@@ -136,6 +135,6 @@ export async function characterRoutes(fastify: FastifyInstance) {
         await db.delete(schema.groupCharacterAssignments).where(eq(schema.groupCharacterAssignments.characterId, character.id))
         const automaticallyAssignedGroupIds = await assignSoleCharacterToAllGroups(request.userId!)
         for (const groupId of automaticallyAssignedGroupIds) broadcastGroupEvent(groupId, { type: "group.members.updated" })
-        return { success: true }
+        return { success: true, character: serialize(character) }
     })
 }

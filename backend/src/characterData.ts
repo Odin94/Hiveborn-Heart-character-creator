@@ -10,6 +10,7 @@ const domainSchema = z.object({ hasDomain: z.boolean(), knacks: text }).strict()
 
 export const characterDataSchema = z
     .object({
+        uuid: z.uuid().optional(),
         name: z.string().max(120),
         characterClass: z.string().max(120),
         calling: z.string().max(120),
