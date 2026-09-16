@@ -162,9 +162,6 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             }
         }
         if (accountChanged) {
-            // Do this before the network request so an old account's persisted
-            // sheets never flash while the next account is loading.
-            setCloudCharacters([], [], [])
             usePlayModeStore.getState().setActiveGroup(null)
             knownIds.current = []
         }
@@ -172,31 +169,50 @@ export function useCloudCharacterSync(accountId: string | undefined) {
         void (async () => {
             const remote = await api.characters()
             if (cancelled || activeAccountId.current !== accountId || generation.current !== nextGeneration) return
-            if (remote.characters.length) {
-                setCloudCharacters(
-                    remote.characters.map((character) => character.data),
-                    remote.characters.map((character) => character.id),
-                    remote.characters.map((character) => character.version),
-                )
-                knownIds.current = remote.characters.map((character) => character.id)
-            } else if (accountChanged) {
-                // Local storage is shared by browser users. Never seed a newly
-                // signed-in account with the previous account's cached sheets.
-                setCloudCharacters([], [], [])
-                knownIds.current = []
-            } else {
-                const created = await Promise.all(characters.map((character) => api.createCharacter(character)))
-                if (cancelled || activeAccountId.current !== accountId || generation.current !== nextGeneration) return
-                setCloudCharacters(
-                    created.map((character) => character.data),
-                    created.map((character) => character.id),
-                    created.map((character) => character.version),
-                )
-                knownIds.current = created.map((character) => character.id)
+
+            // Read after the request: players may have edited or added sheets
+            // while authentication or the network was loading. Unsynced sheets
+            // belong to this browser and must accompany any account's sheets.
+            const local = useCharacterStore.getState()
+            const remaining = new Map(remote.characters.map((character) => [character.id, character]))
+            const nextCharacters: Character[] = []
+            const nextIds: string[] = []
+            const nextVersions: number[] = []
+            const nextBases: Character[] = []
+            let nextIndex = 0
+            for (const [index, character] of local.characters.entries()) {
+                const id = local.cloudCharacterIds[index]
+                // Do not transfer another account's cloud sheets into this one.
+                if (accountChanged && id) continue
+                const server = id ? remaining.get(id) : undefined
+                const base = local.cloudCharacterBases[index]
+                const dirty = !base || !isEqual(base, character)
+                if (index === local.currentCharacterIndex) nextIndex = nextCharacters.length
+                nextCharacters.push(server && !dirty ? server.data : character)
+                nextIds.push(server?.id ?? "")
+                nextVersions.push(server?.version ?? 0)
+                // Keep the original base for pending local edits so conflict
+                // detection can still compare them to the server's version.
+                nextBases.push(server && !dirty ? server.data : (base ?? character))
+                if (server && dirty) nextVersions[nextVersions.length - 1] = local.cloudCharacterVersions[index] ?? 1
+                if (id) remaining.delete(id)
             }
+            for (const character of remaining.values()) {
+                nextCharacters.push(character.data)
+                nextIds.push(character.id)
+                nextVersions.push(character.version)
+                nextBases.push(character.data)
+            }
+
             previousAccountId.current = accountId
             localStorage.setItem(syncedAccountStorageKey, accountId)
+            knownIds.current = remote.characters.map((character) => character.id)
             ready.current = true
+            setCloudCharacters(nextCharacters, nextIds, nextVersions)
+            useCharacterStore.setState({ cloudCharacterBases: nextBases })
+            useCharacterStore.getState().setCurrentCharacter(nextIndex)
+            // The regular sync queue uploads browser-only sheets. Keeping them
+            // locally until each upload succeeds also makes failures retryable.
         })().catch(() => {
             if (!cancelled && activeAccountId.current === accountId && generation.current === nextGeneration) ready.current = false
         })
@@ -204,7 +220,7 @@ export function useCloudCharacterSync(accountId: string | undefined) {
         return () => {
             cancelled = true
         }
-        // Local sheets should seed only the first account authenticated in this browser.
+        // Reconcile once per account; subsequent edits use the regular sync queue.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountId])
 
