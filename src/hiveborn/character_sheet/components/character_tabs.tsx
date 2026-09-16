@@ -36,7 +36,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
 
         return (
             <div
-                key={index}
+                key={character.uuid}
                 className={`relative group flex w-40 cursor-pointer items-center gap-2 rounded-r-lg border border-primary/15 py-3 pl-6 shadow-lg transition-[margin,transform,box-shadow,background-color] duration-200 ease-out hover:duration-150 animate-in slide-in-from-left-4 fade-in ${
                     currentCharacterIndex === index
                         ? "bg-secondary text-secondary-foreground shadow-primary/10"
@@ -68,7 +68,9 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Delete Character?</DialogTitle>
-                                <DialogDescription>Are you sure you want to delete "{displayName}"? This action cannot be undone.</DialogDescription>
+                                <DialogDescription>
+                                    Are you sure you want to delete "{displayName}"? You can restore it from Deleted characters.
+                                </DialogDescription>
                             </DialogHeader>
                             <DialogFooter>
                                 <DialogClose asChild>

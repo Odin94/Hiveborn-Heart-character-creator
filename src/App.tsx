@@ -3,7 +3,13 @@ import CharacterSheet from "./hiveborn/character_sheet/character_sheet"
 import { useCharacterStore } from "./hiveborn/character_sheet/character_states"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { JSONDownloadButton, JSONUploadButton, PDFDownloadButton, ResetButton } from "./hiveborn/character_sheet/components/character_buttons"
+import {
+    JSONDownloadButton,
+    JSONUploadButton,
+    PDFDownloadButton,
+    ResetButton,
+    DeletedCharactersButton,
+} from "./hiveborn/character_sheet/components/character_buttons"
 import { Toaster } from "@/components/ui/sonner"
 import { useUserUuid } from "@/lib/analytics"
 import { createContext, useContext, useEffect, useState } from "react"
@@ -144,6 +150,7 @@ export function CharacterSheetPage() {
                     <JSONDownloadButton />
                     <JSONUploadButton />
                     <ResetButton />
+                    <DeletedCharactersButton />
                     <Button
                         className="rounded-t-none"
                         variant="secondary"

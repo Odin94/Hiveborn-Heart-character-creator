@@ -8,7 +8,7 @@ import { useCloudCharacterSync } from "./useCloudCharacterSync"
 
 vi.mock("@/lib/api", () => ({
     API_URL: "http://localhost:3000",
-    api: { characters: vi.fn(), createCharacter: vi.fn() },
+    api: { characters: vi.fn(), createCharacter: vi.fn(), updateCharacter: vi.fn(), deleteCharacter: vi.fn() },
     tokenStorage: { get: () => null },
 }))
 
@@ -25,7 +25,7 @@ function Sync({ accountId }: { accountId?: string }) {
 beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     localStorage.clear()
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     useCharacterStore.setState(useCharacterStore.getInitialState(), true)
     container = document.createElement("div")
     document.body.append(container)
@@ -72,7 +72,7 @@ it.each([false, true])("preserves browser-only sheets across reloads (previous c
     expect(JSON.parse(localStorage.getItem(storageKey)!).state.characters[1].equipment).toBe("New lantern")
 })
 
-it("preserves sheets while authentication loads and still clears them on actual sign-out", async () => {
+it("preserves sheets while authentication loads and after sign-out", async () => {
     const character = { ...getEmptyCharacter(), name: "Signed-in Witch" }
     useCharacterStore.getState().setCloudCharacters([character], ["sheet-1"], [1])
     localStorage.setItem(`hiveborn-cloud-character-account:${window.location.origin}`, "account-1")
@@ -83,7 +83,7 @@ it("preserves sheets while authentication loads and still clears them on actual 
     await act(async () => root.render(<Sync accountId="account-1" />))
     expect(container.textContent).toBe(character.name)
     await act(async () => root.render(<Sync />))
-    expect(useCharacterStore.getState().characters).toEqual([getEmptyCharacter()])
+    expect(useCharacterStore.getState().characters).toEqual([character])
 })
 
 it.each([false, true])("uploads browser sheets when signing into an account with existing sheets: %s", async (existing) => {
@@ -160,4 +160,111 @@ it("retains local data after a failed upload and retries saving it", async () =>
         warning.mockRestore()
         vi.useRealTimers()
     }
+})
+
+it("ignores a sign-in response after logout and preserves browser data", async () => {
+    const browser = { ...getEmptyCharacter(), name: "Keep on logout" }
+    useCharacterStore.getState().setCloudCharacters([browser], [""], [0])
+    let resolve!: (value: Awaited<ReturnType<typeof api.characters>>) => void
+    vi.mocked(api.characters).mockReturnValue(
+        new Promise((done) => {
+            resolve = done
+        }),
+    )
+    await act(async () => root.render(<Sync accountId="first-account" />))
+    await act(async () => root.render(<Sync />))
+    await act(async () => resolve({ characters: [] }))
+    expect(useCharacterStore.getState().characters).toEqual([browser])
+    expect(api.createCharacter).not.toHaveBeenCalled()
+})
+
+it("switches accounts during an upload without applying the old account's response", async () => {
+    const browser = { ...getEmptyCharacter(), name: "Switching accounts" }
+    useCharacterStore.getState().setCloudCharacters([browser], [""], [0])
+    const saved = (uuid: string) => ({ id: uuid, name: browser.name, data: { ...browser, uuid }, version: 1, updatedAt: "" })
+    const secondId = crypto.randomUUID()
+    let finishFirst!: (value: Awaited<ReturnType<typeof api.createCharacter>>) => void
+    vi.mocked(api.characters).mockResolvedValue({ characters: [] })
+    vi.mocked(api.createCharacter)
+        .mockReturnValueOnce(
+            new Promise((resolve) => {
+                finishFirst = resolve
+            }),
+        )
+        .mockResolvedValueOnce(saved(secondId))
+    await act(async () => root.render(<Sync accountId="first-account" />))
+    await act(async () => root.render(<Sync accountId="second-account" />))
+    await act(async () => finishFirst(saved(browser.uuid)))
+    expect(useCharacterStore.getState().characters).toEqual([saved(secondId).data])
+    expect(useCharacterStore.getState().cloudAccountId).toBe("second-account")
+    expect(useCharacterStore.getState().cloudCharacterIds).toEqual([secondId])
+})
+
+it("soft-deletes a character removed during upload without touching other sheets", async () => {
+    vi.useFakeTimers()
+    try {
+        const browser = { ...getEmptyCharacter(), name: "Delete in flight" }
+        const remaining = { ...getEmptyCharacter(), name: "Keep me" }
+        useCharacterStore.getState().setCloudCharacters([browser, remaining], ["", ""], [0, 0])
+        const row = (data: typeof browser) => ({ id: data.uuid, name: data.name, data, version: 1, updatedAt: "" })
+        let finish!: (value: Awaited<ReturnType<typeof api.createCharacter>>) => void
+        vi.mocked(api.characters).mockResolvedValue({ characters: [] })
+        vi.mocked(api.createCharacter)
+            .mockReturnValueOnce(
+                new Promise((resolve) => {
+                    finish = resolve
+                }),
+            )
+            .mockImplementation(async (data) => row(data))
+        vi.mocked(api.deleteCharacter).mockResolvedValue({ success: true, character: { ...row(browser), deletedAt: new Date().toISOString() } })
+        await act(async () => root.render(<Sync accountId="owner" />))
+        await act(async () => useCharacterStore.getState().removeCharacter(0))
+        await act(async () => finish(row(browser)))
+        await act(async () => vi.advanceTimersByTimeAsync(700))
+        expect(api.deleteCharacter).toHaveBeenCalledExactlyOnceWith(browser.uuid)
+        expect(useCharacterStore.getState().characters).toEqual([remaining])
+        expect(useCharacterStore.getState().archivedCharacters[0].character).toEqual(browser)
+        expect(useCharacterStore.getState().archivedCharacters[0].synced).toBe(true)
+    } finally {
+        vi.useRealTimers()
+    }
+})
+
+it("saves edits made during upload after the backend changes the UUID", async () => {
+    vi.useFakeTimers()
+    try {
+        const browser = { ...getEmptyCharacter(), name: "Editing in flight" }
+        const remapped = { ...browser, uuid: crypto.randomUUID() }
+        const row = (data: typeof browser) => ({ id: data.uuid, name: data.name, data, version: 1, updatedAt: "" })
+        useCharacterStore.getState().setCloudCharacters([browser], [""], [0])
+        let finish!: (value: Awaited<ReturnType<typeof api.createCharacter>>) => void
+        vi.mocked(api.characters).mockResolvedValue({ characters: [] })
+        vi.mocked(api.createCharacter).mockReturnValue(
+            new Promise((resolve) => {
+                finish = resolve
+            }),
+        )
+        vi.mocked(api.updateCharacter).mockImplementation(async (_id, payload) => row({ ...payload.baseData, ...payload.changes }))
+        await act(async () => root.render(<Sync accountId="owner" />))
+        await act(async () => useCharacterStore.getState().setEquipment("Unsaved edit"))
+        await act(async () => vi.advanceTimersByTimeAsync(1000))
+        await act(async () => finish(row(remapped)))
+        await act(async () => vi.advanceTimersByTimeAsync(700))
+        expect(api.updateCharacter).toHaveBeenCalledWith(remapped.uuid, expect.objectContaining({ changes: { equipment: "Unsaved edit" } }))
+        expect(useCharacterStore.getState().characters).toEqual([{ ...remapped, equipment: "Unsaved edit" }])
+    } finally {
+        vi.useRealTimers()
+    }
+})
+
+it("keeps another account's offline deletion archived without sending a delete as the new account", async () => {
+    const browser = { ...getEmptyCharacter(), name: "First account sheet" }
+    useCharacterStore.getState().setCloudCharacters([browser], [browser.uuid], [1])
+    useCharacterStore.setState({ cloudAccountId: "first-account" })
+    useCharacterStore.getState().removeCharacter(0)
+    vi.mocked(api.characters).mockResolvedValue({ characters: [] })
+    vi.mocked(api.createCharacter).mockImplementation(async (data) => ({ id: data.uuid, data, name: data.name, version: 1, updatedAt: "" }))
+    await act(async () => root.render(<Sync accountId="second-account" />))
+    expect(api.deleteCharacter).not.toHaveBeenCalled()
+    expect(useCharacterStore.getState().archivedCharacters[0]).toMatchObject({ character: browser, accountId: "first-account", synced: false })
 })

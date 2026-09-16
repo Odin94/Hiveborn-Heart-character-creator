@@ -107,3 +107,13 @@ Useful production commands:
 /opt/hiveborn/backend/scripts/pm2.sh logs
 /opt/hiveborn/backend/scripts/pm2.sh restart
 ```
+
+## Character identity and recovery
+
+Run `pnpm db:migrate` before starting the updated backend. Migration `0008_character_uuids` assigns UUIDs to existing active and deleted characters without changing their primary keys or group/history references. New character rows use the browser UUID as their primary key.
+
+The API accepts legacy character JSON without a UUID and assigns one. Repeated identical creates with the same UUID return the existing owned character. Differing payloads, deleted UUIDs, and UUIDs owned by another account produce a new character with a new UUID; the frontend adopts the returned identity. Conflicting updates preserve the server sheet and save the submitted version as another sheet. A response may include the original owned sheet as `conflict`; other accounts' data is never included.
+
+`DELETE /characters/:id` only marks the row deleted. `GET /characters?includeDeleted=true` returns the authenticated user's active and deleted sheets for recovery. The browser keeps a durable archive and deletion queue; restoring a deleted sheet creates a new UUID instead of removing its tombstone.
+
+Run `pnpm test` for migration, identity, ownership, conflict, and soft-deletion regression tests.

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { v4 as uuid } from "uuid"
 import { callings } from "./callings"
 import { characterClasses } from "./classes"
 import { domains } from "./domains"
@@ -59,6 +60,7 @@ const ensureCompleteSkillRecord = (val: Partial<Skills>): Skills => {
 }
 
 export const characterSchema = z.object({
+    uuid: z.uuid().default(() => uuid()),
     name: z.string(),
     characterClass: z.union([z.enum(characterClasses), z.string()]),
     calling: z.union([z.enum(callings), z.string()]),
@@ -168,6 +170,7 @@ export const getEmptyCharacter = (): Character => {
     }
 
     const emptyCharacter: Character = {
+        uuid: uuid(),
         name: "",
         characterClass: "",
         calling: "",
