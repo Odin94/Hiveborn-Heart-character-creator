@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { v4 as uuid } from "uuid"
 import { persist } from "zustand/middleware"
 import { Character, Domains, getEmptyCharacter, Skills } from "../game_data/character"
 import { Resistance } from "../game_data/resistances"
@@ -18,7 +19,21 @@ type CharacterHistoryEntry = {
     currentCharacterIndex: number
 }
 
+export type ArchivedCharacter = {
+    archiveId: string
+    character: Character
+    deletedAt: string
+    cloudId: string
+    accountId: string | null
+    synced: boolean
+}
+
 export type CharacterState = {
+    archivedCharacters: ArchivedCharacter[]
+    cloudAccountId: string | null
+    importCharacter: (character: Character) => void
+    restoreCharacter: (archiveId: string) => void
+    resetCharacter: () => void
     characters: Character[]
     /** Local snapshots for a bounded, offline-friendly undo action. */
     characterHistory: CharacterHistoryEntry[]
@@ -140,12 +155,40 @@ export const useCharacterStore = createSelectors(
 
                 const updateCurrentCharacter = (updates: Partial<Character>) => updateCharacter(get().currentCharacterIndex, updates)
 
+                const initialCharacter = getEmptyCharacter()
                 return {
-                    characters: [getEmptyCharacter()],
+                    archivedCharacters: [],
+                    cloudAccountId: null,
+                    importCharacter: (character) => {
+                        const state = get()
+                        const existing = state.characters.findIndex((entry) => entry.uuid === character.uuid)
+                        if (existing >= 0 && JSON.stringify(state.characters[existing]) === JSON.stringify(character)) {
+                            state.setCurrentCharacter(existing)
+                            return
+                        }
+                        const archivedIdentity = state.archivedCharacters.some((entry) => entry.character.uuid === character.uuid)
+                        const next = cloneCharacter({ ...character, uuid: existing >= 0 || archivedIdentity ? uuid() : character.uuid })
+                        set({
+                            characters: [...state.characters, next],
+                            cloudCharacterIds: [...state.cloudCharacterIds, ""],
+                            cloudCharacterVersions: [...state.cloudCharacterVersions, 0],
+                            cloudCharacterBases: [...state.cloudCharacterBases, cloneCharacter(next)],
+                        })
+                        get().setCurrentCharacter(get().characters.length - 1)
+                    },
+                    restoreCharacter: (archiveId) => {
+                        const entry = get().archivedCharacters.find((item) => item.archiveId === archiveId)
+                        if (entry) get().importCharacter({ ...cloneCharacter(entry.character), uuid: uuid() })
+                    },
+                    resetCharacter: () => {
+                        get().removeCharacter(get().currentCharacterIndex)
+                        get().addCharacter()
+                    },
+                    characters: [initialCharacter],
                     characterHistory: [],
                     cloudCharacterIds: [""],
                     cloudCharacterVersions: [0],
-                    cloudCharacterBases: [getEmptyCharacter()],
+                    cloudCharacterBases: [cloneCharacter(initialCharacter)],
                     currentCharacterIndex: 0,
 
                     name: getEmptyCharacter().name,
@@ -206,13 +249,28 @@ export const useCharacterStore = createSelectors(
                     },
                     removeCharacter: (index) => {
                         const state = get()
+                        if (!state.characters[index]) return
+                        const archivedCharacters = [
+                            ...state.archivedCharacters,
+                            {
+                                archiveId: uuid(),
+                                character: cloneCharacter(state.characters[index]),
+                                deletedAt: new Date().toISOString(),
+                                cloudId: state.cloudCharacterIds[index] || "",
+                                accountId: state.cloudAccountId,
+                                synced: false,
+                            },
+                        ]
                         const newCharacters = state.characters.filter((_, i) => i !== index)
                         const newCloudCharacterIds = state.cloudCharacterIds.filter((_, i) => i !== index)
-                        const newIndex = Math.min(state.currentCharacterIndex, newCharacters.length - 1)
+                        const activeUuid = state.characters[state.currentCharacterIndex]?.uuid
+                        const selectedIndex = newCharacters.findIndex((character) => character.uuid === activeUuid)
+                        const newIndex = selectedIndex >= 0 ? selectedIndex : Math.min(state.currentCharacterIndex, newCharacters.length - 1)
                         const character = newCharacters[newIndex] || getEmptyCharacter()
                         latestTextCheckpoint = null
                         set({
                             characters: newCharacters,
+                            archivedCharacters,
                             characterHistory: [...state.characterHistory, characterSnapshot(state)].slice(-12),
                             cloudCharacterIds: newCloudCharacterIds,
                             cloudCharacterVersions: state.cloudCharacterVersions.filter((_, i) => i !== index),
@@ -360,13 +418,36 @@ export const useCharacterStore = createSelectors(
                         const state = get()
                         const previousState = state.characterHistory[state.characterHistory.length - 1]
                         if (!previousState) return
-                        const index = Math.min(previousState.currentCharacterIndex, previousState.characters.length - 1)
-                        const character = previousState.characters[index] || getEmptyCharacter()
+                        const restored = previousState.characters.map((character) => ({
+                            ...cloneCharacter(character),
+                            uuid: state.archivedCharacters.some((entry) => entry.character.uuid === character.uuid) ? uuid() : character.uuid,
+                        }))
+                        const index = Math.min(previousState.currentCharacterIndex, restored.length - 1)
+                        const character = restored[index] || getEmptyCharacter()
                         latestTextCheckpoint = null
                         set({
-                            characters: previousState.characters.map(cloneCharacter),
+                            archivedCharacters: [
+                                ...state.archivedCharacters,
+                                ...state.characters
+                                    .filter((character) => !previousState.characters.some((previous) => JSON.stringify(previous) === JSON.stringify(character)))
+                                    .map((character) => {
+                                        const removed = !restored.some((previous) => previous.uuid === character.uuid)
+                                        const cloudId = state.cloudCharacterIds[state.characters.findIndex((entry) => entry.uuid === character.uuid)] || ""
+                                        return {
+                                            archiveId: uuid(),
+                                            character: cloneCharacter(character),
+                                            deletedAt: new Date().toISOString(),
+                                            cloudId: removed ? cloudId : "",
+                                            accountId: removed ? state.cloudAccountId : null,
+                                            synced: !removed,
+                                        }
+                                    }),
+                            ],
+                            characters: restored,
                             characterHistory: state.characterHistory.slice(0, -1),
-                            cloudCharacterIds: [...previousState.cloudCharacterIds],
+                            cloudCharacterIds: previousState.cloudCharacterIds.map((id, index) =>
+                                restored[index]?.uuid === previousState.characters[index]?.uuid ? id : "",
+                            ),
                             cloudCharacterVersions: [...previousState.cloudCharacterVersions],
                             cloudCharacterBases: previousState.cloudCharacterBases.map(cloneCharacter),
                             currentCharacterIndex: Math.max(0, index),
@@ -389,6 +470,44 @@ export const useCharacterStore = createSelectors(
             },
             {
                 name: "hiveborn-character-storage",
+                version: 1,
+                migrate: (persisted) => persisted as CharacterState,
+                merge: (persisted, current) => {
+                    const saved = persisted as Partial<CharacterState> | undefined
+                    if (!saved) return current
+                    const seen = new Set<string>()
+                    const empty = getEmptyCharacter()
+                    const legacyCharacter = {
+                        ...empty,
+                        ...Object.fromEntries(
+                            Object.keys(empty)
+                                .filter((key) => key in saved)
+                                .map((key) => [key, saved[key as keyof CharacterState]]),
+                        ),
+                    } as Character
+                    const characters = (saved.characters ?? ("name" in saved ? [legacyCharacter] : current.characters)).map((character) => {
+                        const id = character.uuid && !seen.has(character.uuid) ? character.uuid : uuid()
+                        seen.add(id)
+                        return { ...getEmptyCharacter(), ...character, uuid: id }
+                    })
+                    const currentCharacterIndex = Math.max(0, Math.min(saved.currentCharacterIndex ?? 0, characters.length - 1))
+                    return {
+                        ...current,
+                        ...saved,
+                        cloudAccountId: saved.cloudAccountId ?? localStorage.getItem(`hiveborn-cloud-character-account:${window.location.origin}`),
+                        characters,
+                        currentCharacterIndex,
+                        cloudCharacterBases: characters.map((character, index) => ({
+                            ...(saved.cloudCharacterBases?.[index] ?? character),
+                            uuid: character.uuid,
+                        })),
+                        archivedCharacters: (saved.archivedCharacters ?? []).map((entry) => ({
+                            ...entry,
+                            character: { ...entry.character, uuid: entry.character.uuid || uuid() },
+                        })),
+                        ...(characters[currentCharacterIndex] ?? getEmptyCharacter()),
+                    }
+                },
                 // History is an in-session safety net, not durable character data. Keeping
                 // it out of localStorage prevents a long editing session from exhausting it.
                 partialize: ({ characterHistory: _characterHistory, ...state }) => state,

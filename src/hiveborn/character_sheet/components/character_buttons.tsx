@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { generateCharacterPDF } from "@/hiveborn/creator/pdf_creator"
-import { Character, characterSchema, getEmptyCharacter } from "@/hiveborn/game_data/character"
+import { Character, characterSchema } from "@/hiveborn/game_data/character"
 import { useUserUuid } from "@/lib/analytics"
 import { useThemeStore } from "@/lib/theme"
 import { cn } from "@/lib/utils"
@@ -58,33 +58,7 @@ export const JSONDownloadButton = ({ className }: { className?: string }) => {
 }
 
 export const ResetButton = () => {
-    const setName = useCharacterStore.use.setName()
-    const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const setCalling = useCharacterStore.use.setCalling()
-    const setActiveBeats = useCharacterStore.use.setActiveBeats()
-    const setEquipment = useCharacterStore.use.setEquipment()
-    const setResources = useCharacterStore.use.setResources()
-    const setAbilities = useCharacterStore.use.setAbilities()
-    const setFallout = useCharacterStore.use.setFallout()
-    const setSkills = useCharacterStore.use.setSkills()
-    const setDomains = useCharacterStore.use.setDomains()
-    const setProtections = useCharacterStore.use.setProtections()
-    const setStress = useCharacterStore.use.setStress()
-
-    const setCharacter = (character: Character) => {
-        setName(character.name)
-        setCharacterClass(character.characterClass)
-        setCalling(character.calling)
-        setActiveBeats(character.activeBeats)
-        setEquipment(character.equipment)
-        setResources(character.resources)
-        setAbilities(character.abilities)
-        setFallout(character.fallout)
-        setSkills(character.skills)
-        setDomains(character.domains)
-        setProtections(character.protections)
-        setStress(character.stress)
-    }
+    const resetCharacter = useCharacterStore.use.resetCharacter()
 
     return (
         <Dialog>
@@ -94,7 +68,9 @@ export const ResetButton = () => {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Reset Character?</DialogTitle>
-                    <DialogDescription>This will delete your current character and reset to an empty sheet.</DialogDescription>
+                    <DialogDescription>
+                        Your current character will be archived and a new empty sheet created. You can restore it from Deleted characters.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="mt-2 flex justify-end">
@@ -104,7 +80,7 @@ export const ResetButton = () => {
                         </Button>
                     </DialogClose>
                     <DialogClose asChild>
-                        <Button className="ml-3" type="button" onClick={() => setCharacter(getEmptyCharacter())}>
+                        <Button className="ml-3" type="button" onClick={resetCharacter}>
                             Reset Character
                         </Button>
                     </DialogClose>
@@ -117,33 +93,7 @@ export const ResetButton = () => {
 export const JSONUploadButton = () => {
     const posthog = usePostHog()
     const [file, setFile] = useState<File>()
-    const setName = useCharacterStore.use.setName()
-    const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const setCalling = useCharacterStore.use.setCalling()
-    const setActiveBeats = useCharacterStore.use.setActiveBeats()
-    const setEquipment = useCharacterStore.use.setEquipment()
-    const setResources = useCharacterStore.use.setResources()
-    const setAbilities = useCharacterStore.use.setAbilities()
-    const setFallout = useCharacterStore.use.setFallout()
-    const setSkills = useCharacterStore.use.setSkills()
-    const setDomains = useCharacterStore.use.setDomains()
-    const setProtections = useCharacterStore.use.setProtections()
-    const setStress = useCharacterStore.use.setStress()
-
-    const setCharacter = (character: Character) => {
-        setName(character.name)
-        setCharacterClass(character.characterClass)
-        setCalling(character.calling)
-        setActiveBeats(character.activeBeats)
-        setEquipment(character.equipment)
-        setResources(character.resources)
-        setAbilities(character.abilities)
-        setFallout(character.fallout)
-        setSkills(character.skills)
-        setDomains(character.domains)
-        setProtections(character.protections)
-        setStress(character.stress)
-    }
+    const importCharacter = useCharacterStore.use.importCharacter()
     const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
         accept: {
             "application/json": [".json"],
@@ -223,7 +173,7 @@ export const JSONUploadButton = () => {
             return
         }
 
-        setCharacter(character.data)
+        importCharacter(character.data)
         setFile(undefined)
         toast.success("Character loaded successfully", {
             duration: 5000,
@@ -246,7 +196,7 @@ export const JSONUploadButton = () => {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Load from json file</DialogTitle>
-                    <DialogDescription>This will overwrite your current character.</DialogDescription>
+                    <DialogDescription>This adds the imported character. If its saved version differs, both copies are kept.</DialogDescription>
                 </DialogHeader>
                 <div>
                     <div
@@ -309,5 +259,48 @@ export const PDFDownloadButton = ({ className }: { className?: string }) => {
             <FileDown className="mr-2 h-4 w-4" />
             Download PDF
         </Button>
+    )
+}
+
+export const DeletedCharactersButton = () => {
+    const archived = useCharacterStore.use.archivedCharacters()
+    const restore = useCharacterStore.use.restoreCharacter()
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="secondary" className="rounded-t-none" disabled={!archived.length}>
+                    Deleted characters ({archived.length})
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Deleted characters</DialogTitle>
+                    <DialogDescription>Deleted and reset sheets stay saved. Restore creates a separate active copy.</DialogDescription>
+                </DialogHeader>
+                <div className="max-h-96 space-y-3 overflow-y-auto">
+                    {archived.map((entry) => (
+                        <div key={entry.archiveId} className="flex items-center justify-between gap-3 border-b pb-3">
+                            <div>
+                                <p>{entry.character.name || "Unnamed hiveborn"}</p>
+                                <p className="text-sm text-muted-foreground">{new Date(entry.deletedAt).toLocaleString()}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="secondary" onClick={() => void downloadJson(entry.character)}>
+                                    Download JSON
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        restore(entry.archiveId)
+                                        toast.success("Restored as a new character")
+                                    }}
+                                >
+                                    Restore
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </DialogContent>
+        </Dialog>
     )
 }

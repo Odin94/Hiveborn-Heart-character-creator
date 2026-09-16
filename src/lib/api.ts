@@ -5,7 +5,15 @@ const TOKEN_KEY = "hiveborn-auth-token"
 
 export type User = { id: string; email: string; firstName: string | null; lastName: string | null; nickname: string | null }
 export type ApiRequestError = Error & { status: number; details: Record<string, unknown> }
-export type CloudCharacter = { id: string; name: string; data: Character; version: number; updatedAt: string }
+export type CloudCharacter = {
+    id: string
+    name: string
+    data: Character
+    version: number
+    updatedAt: string
+    deletedAt?: string | null
+    conflict?: CloudCharacter
+}
 export type GroupCharacter = CloudCharacter
 export type PlayGroupInvitation = { group: Pick<PlayGroup, "id" | "name" | "ownerId" | "createdAt">; invitedByNickname: string | null; createdAt: string }
 export type PlayGroup = {
@@ -60,11 +68,11 @@ export const api = {
     me: () => request<User>("/auth/me"),
     updateProfile: (nickname: string) => request<User>("/auth/me", { method: "PUT", body: JSON.stringify({ nickname }) }),
     logout: () => request<{ success: boolean }>("/auth/logout", { method: "POST" }),
-    characters: () => request<{ characters: CloudCharacter[] }>("/characters"),
+    characters: (includeDeleted = false) => request<{ characters: CloudCharacter[] }>(`/characters${includeDeleted ? "?includeDeleted=true" : ""}`),
     createCharacter: (character: Character) => request<CloudCharacter>("/characters", { method: "POST", body: JSON.stringify({ data: character }) }),
     updateCharacter: (id: string, payload: { baseVersion: number; baseData: Character; changes: Partial<Character> }) =>
         request<CloudCharacter>(`/characters/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
-    deleteCharacter: (id: string) => request<{ success: boolean }>(`/characters/${id}`, { method: "DELETE" }),
+    deleteCharacter: (id: string) => request<{ success: boolean; character?: CloudCharacter }>(`/characters/${id}`, { method: "DELETE" }),
     groups: () => request<{ groups: PlayGroup[]; invitations: PlayGroupInvitation[] }>("/play-groups"),
     createGroup: (name: string) => request<PlayGroup>("/play-groups", { method: "POST", body: JSON.stringify({ name }) }),
     invite: (groupId: string, nickname: string) => request(`/play-groups/${groupId}/invitations`, { method: "POST", body: JSON.stringify({ nickname }) }),
