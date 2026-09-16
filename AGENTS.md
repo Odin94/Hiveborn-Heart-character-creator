@@ -9,6 +9,7 @@
 ## Character Data Persistence
 
 - Refreshing the page must never clear character data. Most users rely entirely on browser storage; preserve all saved characters and the active character across reloads without requiring sign-in or a backend connection.
+- Creating an account or signing in must preserve browser-only characters and save them to the account alongside existing cloud characters; failed requests must leave local data intact. Never import another account’s cloud-linked sheets.
 - Authentication initialization must not be treated as sign-out. Cover browser-only persistence with regression tests when changing character storage or cloud sync.
 
 ## Local Play Mode Login
