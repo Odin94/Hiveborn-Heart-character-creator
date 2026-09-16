@@ -5,6 +5,7 @@ import { env, isAllowedFrontendOrigin } from "./config/env.js"
 import { authRoutes } from "./routes/auth.js"
 import { characterRoutes } from "./routes/characters.js"
 import { groupRoutes } from "./routes/groups.js"
+import { startCharacterHistory } from "./utils/characterHistory.js"
 import { startMetrics } from "./utils/metrics.js"
 import { shutdownTracking } from "./utils/tracker.js"
 import { registerLiveGroupRoutes } from "./websocket/liveGroups.js"
@@ -27,6 +28,7 @@ await app.register(characterRoutes)
 await app.register(groupRoutes)
 app.get("/health", { config: { rateLimit: false } }, async () => ({ status: "ok", app: "hiveborn" }))
 startMetrics(app)
+startCharacterHistory(app)
 
 async function stop() {
     await app.close()
