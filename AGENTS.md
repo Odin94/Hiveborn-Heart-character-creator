@@ -6,6 +6,11 @@
 - If you are working in a worktree, rebase your completed work onto `main` before handing it off.
 - If you are already on `main`, keep changes and commits directly on `main`; do not create a separate integration branch.
 
+## Character Data Persistence
+
+- Refreshing the page must never clear character data. Most users rely entirely on browser storage; preserve all saved characters and the active character across reloads without requiring sign-in or a backend connection.
+- Authentication initialization must not be treated as sign-out. Cover browser-only persistence with regression tests when changing character storage or cloud sync.
+
 ## Local Play Mode Login
 
 When Hiveborn is running locally, use the **/Local test sign-in/** link in the top navigation to enter Play Mode without WorkOS setup. It only appears for `localhost` and `127.0.0.1`, and the backend rejects the endpoint in production or for non-local hosts.
