@@ -150,7 +150,10 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             (previousAccountId.current && previousAccountId.current !== accountId) ||
             (localStorage.getItem(syncedAccountStorageKey) && localStorage.getItem(syncedAccountStorageKey) !== accountId)
         if (!accountId) {
-            setCloudCharacters([], [], [])
+            // Missing authentication on mount is normal for browser-only users
+            // and while a saved session is loading. Only clear sheets on an
+            // actual sign-out, never when restoring the page's local storage.
+            if (previousAccountId.current) setCloudCharacters([], [], [])
             usePlayModeStore.getState().setActiveGroup(null)
             knownIds.current = []
             previousAccountId.current = undefined
