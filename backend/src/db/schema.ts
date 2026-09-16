@@ -41,6 +41,31 @@ export const characters = sqliteTable(
     (table) => ({ userIdx: index("characters_user_idx").on(table.userId) }),
 )
 
+// Historical data is intentionally database-only; no API exposes these tables.
+export const characterHistory = sqliteTable(
+    "character_history",
+    {
+        characterId: text("character_id")
+            .notNull()
+            .references(() => characters.id, { onDelete: "cascade" }),
+        capturedAt: integer("captured_at", { mode: "timestamp" }).notNull(),
+        version: integer("version").notNull(),
+        data: text("data").notNull(),
+    },
+    (table) => ({
+        pk: primaryKey({ columns: [table.characterId, table.capturedAt] }),
+        capturedAtIdx: index("character_history_captured_at_idx").on(table.capturedAt),
+    }),
+)
+
+export const characterHistoryCheckpoints = sqliteTable("character_history_checkpoints", {
+    characterId: text("character_id")
+        .primaryKey()
+        .references(() => characters.id, { onDelete: "cascade" }),
+    checkedAt: integer("checked_at", { mode: "timestamp" }).notNull(),
+    dataHash: text("data_hash").notNull(),
+})
+
 export const groups = sqliteTable(
     "play_groups",
     {
