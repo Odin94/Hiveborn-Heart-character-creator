@@ -38,7 +38,10 @@ export const characters = sqliteTable(
         deletedAt: integer("deleted_at", { mode: "timestamp" }),
         ...timestamps,
     },
-    (table) => ({ userIdx: index("characters_user_idx").on(table.userId) }),
+    (table) => ({
+        userIdx: index("characters_user_idx").on(table.userId),
+        uuidUnique: uniqueIndex("characters_uuid_unique").on(sql`json_extract(${table.data}, '$.uuid')`),
+    }),
 )
 
 // Historical data is intentionally database-only; no API exposes these tables.
