@@ -84,7 +84,8 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     const [resistance, setResistance] = useState<Resistance>("blood")
     const selectedSeverityClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
     const selectedResistanceClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
-    const isFalloutPickedAlready = (falloutOption: FalloutOption) => hasTitledEntry(fallout, falloutOption.name)
+    const isFalloutPickedAlready = (falloutOption: FalloutOption) =>
+        hasTitledEntry(fallout, falloutOption.name) || hasTitledEntry(fallout, `${falloutOption.name} (${falloutOption.severity})`)
     const filteredFalloutOptions = falloutOptions
         .filter((falloutOption) => falloutOption.severity === falloutSeverity)
         .filter((falloutOption) => falloutOption.resistance === resistance)
