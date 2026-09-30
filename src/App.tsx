@@ -145,7 +145,7 @@ export function CharacterSheetPage() {
             </Dialog>
 
             <div className="container mx-auto max-w-screen-xl lg:px-20 2xl:max-w-screen-2xl">
-                <div className="mt-0 flex flex-wrap justify-center gap-2 px-2 pb-4 lg:h-10 lg:justify-start lg:gap-8 lg:pl-4 lg:pb-0">
+                <div className="mt-0 flex flex-wrap justify-center gap-2 px-2 pb-4 lg:justify-start lg:gap-8 lg:pl-4">
                     <PDFDownloadButton />
                     <JSONDownloadButton />
                     <JSONUploadButton />

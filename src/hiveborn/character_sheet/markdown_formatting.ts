@@ -27,7 +27,7 @@ export const formatAbilityEntry = (ability: Ability) => formatTitledEntry(abilit
 
 export const formatBeatEntry = (beat: Beat) => formatTitledEntry(capitalize(beat.type), beat.description)
 
-export const formatFalloutEntry = (fallout: Fallout) => formatTitledEntry(fallout.name, fallout.description)
+export const formatFalloutEntry = (fallout: Fallout) => formatTitledEntry(`${fallout.name} (${fallout.severity})`, fallout.description)
 
 export const formatEquipmentEntry = (equipment: string) => {
     const normalizedEquipment = formatRulesText(equipment).trim()

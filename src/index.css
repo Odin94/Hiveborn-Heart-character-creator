@@ -16,7 +16,7 @@
 
     color-scheme: light;
     color: oklch(0.31 0.055 30);
-    background-color: #fbf7ef;
+    background-color: var(--background);
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
