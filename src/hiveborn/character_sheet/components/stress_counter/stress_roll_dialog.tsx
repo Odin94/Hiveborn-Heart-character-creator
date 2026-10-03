@@ -22,7 +22,7 @@ const stressRollAnimationMs = 1600
 const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`
 
 const StressDieButton = ({ size, onClick }: { size: DieSize; onClick: () => void }) => (
-    <Button type="button" variant="outline" className="h-20 justify-between px-4" onClick={onClick}>
+    <Button type="button" aria-label={`Roll d${size} stress`} variant="outline" className="h-20 justify-between px-4" onClick={onClick}>
         <span className="font-bold">d{size}</span>
         <span className="relative h-12 w-16 shrink-0 overflow-visible" aria-hidden="true">
             <span className="absolute top-0 left-4 scale-[0.32] origin-top-left">

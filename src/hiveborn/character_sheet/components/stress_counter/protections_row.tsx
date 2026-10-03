@@ -6,15 +6,17 @@ type StressRowNumber = NumberBy<["s"]>["s"]
 export type ProtectionsRowProps = Omit<StressRowNumber, "setN"> & {
     setN?: StressRowNumber["setN"]
     readOnly?: boolean
+    label?: string
 }
 
-const ProtectionsRow = ({ n, setN, readOnly = false }: ProtectionsRowProps) => {
+const ProtectionsRow = ({ n, setN, readOnly = false, label = "protection" }: ProtectionsRowProps) => {
     return (
         <div className="flex min-w-0 flex-wrap gap-1 sm:block">
             {[1, 2, 3, 4, 5].map((i) => (
                 <Checkbox
                     key={i}
                     className="p-0 disabled:opacity-100 sm:mx-0.5"
+                    aria-label={`${label}: ${i} protection`}
                     checked={i <= n}
                     disabled={readOnly}
                     onCheckedChange={() => {

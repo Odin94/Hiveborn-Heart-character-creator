@@ -24,9 +24,9 @@ export const ReadOnlyStressCounter = ({ stress, protections }: StressProtections
             {resistances.map((resistance) => (
                 <div key={resistance} className={gridClass}>
                     <div className="font-bold">{resistance.toUpperCase()}</div>
-                    <ResistanceRow n={stress[resistance]} readOnly />
+                    <ResistanceRow label={resistance} n={stress[resistance]} readOnly />
                     <div className="col-start-2 sm:col-start-auto">
-                        <ProtectionsRow n={protections[resistance]} readOnly />
+                        <ProtectionsRow label={resistance} n={protections[resistance]} readOnly />
                     </div>
                 </div>
             ))}
@@ -70,9 +70,9 @@ const StressCounter = () => {
                         </TooltipContent>
                     </Tooltip>
 
-                    <ResistanceRow n={stress[resistance]} setN={(n) => setStress({ ...stress, [resistance]: n })} />
+                    <ResistanceRow label={resistance} n={stress[resistance]} setN={(n) => setStress({ ...stress, [resistance]: n })} />
                     <div className="col-start-2 sm:col-start-auto">
-                        <ProtectionsRow n={protections[resistance]} setN={(n) => setProtections({ ...protections, [resistance]: n })} />
+                        <ProtectionsRow label={resistance} n={protections[resistance]} setN={(n) => setProtections({ ...protections, [resistance]: n })} />
                     </div>
                 </div>
             ))}

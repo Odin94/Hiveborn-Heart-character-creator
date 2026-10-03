@@ -33,13 +33,13 @@ const NameClassCalling = () => {
             {/* Name */}
             <div className="flex items-center font-bold text-left">Name</div>
             <div className="flex items-center">
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="w-full" />
+                <Input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full" />
             </div>
 
             {/* Class */}
             <div className="flex items-center font-bold text-left">Class</div>
             <div className="relative flex items-center">
-                <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="w-full pr-10" />
+                <Input aria-label="Class" value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="w-full pr-10" />
                 <div className="absolute right-2">
                     <ClassDropdown />
                 </div>
@@ -48,7 +48,7 @@ const NameClassCalling = () => {
             {/* Calling */}
             <div className="flex items-center font-bold text-left">Calling</div>
             <div className="relative flex items-center">
-                <Input value={calling} onChange={(e) => setCalling(e.target.value)} className="w-full pr-10" />
+                <Input aria-label="Calling" value={calling} onChange={(e) => setCalling(e.target.value)} className="w-full pr-10" />
                 <div className="absolute right-2">
                     <CallingDropdown />
                 </div>
@@ -66,7 +66,10 @@ const ClassDropdown = () => {
     return (
         <Dialog>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none">
+                <DropdownMenuTrigger
+                    aria-label="Choose class"
+                    className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
                     <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -162,7 +165,10 @@ const CallingDropdown = () => {
     return (
         <Dialog>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none">
+                <DropdownMenuTrigger
+                    aria-label="Choose calling"
+                    className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
                     <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
