@@ -230,18 +230,26 @@ export const PDFDownloadButton = ({ className }: { className?: string }) => {
     const theme = useThemeStore((state) => state.theme)
     const { userUuid } = useUserUuid()
 
+    const [exporting, setExporting] = useState(false)
     const handleDownload = async () => {
+        if (exporting) return
+        setExporting(true)
         const character = getCharacterData()
 
         try {
             const { generateCharacterPDF } = await import("@/hiveborn/creator/pdf_creator")
-            const pdfBytes = await generateCharacterPDF(character, theme)
+            const pdfBytes = await generateCharacterPDF(character, theme, (glyphs) =>
+                toast.warning("Some PDF glyphs are unavailable", {
+                    description: `The PDF font cannot display ${glyphs.join(" ")}. Original text is preserved in its editable fields.`,
+                }),
+            )
 
             const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" })
             const link = document.createElement("a")
             link.href = window.URL.createObjectURL(blob)
             link.download = `${character.name}_hiveborn.pdf`
             link.click()
+            window.setTimeout(() => window.URL.revokeObjectURL(link.href), 1000)
         } catch (error) {
             console.log({ error })
             toast.error("Failed to generate PDF", {
@@ -250,14 +258,15 @@ export const PDFDownloadButton = ({ className }: { className?: string }) => {
                 dismissible: true,
             })
         } finally {
+            setExporting(false)
             posthog.capture("PDF Download", { userUuid })
         }
     }
 
     return (
-        <Button className={cn("rounded-t-none", growDownClass, className)} onClick={handleDownload}>
+        <Button className={cn("rounded-t-none", growDownClass, className)} onClick={handleDownload} disabled={exporting}>
             <FileDown className="mr-2 h-4 w-4" />
-            Download PDF
+            {exporting ? "Generating PDF…" : "Download PDF"}
         </Button>
     )
 }

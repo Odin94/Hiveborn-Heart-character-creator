@@ -13,7 +13,7 @@ import { type DieRoll, type DieSize } from "../dice_roller/types"
 type PendingStressRoll = {
     resistance: Resistance
     die: DieRoll
-    characterIndex: number
+    characterUuid: string
     protection: number
 }
 
@@ -58,14 +58,20 @@ const StressRollDialog = ({
 
         const die = rollDice(1, size)[0]
         const { currentCharacterIndex, protections } = useCharacterStore.getState()
-        const roll = { resistance, die, characterIndex: currentCharacterIndex, protection: protections[resistance] }
+        const roll = {
+            resistance,
+            die,
+            characterUuid: useCharacterStore.getState().characters[currentCharacterIndex].uuid,
+            protection: protections[resistance],
+        }
         setPendingRoll(roll)
         onRollingChange(true)
         onClose()
 
         finishTimer.current = window.setTimeout(() => {
             const { characters, setStressForCharacter } = useCharacterStore.getState()
-            const character = characters[roll.characterIndex]
+            const characterIndex = characters.findIndex((entry) => entry.uuid === roll.characterUuid)
+            const character = characters[characterIndex]
             const finishAnimation = () => {
                 setPendingRoll(null)
                 onRollingChange(false)
@@ -81,7 +87,7 @@ const StressRollDialog = ({
             const addedStress = Math.min(10 - character.stress[roll.resistance], requestedStress)
 
             if (addedStress > 0) {
-                setStressForCharacter(roll.characterIndex, {
+                setStressForCharacter(characterIndex, {
                     ...character.stress,
                     [roll.resistance]: character.stress[roll.resistance] + addedStress,
                 })

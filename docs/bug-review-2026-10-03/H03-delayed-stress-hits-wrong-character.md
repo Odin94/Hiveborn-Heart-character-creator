@@ -19,3 +19,9 @@ A deterministic d6 reproduction left deleted A at zero Blood stress in recovery 
 Capture the target UUID and find it again when the roll completes. If it has been deleted, leave other sheets untouched and report/cancel the roll. Apply the update by UUID and clamp against the target's current stress.
 
 Regression: switching selection, deleting the target, deleting an earlier character, and a remote reconciliation during the animation.
+
+## Implemented fix
+
+Pending rolls capture the character UUID, resolve it against the latest collection after animation, and cancel if it was deleted. Regression: `src/hiveborn/character_sheet/components/stress_counter/stress_roll_dialog.test.tsx`.
+
+Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.

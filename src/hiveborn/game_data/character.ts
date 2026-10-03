@@ -59,7 +59,25 @@ const ensureCompleteSkillRecord = (val: Partial<Skills>): Skills => {
     return result
 }
 
+const traitSourceSchema = z.object({
+    selection: z.string().max(120),
+    skills: z.array(z.string()),
+    domains: z.array(z.string()),
+    protections: z.array(z.object({ resistance: z.enum(resistances), amount: z.number().int().min(0).max(5) })),
+    abilities: z.array(z.string()),
+    equipment: z.array(z.string()),
+    resources: z.array(z.string()),
+})
+export const traitGrantsSchema = z.object({
+    skills: z.record(z.string(), z.boolean()),
+    domains: z.record(z.string(), z.boolean()),
+    protections: z.record(z.enum(resistances), z.number().int().min(0).max(5)),
+    sources: z.object({ class: traitSourceSchema.optional(), calling: traitSourceSchema.optional() }),
+})
+export type TraitGrants = z.infer<typeof traitGrantsSchema>
+
 export const characterSchema = z.object({
+    traitGrants: traitGrantsSchema.optional(),
     uuid: z.uuid().default(() => uuid()),
     name: z.string(),
     characterClass: z.union([z.enum(characterClasses), z.string()]),

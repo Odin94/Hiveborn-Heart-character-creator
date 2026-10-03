@@ -96,9 +96,15 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             const url = new URL(API_URL)
             url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
             url.pathname = "/characters/live"
-            url.searchParams.set("token", tokenStorage.get()!)
+            url.search = ""
             socket = new WebSocket(url)
-            socket.onmessage = () => {
+            socket.onopen = () => socket?.send(JSON.stringify({ type: "auth", token: tokenStorage.get() }))
+            socket.onmessage = (message) => {
+                try {
+                    if (JSON.parse(message.data).type === "authenticated") return
+                } catch {
+                    /* Refresh from the authoritative API. */
+                }
                 refresh = true
                 schedule()
             }

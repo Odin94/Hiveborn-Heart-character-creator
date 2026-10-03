@@ -21,3 +21,9 @@ After cancellation the stored class is already Cleaver, despite its traits never
 Keep a pending selection until Apply and restore/discard it on Cancel or dialog dismissal. Track applied class/calling grants separately from independently earned progression, so changing a class removes only its own grants. Apply the operation atomically so one Undo reverses the whole confirmed change.
 
 Regression: cancel then select another class; change classes with independently gained overlapping skills/domains; preserve knacks and protection gained from other sources.
+
+## Implemented fix
+
+Class and calling dialogs keep selections local until Apply. Apply targets the original UUID and commits one undo transaction. Optional `traitGrants` metadata records earned skill/domain/protection baselines and actual applied sources; class labels and legacy sheets never imply removable grants. Regression: `src/hiveborn/character_sheet/traitGrants.test.ts`.
+
+Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.

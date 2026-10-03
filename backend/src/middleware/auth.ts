@@ -39,7 +39,8 @@ export async function authenticateUser(request: FastifyRequest, reply: FastifyRe
             return
         }
     } catch {
-        // Return the generic unauthorized response below so session details stay private.
+        // Provider/network failures are retryable; invalid sessions return false above.
+        return reply.code(503).send({ error: "Authentication unavailable", message: "Please try again shortly" })
     }
     return reply.code(401).send({ error: "Unauthorized", message: "Session is invalid" })
 }
@@ -48,9 +49,7 @@ export async function authenticateToken(token: string, allowLocalDevelopmentToke
     if (env.NODE_ENV !== "production" && allowLocalDevelopmentToken && token === "hiveborn-local-dev-user") {
         return { id: "local-hivekeeper", email: "local@hiveborn.test", firstName: "Local", lastName: "Hivekeeper" }
     }
-    if (!hasWorkosConfiguration || !workos) {
-        return undefined
-    }
+    if (!hasWorkosConfiguration || !workos) throw new Error("Authentication unavailable")
     try {
         const session = workos.userManagement.loadSealedSession({ sessionData: token, cookiePassword: env.WORKOS_COOKIE_PASSWORD! })
         const authenticated = await session.authenticate()
@@ -59,6 +58,6 @@ export async function authenticateToken(token: string, allowLocalDevelopmentToke
         if (refreshed.authenticated && "user" in refreshed) return refreshed.user
         return undefined
     } catch {
-        return undefined
+        throw new Error("Authentication unavailable")
     }
 }

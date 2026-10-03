@@ -19,3 +19,9 @@ The test injects only the transient 503 response; login and the recovery request
 Remove a session only on a confirmed authentication rejection. Keep credentials on timeouts, offline errors, and 5xx responses; expose a reconnecting state and retry when connectivity returns. Avoid repeated destructive actions during initialization.
 
 Regression: valid token plus 503, request failure, and later success must retain authentication and resume sync. A genuine invalid-session response must still clear authentication.
+
+## Implemented fix
+
+Retryable failures retain credentials and confirmed users; initialization stays pending until a definitive result. Reconnect and timed retry recover automatically. Only HTTP 401 invalidates a session. Request generation guards reject refresh responses after logout, and token rotation cannot restore an obsolete token. Backend provider failures return retryable responses. Regression: `src/hooks/useAuth.test.tsx`.
+
+Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.

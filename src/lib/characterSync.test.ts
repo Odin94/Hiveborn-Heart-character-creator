@@ -22,6 +22,7 @@ beforeEach(() => {
 it("migrates legacy browser sheets and persists stable UUIDs without changing content or selection", async () => {
     const { uuid: _uuid, ...legacy } = sheet("Legacy")
     const { uuid: _otherUuid, ...other } = sheet("Other legacy")
+    localStorage.clear()
     localStorage.setItem("hiveborn-character-storage", JSON.stringify({ version: 0, state: { characters: [legacy, other], currentCharacterIndex: 1 } }))
     await store.persist.rehydrate()
     const migrated = store.getState().characters
@@ -37,6 +38,7 @@ it("migrates legacy browser sheets and persists stable UUIDs without changing co
 
 it("migrates a legacy single-sheet storage record", async () => {
     const { uuid: _uuid, ...legacy } = sheet("Single old sheet")
+    localStorage.clear()
     localStorage.setItem("hiveborn-character-storage", JSON.stringify({ version: 0, state: legacy }))
     await store.persist.rehydrate()
     expect(store.getState().characters[0]).toMatchObject(legacy)
@@ -191,4 +193,34 @@ it("recovers a pending deletion when the upload succeeded but its response was l
     reconcileCharacters([cloud(original)], "owner")
     expect(store.getState().characters.some((character) => character.uuid === original.uuid)).toBe(false)
     expect(store.getState().archivedCharacters[0]).toMatchObject({ cloudId: original.uuid, accountId: "owner", synced: false, character: original })
+})
+
+it("adopts clean server updates without forking or moving the active UUID", () => {
+    const first = sheet("First")
+    const original = sheet("Original")
+    const remote = { ...original, equipment: "New remote equipment" }
+    store.getState().setCloudCharacters([first, original], [first.uuid, original.uuid], [1, 1])
+    store.getState().setCurrentCharacter(1)
+    store.setState({ cloudAccountId: "owner" })
+    reconcileCharacters([cloud(first), { ...cloud(remote), version: 2 }], "owner")
+    expect(store.getState().characters).toEqual([first, remote])
+    expect(store.getState().cloudCharacterVersions).toEqual([1, 2])
+    expect(store.getState().getCharacterData().uuid).toBe(original.uuid)
+})
+
+it("storage events adopt another tab's data without moving this tab's selected UUID", async () => {
+    const first = sheet("First"),
+        selected = sheet("Selected")
+    store.getState().setCloudCharacters([first, selected], ["", ""], [0, 0])
+    store.getState().setCurrentCharacter(1)
+    const { createDurableCharacterStorage } = await import("./durableCharacterStorage")
+    const remoteStorage = createDurableCharacterStorage(localStorage, "other-tab")
+    const raw = JSON.parse(remoteStorage.getItem("hiveborn-character-storage") as string)
+    raw.state.characters[0].equipment = "Remote lantern"
+    raw.state.currentCharacterIndex = 0
+    await remoteStorage.setItem("hiveborn-character-storage", JSON.stringify(raw))
+    window.dispatchEvent(new StorageEvent("storage", { key: "hiveborn-character-storage" }))
+    await Promise.resolve()
+    expect(store.getState().getCharacterData().uuid).toBe(selected.uuid)
+    expect(store.getState().characters[0].equipment).toBe("Remote lantern")
 })

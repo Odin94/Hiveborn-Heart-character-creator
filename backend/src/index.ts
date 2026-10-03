@@ -10,7 +10,14 @@ import { startMetrics } from "./utils/metrics.js"
 import { shutdownTracking } from "./utils/tracker.js"
 import { registerLiveGroupRoutes } from "./websocket/liveGroups.js"
 
-const app = Fastify({ logger: env.NODE_ENV === "development" ? { transport: { target: "pino-pretty" } } : true, trustProxy: true })
+const app = Fastify({
+    logger: {
+        ...(env.NODE_ENV === "development" ? { transport: { target: "pino-pretty" } } : {}),
+        redact: ["req.headers.authorization", "req.headers.cookie"],
+        serializers: { req: (request) => ({ method: request.method, url: request.url?.split("?")[0], hostname: request.hostname, remoteAddress: request.ip }) },
+    },
+    trustProxy: true,
+})
 await app.register(cors, {
     origin: (origin, callback) => {
         if (!origin || isAllowedFrontendOrigin(origin)) return callback(null, true)

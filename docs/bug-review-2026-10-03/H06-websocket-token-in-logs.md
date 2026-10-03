@@ -23,3 +23,9 @@ A fresh log sample from the final revalidation is saved in `hiveborn-fixture-tok
 Use an initial authenticated socket message over TLS, or exchange the normal session for a short-lived, single-use socket ticket. Authenticate before subscribing or sending data. Redact sensitive URL parameters and authorization headers in app/infrastructure logs as defense in depth; changing only app logging leaves the URL exposure intact.
 
 Regression: establish both socket types with a recognizable fixture credential and assert that no log URL/message contains it. Unauthorized sockets must not receive events.
+
+## Implemented fix
+
+Both WebSocket routes authenticate the first message, never a URL query parameter. Nothing subscribes or changes presence before authentication. Origins and group membership remain enforced. Backend request logging removes query strings and redacts credential headers; transient provider failures close with retryable 1013. Regression: `backend/tests/liveAuthentication.test.ts`.
+
+Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.

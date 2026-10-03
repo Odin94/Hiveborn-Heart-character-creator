@@ -19,3 +19,9 @@ Evidence: `hiveborn-pdf-unicode.js` and `browser-results.json:H07pdf`. The same 
 Embed a licensed Unicode font with fontkit, and use it for text fields and all appearances. Decide how unsupported emoji/glyphs are represented, and communicate any substitution instead of silently removing text. Keep the font objects scoped to each export.
 
 Regression: export supported accents, CJK, and emoji in each free-text section; inspect the resulting text/appearance and ensure an unsupported glyph cannot abort the entire export.
+
+## Implemented fix
+
+PDF exports use document-scoped fonts and a bundled licensed Noto CJK font for text outside WinAnsi. Standard Latin exports retain the lightweight Helvetica path. Unicode bytes are cached, loaded only during export, and fully embedded to preserve composite CJK glyphs. Unsupported glyphs visibly warn; their original text remains in editable form fields. Concurrent exports no longer share mutable font instances. Regression: `src/hiveborn/creator/pdf_creator.test.ts`.
+
+Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.

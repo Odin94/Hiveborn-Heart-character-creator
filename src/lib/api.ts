@@ -48,7 +48,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
         headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers },
     })
     const refreshed = response.headers.get("X-New-Token")
-    if (refreshed) tokenStorage.set(refreshed)
+    if (refreshed && tokenStorage.get() === token) tokenStorage.set(refreshed)
     if (!response.ok) {
         const detail = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
         const error = new Error(detail.message ?? detail.error ?? `Request failed (${response.status})`) as ApiRequestError

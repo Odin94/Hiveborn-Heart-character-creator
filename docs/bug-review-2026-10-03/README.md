@@ -1,8 +1,8 @@
 # Hiveborn deep bug review — 2026-10-03
 
-**7 confirmed open findings: 5 high and 2 medium.** Each report includes reproduction, observed impact, cause, a suggested fix, and a regression check.
+**All 7 confirmed findings have local implementations and focused regression coverage. Independent review and browser revalidation are in progress.** Each report includes reproduction, observed impact, cause, a suggested fix, and a regression check.
 
-Initial committed snapshot: `8a0544f`. Final revalidation: `88c2eb0` plus documentation-only review commits. The separate worktree is on `chore/odin/deep-bug-review`. The primary checkout's uncommitted architecture work was not reviewed or changed. Nothing was pushed and no PR was created.
+Initial committed snapshot: `8a0544f`. Final revalidation: `88c2eb0` plus documentation-only review commits. The fixes are in the separate worktree on `fix/odin/review-bug-fixes`. The primary checkout's uncommitted architecture work was not reviewed or changed. Nothing was pushed and no PR was created.
 
 ## Findings
 
@@ -18,7 +18,7 @@ Initial committed snapshot: `8a0544f`. Final revalidation: `88c2eb0` plus docume
 
 ## Verification and scope
 
-Frontend: 34 tests; backend: 8 tests. Frontend and backend production builds/typechecks pass. The clean larger-collection probe (21 sheets, 15,500 characters of notes per imported sheet, repeated edits) did not reproduce storage exhaustion or obvious editing delay.
+Baseline: 34 frontend tests and 8 backend tests. Fix validation currently includes 60 frontend tests and 9 backend tests. Frontend and backend production builds/typechecks pass. The clean larger-collection probe (21 sheets, 15,500 characters of notes per imported sheet, repeated edits) did not reproduce storage exhaustion or obvious editing delay.
 
 All three apps were launched locally against disposable SQLite databases. Browser/API probes cover anonymous persistence, cross-tab editing, import/export, authenticated sync, conflicts, reload/recovery, character switching, and the reported interaction bugs. Default sheets were inspected at 390 × 844 with no horizontal overflow or page errors. Passing existing tests did not prevent the reported bugs.
 

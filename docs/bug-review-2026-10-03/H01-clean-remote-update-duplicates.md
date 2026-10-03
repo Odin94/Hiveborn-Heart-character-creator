@@ -21,3 +21,9 @@ The original browser had no pending edits. Its one sheet becomes two: an old she
 Before the divergent branch, compare local with its confirmed base for the same account. If they match, adopt the newer server document and revision. Keep forking for actual conflicting edits, and consider merging disjoint edits. Preserve active selection by UUID when the list changes.
 
 Regression: a clean remote edit, including a GM stress/fallout update, must update one sheet without creating another database row.
+
+## Implemented fix
+
+Clean local data now adopts the remote version when it matches the confirmed base. UUID selection and genuine divergent copies remain intact. Regression: `src/lib/characterSync.test.ts`.
+
+Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.

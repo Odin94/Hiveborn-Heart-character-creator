@@ -229,8 +229,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             const url = new URL(API_URL)
             url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
             url.pathname = `/play-groups/${group.id}/live`
-            url.searchParams.set("token", tokenStorage.get()!)
+            url.search = ""
             socket = new WebSocket(url)
+            socket.onopen = () => socket?.send(JSON.stringify({ type: "auth", token: tokenStorage.get() }))
             socket.onmessage = (message) => {
                 try {
                     const event = JSON.parse(message.data) as LiveGroupEvent

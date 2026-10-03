@@ -8,8 +8,25 @@ const text = z.string().max(100_000)
 const skillSchema = z.object({ hasSkill: z.boolean(), knacks: text }).strict()
 const domainSchema = z.object({ hasDomain: z.boolean(), knacks: text }).strict()
 
+const traitSourceSchema = z.object({
+    selection: z.string().max(120),
+    skills: z.array(z.string()),
+    domains: z.array(z.string()),
+    protections: z.array(z.object({ resistance: z.enum(resistances), amount: z.number().int().min(0).max(5) })),
+    abilities: z.array(z.string()),
+    equipment: z.array(z.string()),
+    resources: z.array(z.string()),
+})
+export const traitGrantsSchema = z.object({
+    skills: z.record(z.string(), z.boolean()),
+    domains: z.record(z.string(), z.boolean()),
+    protections: z.record(z.enum(resistances), z.number().int().min(0).max(5)),
+    sources: z.object({ class: traitSourceSchema.optional(), calling: traitSourceSchema.optional() }),
+})
+
 export const characterDataSchema = z
     .object({
+        traitGrants: traitGrantsSchema.optional(),
         uuid: z.uuid().optional(),
         name: z.string().max(120),
         characterClass: z.string().max(120),
