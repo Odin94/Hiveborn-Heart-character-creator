@@ -105,14 +105,14 @@ const ClassDropdown = () => {
                                 Abilities: <Markdown inline>{coreTraits.abilities.map((ability) => `\`${ability.name}\``).join(", ")}</Markdown>
                             </div>
 
-                            <p>Equipment:</p>
+                            <p className="mt-5 mb-3">Equipment:</p>
                             {coreTraits.equipment ? (
                                 <>
                                     <Markdown>{formatEquipmentEntry(coreTraits.equipment)}</Markdown>
-                                    <p>AND</p>
+                                    <p className="my-3">AND</p>
                                 </>
                             ) : null}
-                            <RadioGroup value={pickedEquipmentIndex} onValueChange={setPickedEquipmentIndex}>
+                            <RadioGroup className="gap-3" value={pickedEquipmentIndex} onValueChange={setPickedEquipmentIndex}>
                                 {coreTraits.pickEquipment.map((pickEquipment, i) => (
                                     <div className="flex items-center space-x-2" key={pickEquipment}>
                                         <RadioGroupItem value={`${i}`} id={`${i}`} />
@@ -123,7 +123,7 @@ const ClassDropdown = () => {
                                 ))}
                             </RadioGroup>
 
-                            <div className="mt-2 flex justify-end">
+                            <div className="mt-5 flex justify-end">
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary" onClick={() => {}}>
                                         Cancel
@@ -191,7 +191,7 @@ const CallingDropdown = () => {
                         <div className="text-muted-foreground text-md my-2">
                             {callingAbility ? <Markdown inline>{`\`${callingAbility.name}\`: ${formatRulesText(callingAbility.description)}`}</Markdown> : null}
                         </div>
-                        <div className="mt-2 flex justify-end">
+                        <div className="mt-5 flex justify-end">
                             <DialogClose asChild>
                                 <Button type="button" variant="secondary" onClick={() => {}}>
                                     Cancel
