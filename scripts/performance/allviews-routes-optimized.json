@@ -1,0 +1,49 @@
+{
+    "build": "../hiveborn-all-views-build",
+    "common": {
+        "rawJsBytes": 717568,
+        "files": ["assets/index-Bu91XVME.js"]
+    },
+    "routes": {
+        "/": {
+            "rawJsBytes": 1316972,
+            "files": [
+                "assets/index-Bu91XVME.js",
+                "assets/character-sheet-Cn7Qpt8V.js",
+                "assets/fallout-CUpL04uU.js",
+                "assets/button-C2CmHs4m.js",
+                "assets/logo-dark-QAisOc83.js"
+            ]
+        },
+        "/auth/callback": {
+            "rawJsBytes": 718344,
+            "files": ["assets/index-Bu91XVME.js", "assets/auth-callback-BGXHmv0g.js"]
+        },
+        "/play-anonymous-guard": {
+            "rawJsBytes": 750753,
+            "files": ["assets/index-Bu91XVME.js", "assets/play-mode-uO0oP5mj.js", "assets/button-C2CmHs4m.js"]
+        },
+        "/play": {
+            "rawJsBytes": 1066709,
+            "files": [
+                "assets/index-Bu91XVME.js",
+                "assets/play-mode-uO0oP5mj.js",
+                "assets/button-C2CmHs4m.js",
+                "assets/group_overview-BMm1cBLS.js",
+                "assets/fallout-CUpL04uU.js",
+                "assets/fallout_timing-DeJ0-zjD.js"
+            ]
+        },
+        "/play/$groupId": {
+            "rawJsBytes": 1066709,
+            "files": [
+                "assets/index-Bu91XVME.js",
+                "assets/play-mode-uO0oP5mj.js",
+                "assets/button-C2CmHs4m.js",
+                "assets/group_overview-BMm1cBLS.js",
+                "assets/fallout-CUpL04uU.js",
+                "assets/fallout_timing-DeJ0-zjD.js"
+            ]
+        }
+    }
+}

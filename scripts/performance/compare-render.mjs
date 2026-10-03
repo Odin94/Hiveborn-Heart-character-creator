@@ -11,12 +11,16 @@ try {
     execFileSync("tar", ["-x", "-C", temporaryDirectory], { input: archive })
     const results = {}
     for (const source of ["baseline", "optimized"]) {
-        const output = execFileSync("pnpm", ["exec", "vitest", "run", "--config", "scripts/performance/vitest.config.ts"], {
-            cwd: root,
-            env: { ...process.env, HIVEBORN_BENCHMARK_SOURCE: source === "baseline" ? join(temporaryDirectory, "src") : join(root, "src") },
-            encoding: "utf8",
-            maxBuffer: 5 * 1024 * 1024,
-        })
+        const output = execFileSync(
+            "pnpm",
+            ["exec", "vitest", "run", "--config", "scripts/performance/vitest.config.ts", "scripts/performance/render.bench.test.tsx"],
+            {
+                cwd: root,
+                env: { ...process.env, HIVEBORN_BENCHMARK_SOURCE: source === "baseline" ? join(temporaryDirectory, "src") : join(root, "src") },
+                encoding: "utf8",
+                maxBuffer: 5 * 1024 * 1024,
+            },
+        )
         results[source] = output
             .split("\n")
             .filter((line) => line.startsWith('{"benchmark":'))
