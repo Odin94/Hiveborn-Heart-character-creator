@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Connect a signed-in Hiveborn account to Stage through a browser consent page,
+  preserving the connection request across WorkOS login and using a private
+  loopback handoff without putting session tokens into URLs.
+
 - Give class equipment choices and confirmation buttons more breathing room.
 
 - Preserve independent browser edits across tabs, keep conflicting drafts and recovery archives, and adopt clean cloud updates without creating duplicate sheets.

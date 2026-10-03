@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { api, tokenStorage } from "@/lib/api"
 import { useAppAuth } from "@/App"
+import { readStageConnection } from "@/lib/stageConnection"
 
 export function AuthCallbackPage() {
     const { refresh } = useAppAuth()
     const navigate = useNavigate()
     const [error, setError] = useState<string | null>(null)
+    const started = useRef(false)
     useEffect(() => {
+        if (started.current) return
+        started.current = true
         const code = new URLSearchParams(window.location.search).get("code")
         if (!code) {
             setError("The sign-in response did not include an authorization code.")
@@ -18,7 +22,7 @@ export function AuthCallbackPage() {
             .then(async (response) => {
                 tokenStorage.set(response.token)
                 await refresh()
-                await navigate({ to: "/", replace: true })
+                await navigate({ to: readStageConnection() ? "/stage-connect" : "/", replace: true })
             })
             .catch((reason: Error) => setError(reason.message))
     }, [refresh, navigate])
