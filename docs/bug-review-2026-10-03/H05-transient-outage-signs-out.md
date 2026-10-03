@@ -2,7 +2,7 @@
 
 Severity: **Medium**. Confirmed in the running browser at `8a0544f`.
 
-Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
 

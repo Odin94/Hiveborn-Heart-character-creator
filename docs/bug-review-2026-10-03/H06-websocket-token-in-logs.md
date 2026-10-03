@@ -2,7 +2,7 @@
 
 Severity: **High**. Confirmed with a disposable local token at `8a0544f`; production logging exposure follows from the same configuration and has not been inspected in production.
 
-Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
 
@@ -12,7 +12,7 @@ Use local test sign-in and watch the running backend's request log. The opening 
 GET /characters/live?token=hiveborn-local-dev-user
 ```
 
-This value is the development-only fixture, not a real user's secret. The production WorkOS sealed session is placed in the same query parameter. The group socket uses the same mechanism.
+A fresh log sample from the final revalidation is saved in `hiveborn-fixture-token-log.txt` in the shared evidence directory. This value is the development-only fixture, not a real user's secret. The production WorkOS sealed session is placed in the same query parameter. The group socket uses the same mechanism.
 
 ## Cause
 

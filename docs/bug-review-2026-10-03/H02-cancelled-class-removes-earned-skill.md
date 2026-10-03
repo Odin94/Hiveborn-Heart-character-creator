@@ -2,7 +2,7 @@
 
 Severity: **High**. Confirmed through the class dropdown and dialogs at `8a0544f`; screenshot: `../../../evidence/hiveborn-class-cancel.png`.
 
-Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
 
