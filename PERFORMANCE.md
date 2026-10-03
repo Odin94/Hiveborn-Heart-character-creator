@@ -118,8 +118,21 @@ Frontend typecheck, lint, changed-code formatting, production build, and all 30
 persistence/sync tests passed. Backend build and all seven tests passed, including
 mixed new/not-due/deleted checkpoints and the exact seven-day boundary. Generated
 schema/migrations apply successfully in disposable databases. Browser checks cover
-actual name input, reload persistence, and the sheet layout; authenticated Play
-Mode and PDF export additionally need normal feature smoke checks when deploying.
+actual name input, reload persistence, and the sheet layout. A separate production
+smoke build used a fresh migrated local database and backend, without changing the
+measured build/environment. Its first PDF export requested the 426,734-byte lazy
+chunk and produced a 137,895-byte `application/pdf` Blob with the edited character
+name in the filename. The browser download anchor was intercepted to inspect the
+artifact. Local test sign-in succeeded, and the first authenticated `/play` visit
+requested the 522,816-byte lazy chunk and rendered group creation. Creating a test
+group automatically assigned the active sheet and showed its live table with one
+online owner. No feature exception was observed. Raw evidence is saved in
+`scripts/performance/lazy-smoke.json`.
+
+Independent subagent review checked the source diff, generated migration/schema,
+benchmark harnesses, and backend tests. Its recommendation to exercise the lazy
+PDF and authenticated Play Mode entry points was implemented with the smoke check
+above. The follow-up review found no remaining valuable actionable recommendations.
 
 The root formatter was run; its unrelated pre-existing workflow indentation
 change was discarded, and formatting for `src`, `backend`, and `scripts` was

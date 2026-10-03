@@ -1,0 +1,18 @@
+{
+    "scripts": [
+        {
+            "bytes": 1316850,
+            "name": "index-wAalNJui.js"
+        },
+        {
+            "bytes": 426734,
+            "name": "pdf_creator-3N4vcA_V.js"
+        },
+        {
+            "bytes": 522816,
+            "name": "group_overview-8i_L8R7M.js"
+        }
+    ],
+    "text": "Character sheets\nPlay groups\nCreate group\nShow me other players’ beats\nStart a play group\n\nSet your nickname in the account menu, then create a group and invite players by nickname.\n\nCreate",
+    "url": "http://localhost:5222/play"
+}
