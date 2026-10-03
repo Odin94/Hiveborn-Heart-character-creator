@@ -1,0 +1,189 @@
+{
+    "baselineRef": "8a0544fb1baeee61a3dcc7334c4548103328751a",
+    "optimizedRef": "1864673139345b6c86332a3a3d78fcde155602bb",
+    "node": "v24.15.0",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "results": {
+        "baseline": [
+            {
+                "benchmark": "sheet-name-edits",
+                "characters": 30,
+                "editsPerSample": 30,
+                "samples": [
+                    {
+                        "elapsedMs": 621.3207499999999,
+                        "commits": 60,
+                        "renderMs": 479.5830619999956,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 477.06891700000006,
+                        "commits": 60,
+                        "renderMs": 364.30121599994845,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 545.965666,
+                        "commits": 60,
+                        "renderMs": 419.33339299993213,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 493.2741249999999,
+                        "commits": 60,
+                        "renderMs": 364.9594690001072,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 524.916917,
+                        "commits": 60,
+                        "renderMs": 396.09842000005756,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    }
+                ],
+                "medianElapsedMs": 524.916917,
+                "medianRenderMs": 396.09842000005756
+            },
+            {
+                "benchmark": "sheet-equipment-edits",
+                "characters": 30,
+                "editsPerSample": 30,
+                "samples": [
+                    {
+                        "elapsedMs": 465.4935409999998,
+                        "commits": 60,
+                        "renderMs": 353.97728100006225,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 460.46095799999966,
+                        "commits": 60,
+                        "renderMs": 342.75492500004657,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 617.2875000000004,
+                        "commits": 60,
+                        "renderMs": 472.12071399987235,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 744.3540419999999,
+                        "commits": 60,
+                        "renderMs": 570.8730810000407,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 762.6201659999997,
+                        "commits": 60,
+                        "renderMs": 572.1248800000658,
+                        "abilitiesUpdates": 30,
+                        "tabsUpdates": 30
+                    }
+                ],
+                "medianElapsedMs": 617.2875000000004,
+                "medianRenderMs": 472.12071399987235
+            }
+        ],
+        "optimized": [
+            {
+                "benchmark": "sheet-name-edits",
+                "characters": 30,
+                "editsPerSample": 30,
+                "samples": [
+                    {
+                        "elapsedMs": 145.7510830000001,
+                        "commits": 30,
+                        "renderMs": 92.80490000001305,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 130.24129200000016,
+                        "commits": 30,
+                        "renderMs": 80.56645300000287,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 111.67949999999996,
+                        "commits": 30,
+                        "renderMs": 69.26265500002887,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 125.84495900000002,
+                        "commits": 30,
+                        "renderMs": 76.29912700000932,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 30
+                    },
+                    {
+                        "elapsedMs": 125.8102080000001,
+                        "commits": 30,
+                        "renderMs": 79.02642199998309,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 30
+                    }
+                ],
+                "medianElapsedMs": 125.84495900000002,
+                "medianRenderMs": 79.02642199998309
+            },
+            {
+                "benchmark": "sheet-equipment-edits",
+                "characters": 30,
+                "editsPerSample": 30,
+                "samples": [
+                    {
+                        "elapsedMs": 70.6343330000002,
+                        "commits": 30,
+                        "renderMs": 50.16220800001042,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 0
+                    },
+                    {
+                        "elapsedMs": 65.63720899999998,
+                        "commits": 30,
+                        "renderMs": 50.39120400000229,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 0
+                    },
+                    {
+                        "elapsedMs": 37.25824999999986,
+                        "commits": 30,
+                        "renderMs": 19.893364000006386,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 0
+                    },
+                    {
+                        "elapsedMs": 27.729749999999967,
+                        "commits": 30,
+                        "renderMs": 15.349266000005173,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 0
+                    },
+                    {
+                        "elapsedMs": 32.91483300000027,
+                        "commits": 30,
+                        "renderMs": 16.655578000001697,
+                        "abilitiesUpdates": 0,
+                        "tabsUpdates": 0
+                    }
+                ],
+                "medianElapsedMs": 37.25824999999986,
+                "medianRenderMs": 19.893364000006386
+            }
+        ]
+    }
+}

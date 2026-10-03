@@ -1,0 +1,7 @@
+{
+    "benchmark": "production-initial-js",
+    "entries": [{ "file": "assets/index-D-DDQmHJ.js", "bytes": 1316850, "gzipBytes": 403678 }],
+    "initialBytes": 1316850,
+    "initialGzipBytes": 403678,
+    "totalJsBytes": 2266400
+}

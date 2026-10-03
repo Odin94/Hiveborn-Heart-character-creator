@@ -1,0 +1,860 @@
+[
+    {
+        "domNodes": 520,
+        "inputs": [
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            }
+        ],
+        "js": [
+            {
+                "bytes": 1316850,
+                "duration": 5.599999999627471,
+                "name": "index-D-DDQmHJ.js"
+            }
+        ],
+        "jsBytes": 1316850,
+        "longTasks": [],
+        "paint": [
+            {
+                "name": "first-paint",
+                "start": 144
+            },
+            {
+                "name": "first-contentful-paint",
+                "start": 144
+            }
+        ],
+        "url": "http://localhost:5212/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) T3Code(Alpha)/0.0.45 Chrome/152.0.7977.130 Electron/44.4.2 Safari/537.36",
+        "visibility": "visible"
+    },
+    {
+        "domNodes": 520,
+        "inputs": [
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            }
+        ],
+        "js": [
+            {
+                "bytes": 1316850,
+                "duration": 7.099999999627471,
+                "name": "index-D-DDQmHJ.js"
+            }
+        ],
+        "jsBytes": 1316850,
+        "longTasks": [],
+        "paint": [
+            {
+                "name": "first-contentful-paint",
+                "start": 68
+            },
+            {
+                "name": "first-paint",
+                "start": 96
+            }
+        ],
+        "url": "http://localhost:5212/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) T3Code(Alpha)/0.0.45 Chrome/152.0.7977.130 Electron/44.4.2 Safari/537.36",
+        "visibility": "visible"
+    },
+    {
+        "domNodes": 520,
+        "inputs": [
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            },
+            {
+                "ariaLabel": null,
+                "placeholder": "",
+                "tag": "INPUT",
+                "type": "text",
+                "value": ""
+            }
+        ],
+        "js": [
+            {
+                "bytes": 1316850,
+                "duration": 6,
+                "name": "index-D-DDQmHJ.js"
+            }
+        ],
+        "jsBytes": 1316850,
+        "longTasks": [],
+        "paint": [
+            {
+                "name": "first-paint",
+                "start": 104
+            },
+            {
+                "name": "first-contentful-paint",
+                "start": 104
+            }
+        ],
+        "url": "http://localhost:5212/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) T3Code(Alpha)/0.0.45 Chrome/152.0.7977.130 Electron/44.4.2 Safari/537.36",
+        "visibility": "visible"
+    }
+]
