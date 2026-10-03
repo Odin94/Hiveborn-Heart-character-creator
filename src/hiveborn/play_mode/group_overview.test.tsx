@@ -139,3 +139,56 @@ it("refreshes an open shared sheet and updates permissions when switching tables
         container.remove()
     }
 })
+
+it("advances sheet age labels while unchanged HTTP snapshots retain their data", async () => {
+    const start = new Date("2026-10-03T10:00:00Z")
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] })
+    vi.setSystemTime(start)
+    const fixture = [
+        {
+            id: "table",
+            name: "Table",
+            ownerId: "other",
+            createdAt: start.toISOString(),
+            members: [
+                {
+                    id: "other",
+                    nickname: "Other",
+                    joinedAt: start.toISOString(),
+                    isOnline: true,
+                    isGameMaster: false,
+                    characters: [{ id: "sheet", name: "Witch", data: { ...getEmptyCharacter(), name: "Witch" }, version: 1, updatedAt: start.toISOString() }],
+                },
+            ],
+            rolls: [],
+        },
+    ] as PlayGroup[]
+    fixture[0].rolls = [
+        {
+            id: "roll",
+            userId: "other",
+            characterId: "sheet",
+            characterName: "Witch",
+            label: "Delve",
+            dice: "2d10",
+            result: "7",
+            falloutAssignedAt: null,
+            createdAt: start.toISOString(),
+        },
+    ]
+    vi.mocked(api.groups).mockImplementation(async () => ({ groups: JSON.parse(JSON.stringify(fixture)), invitations: [] }))
+    vi.mocked(api.characters).mockResolvedValue({ characters: [] })
+    const container = document.createElement("div")
+    const root = createRoot(container)
+    try {
+        await act(async () => root.render(<GroupOverview user={{ id: "owner" } as User} selectedGroupId="table" onClose={vi.fn()} onSelectGroup={vi.fn()} />))
+        expect(container.querySelector("article")?.textContent).toContain("Sheet updated just now")
+        await act(async () => vi.advanceTimersByTime(10_000))
+        expect(container.querySelector("article")?.textContent).toContain("Sheet updated 10s ago")
+        await act(async () => vi.advanceTimersByTime(20_000))
+        expect(container.querySelector("article")?.textContent).toContain("Sheet updated 30s ago")
+    } finally {
+        await act(() => root.unmount())
+        vi.useRealTimers()
+    }
+})

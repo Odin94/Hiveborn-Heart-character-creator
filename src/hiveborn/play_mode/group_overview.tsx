@@ -16,8 +16,10 @@ import { falloutOptions, type Fallout as FalloutOption } from "@/hiveborn/game_d
 import { falloutRollOverlayLifetimeMs } from "./fallout_timing"
 import { useShallow } from "zustand/react/shallow"
 import { BookOpen, ChevronLeft, Circle, Dices, Package, Plus, ShieldAlert, Sparkles, Users } from "lucide-react"
-import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
+import { createContext, useContext, lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { toast } from "sonner"
+
+const PlayClockContext = createContext<number | null>(null)
 
 const loadFalloutDie = () => import("./fallout_die")
 const FalloutDie = lazy(loadFalloutDie)
@@ -160,6 +162,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         try {
             const [nextGroups, nextCharacters] = await Promise.all([api.groups(), api.characters()])
             setGroups((current) => preserveGroupSheetData(current, nextGroups.groups))
+            setRollAgeUpdatedAt(Date.now())
             setInvitations(nextGroups.invitations)
             setOwnCharacters(nextCharacters.characters)
         } catch (error) {
@@ -732,15 +735,17 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 <p className="mt-2 text-sm text-muted-foreground">Create a character sheet to add it to this group.</p>
                             )}
                         </section>
-                        <CharacterCards
-                            characters={characters}
-                            userId={user.id}
-                            gameMaster={isGameMaster}
-                            rollingId={rollingFalloutCharacterId}
-                            onOpen={openCharacter}
-                            onFallout={rollFallout}
-                            showBeats={showOtherPlayersBeats}
-                        />
+                        <PlayClockContext.Provider value={rollAgeUpdatedAt}>
+                            <CharacterCards
+                                characters={characters}
+                                userId={user.id}
+                                gameMaster={isGameMaster}
+                                rollingId={rollingFalloutCharacterId}
+                                onOpen={openCharacter}
+                                onFallout={rollFallout}
+                                showBeats={showOtherPlayersBeats}
+                            />
+                        </PlayClockContext.Provider>
                         <SharedRolls characters={characters} rolls={visibleRolls} now={rollAgeUpdatedAt} />
                     </>
                 )}
@@ -921,6 +926,11 @@ const SharedRolls = memo(function SharedRolls({ characters, rolls, now }: { char
     )
 })
 
+function SheetUpdatedTime({ updatedAt }: { updatedAt: string }) {
+    const now = useContext(PlayClockContext) ?? Date.now()
+    return <p className="mt-1 text-xs text-muted-foreground">Sheet updated {relativeTime(updatedAt, now)}</p>
+}
+
 const CharacterCards = memo(function CharacterCards({
     characters,
     userId,
@@ -990,7 +1000,7 @@ const CharacterCard = memo(
                             {character.isOnline ? " online" : " away"}
                         </p>
                         <h2 className="text-2xl font-black">{character.name || "Unnamed hiveborn"}</h2>
-                        <p className="mt-1 text-xs text-muted-foreground">Sheet updated {relativeTime(character.updatedAt)}</p>
+                        <SheetUpdatedTime updatedAt={character.updatedAt} />
                     </div>
                     <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
                 </div>
