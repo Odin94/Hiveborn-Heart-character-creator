@@ -8,106 +8,26 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
-import {
-    formatEquipmentEntry,
-    formatRulesText,
-    hasTitledEntry,
-    insertAbilityIntoText,
-    removeEquipmentEntriesFromText,
-    removeMarkdownEntriesFromText,
-    removeTitledEntriesFromText,
-} from "@/hiveborn/character_sheet/markdown_formatting"
-import { CharacterClass, characterClasses, CoreTraits, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
+import { formatEquipmentEntry, formatRulesText } from "@/hiveborn/character_sheet/markdown_formatting"
+import { CharacterClass, characterClasses, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
 import { useCharacterStore } from "../character_states"
 import { Calling, callings, isCalling } from "@/hiveborn/game_data/callings"
-import { abilitiesByClassOrCalling, StaticBonuses } from "@/hiveborn/game_data/abilities"
+import { abilitiesByClassOrCalling } from "@/hiveborn/game_data/abilities"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { Domains, gainDomain, gainSkill, Skills } from "@/hiveborn/game_data/character"
-import { DomainKey } from "@/hiveborn/game_data/domains"
-import { protectionMaximum } from "../character_states"
-import { Resistance } from "@/hiveborn/game_data/resistances"
-import { SkillKey } from "@/hiveborn/game_data/skills"
 
 const NameClassCalling = () => {
     const name = useCharacterStore.use.name()
     const setName = useCharacterStore.use.setName()
     const characterClass = useCharacterStore.use.characterClass()
     const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const abilities = useCharacterStore.use.abilities()
-    const setAbilities = useCharacterStore.use.setAbilities()
     const calling = useCharacterStore.use.calling()
     const setCalling = useCharacterStore.use.setCalling()
-    const existingSkills = useCharacterStore.use.skills()
-    const setSkills = useCharacterStore.use.setSkills()
-    const existingDomains = useCharacterStore.use.domains()
-    const setDomains = useCharacterStore.use.setDomains()
-    const resources = useCharacterStore.use.resources()
-    const setResources = useCharacterStore.use.setResources()
-    const equipment = useCharacterStore.use.equipment()
-    const setEquipment = useCharacterStore.use.setEquipment()
-    const protections = useCharacterStore.use.protections()
-    const setProtections = useCharacterStore.use.setProtections()
-
-    const applyCoreTraits = ({ pickedEquipment, previousClass }: { pickedEquipment: string; previousClass: CharacterClass | null }) => {
-        if (isCharacterClass(characterClass)) {
-            const coreTraits = coreTraitsByCharacter[characterClass]
-            const previousCoreTraits = previousClass ? coreTraitsByCharacter[previousClass] : null
-            const callingAbility = getCallingAbility(calling)
-
-            let newAbilities = previousCoreTraits
-                ? removeTitledEntriesFromText(
-                      abilities,
-                      previousCoreTraits.abilities.map((ability) => ability.name),
-                  )
-                : abilities
-            for (const coreAbility of coreTraits.abilities) {
-                if (!hasTitledEntry(newAbilities, coreAbility.name)) {
-                    newAbilities = insertAbilityIntoText(newAbilities, coreAbility)
-                }
-            }
-            setAbilities(newAbilities)
-
-            let newEquipment = previousCoreTraits
-                ? removeEquipmentEntriesFromText(equipment, [previousCoreTraits.equipment, ...previousCoreTraits.pickEquipment].filter(Boolean))
-                : equipment
-            for (const coreEquipment of [pickedEquipment, coreTraits.equipment]) {
-                if (!coreEquipment) continue
-
-                const formattedEquipment = formatEquipmentEntry(coreEquipment)
-                if (!newEquipment.includes(coreEquipment) && !newEquipment.includes(formattedEquipment)) {
-                    newEquipment = `${formattedEquipment}\n\n${newEquipment}`
-                }
-            }
-            setEquipment(newEquipment)
-
-            let newResources = previousCoreTraits ? removeMarkdownEntriesFromText(resources, [previousCoreTraits.resource]) : resources
-            const formattedResource = formatRulesText(coreTraits.resource)
-            if (!newResources.includes(coreTraits.resource) && !newResources.includes(formattedResource)) {
-                newResources = `${formattedResource}\n\n${newResources}`
-            }
-            setResources(newResources)
-
-            const newSkills = copySkills(existingSkills)
-            const newDomains = copyDomains(existingDomains)
-            const newProtections = { ...protections }
-            const callingBonuses = callingAbility?.staticBonuses ?? emptyStaticBonuses()
-
-            if (previousCoreTraits) {
-                removeClassBonusesFromDraft(newSkills, newDomains, newProtections, previousCoreTraits, callingBonuses)
-            }
-            applyClassBonusesToDraft(newSkills, newDomains, newProtections, coreTraits)
-            setSkills(newSkills)
-            setDomains(newDomains)
-            setProtections(newProtections)
-        } else {
-            console.log(`Not a correct character class: '${characterClass}'`)
-        }
-    }
+    const applyProgression = useCharacterStore.use.applyProgression()
 
     return (
         <div className="grid w-full grid-cols-1 gap-x-2 gap-y-2 sm:grid-cols-[1fr_6fr]">
@@ -122,12 +42,7 @@ const NameClassCalling = () => {
             <div className="relative flex items-center">
                 <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="w-full pr-10" />
                 <div className="absolute right-2">
-                    <ClassDropdown
-                        onSelect={(characterClass: CharacterClass) => {
-                            setCharacterClass(characterClass)
-                        }}
-                        onConfirm={applyCoreTraits}
-                    />
+                    <ClassDropdown onConfirm={({ characterClass, pickedEquipment }) => applyProgression({ type: "class", characterClass, pickedEquipment })} />
                 </div>
             </div>
 
@@ -136,61 +51,19 @@ const NameClassCalling = () => {
             <div className="relative flex items-center">
                 <Input value={calling} onChange={(e) => setCalling(e.target.value)} className="w-full pr-10" />
                 <div className="absolute right-2">
-                    <CallingDropdown
-                        onSelect={(calling: Calling) => {
-                            setCalling(calling)
-                        }}
-                        onConfirm={({ previousCalling }) => {
-                            // TODOdin: Deal with people putting their ancestry in this field somehow
-                            if (isCalling(calling)) {
-                                const callingAbility = abilitiesByClassOrCalling[calling][0]
-                                const previousCallingAbility = previousCalling ? abilitiesByClassOrCalling[previousCalling][0] : null
-                                let newAbilities = previousCallingAbility ? removeTitledEntriesFromText(abilities, [previousCallingAbility.name]) : abilities
-                                if (!hasTitledEntry(newAbilities, callingAbility.name)) {
-                                    newAbilities = insertAbilityIntoText(newAbilities, callingAbility)
-                                }
-                                setAbilities(newAbilities)
-
-                                const newSkills = copySkills(existingSkills)
-                                const newDomains = copyDomains(existingDomains)
-                                const newProtections = { ...protections }
-                                const classTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
-
-                                if (previousCallingAbility) {
-                                    removeStaticBonusesFromDraft(
-                                        newSkills,
-                                        newDomains,
-                                        newProtections,
-                                        previousCallingAbility.staticBonuses,
-                                        getClassProvidedBonuses(classTraits),
-                                    )
-                                }
-                                applyStaticBonusesToDraft(newSkills, newDomains, newProtections, callingAbility.staticBonuses)
-                                setSkills(newSkills)
-                                setDomains(newDomains)
-                                setProtections(newProtections)
-                            } else {
-                                console.log(`Not a correct calling: '${calling}'`)
-                            }
-                        }}
-                    />
+                    <CallingDropdown onConfirm={({ calling }) => applyProgression({ type: "calling", calling })} />
                 </div>
             </div>
         </div>
     )
 }
 
-const ClassDropdown = ({
-    onSelect,
-    onConfirm,
-}: {
-    onSelect: (text: CharacterClass) => void
-    onConfirm: (selection: { pickedEquipment: string; previousClass: CharacterClass | null }) => void
-}) => {
-    const characterClass = useCharacterStore.use.characterClass()
+const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment: string; characterClass: CharacterClass }) => void }) => {
+    const savedClass = useCharacterStore.use.characterClass()
+    const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null)
+    const characterClass = selectedClass ?? savedClass
     const coreTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
     const [pickedEquipmentIndex, setPickedEquipmentIndex] = useState("0")
-    const [previousClass, setPreviousClass] = useState<CharacterClass | null>(null)
 
     return (
         <Dialog>
@@ -205,8 +78,7 @@ const ClassDropdown = ({
                         <DialogTrigger asChild key={c}>
                             <DropdownMenuItem
                                 onSelect={(_e) => {
-                                    setPreviousClass(isCharacterClass(characterClass) ? characterClass : null)
-                                    onSelect(c)
+                                    setSelectedClass(c)
                                 }}
                                 key={c}
                             >
@@ -262,9 +134,10 @@ const ClassDropdown = ({
                                         className="ml-3"
                                         type="button"
                                         onClick={() => {
-                                            onConfirm({ pickedEquipment: coreTraits.pickEquipment[Number(pickedEquipmentIndex)], previousClass })
+                                            if (isCharacterClass(characterClass))
+                                                onConfirm({ pickedEquipment: coreTraits.pickEquipment[Number(pickedEquipmentIndex)], characterClass })
                                             setPickedEquipmentIndex("0")
-                                            setPreviousClass(null)
+                                            setSelectedClass(null)
                                         }}
                                     >
                                         Apply
@@ -279,16 +152,11 @@ const ClassDropdown = ({
     )
 }
 
-const CallingDropdown = ({
-    onSelect,
-    onConfirm,
-}: {
-    onSelect: (text: Calling) => void
-    onConfirm: (selection: { previousCalling: Calling | null }) => void
-}) => {
-    const calling = useCharacterStore.use.calling()
+const CallingDropdown = ({ onConfirm }: { onConfirm: (selection: { calling: Calling }) => void }) => {
+    const savedCalling = useCharacterStore.use.calling()
+    const [selectedCalling, setSelectedCalling] = useState<Calling | null>(null)
+    const calling = selectedCalling ?? savedCalling
     const callingAbility = isCalling(calling) ? abilitiesByClassOrCalling[calling][0] : null
-    const [previousCalling, setPreviousCalling] = useState<Calling | null>(null)
 
     return (
         <Dialog>
@@ -303,8 +171,7 @@ const CallingDropdown = ({
                         <DialogTrigger asChild key={c}>
                             <DropdownMenuItem
                                 onSelect={(_e) => {
-                                    setPreviousCalling(isCalling(calling) ? calling : null)
-                                    onSelect(c)
+                                    setSelectedCalling(c)
                                 }}
                                 key={c}
                             >
@@ -333,8 +200,8 @@ const CallingDropdown = ({
                                     className="ml-3"
                                     type="button"
                                     onClick={() => {
-                                        onConfirm({ previousCalling })
-                                        setPreviousCalling(null)
+                                        if (isCalling(calling)) onConfirm({ calling })
+                                        setSelectedCalling(null)
                                     }}
                                 >
                                     Apply
@@ -349,99 +216,3 @@ const CallingDropdown = ({
 }
 
 export default NameClassCalling
-
-const emptyStaticBonuses = (): StaticBonuses => ({ domains: [], skills: [], protections: [] })
-
-const getCallingAbility = (calling: string) => {
-    return isCalling(calling) ? abilitiesByClassOrCalling[calling][0] : null
-}
-
-const copySkills = (skills: Skills): Skills => {
-    return Object.fromEntries(Object.entries(skills).map(([skill, value]) => [skill, { ...value }])) as Skills
-}
-
-const copyDomains = (domains: Domains): Domains => {
-    return Object.fromEntries(Object.entries(domains).map(([domain, value]) => [domain, { ...value }])) as Domains
-}
-
-const applyClassBonusesToDraft = (skills: Skills, domains: Domains, protections: Record<Resistance, number>, coreTraits: CoreTraits) => {
-    skills[coreTraits.skill] = gainSkill(skills[coreTraits.skill])
-    domains[coreTraits.domain] = gainDomain(domains[coreTraits.domain])
-
-    for (const ability of coreTraits.abilities) {
-        applyStaticBonusesToDraft(skills, domains, protections, ability.staticBonuses)
-    }
-}
-
-const removeClassBonusesFromDraft = (
-    skills: Skills,
-    domains: Domains,
-    protections: Record<Resistance, number>,
-    coreTraits: CoreTraits,
-    preservedBonuses: StaticBonuses,
-) => {
-    if (!preservedBonuses.skills.includes(coreTraits.skill)) {
-        skills[coreTraits.skill].hasSkill = false
-    }
-    if (!preservedBonuses.domains.includes(coreTraits.domain)) {
-        domains[coreTraits.domain].hasDomain = false
-    }
-
-    for (const ability of coreTraits.abilities) {
-        removeStaticBonusesFromDraft(skills, domains, protections, ability.staticBonuses, preservedBonuses)
-    }
-}
-
-const applyStaticBonusesToDraft = (skills: Skills, domains: Domains, protections: Record<Resistance, number>, bonuses: StaticBonuses) => {
-    for (const skill of bonuses.skills) {
-        skills[skill] = gainSkill(skills[skill])
-    }
-
-    for (const domain of bonuses.domains) {
-        domains[domain] = gainDomain(domains[domain])
-    }
-
-    for (const { resistance, amount } of bonuses.protections) {
-        protections[resistance] = Math.min(protections[resistance] + amount, protectionMaximum)
-    }
-}
-
-const removeStaticBonusesFromDraft = (
-    skills: Skills,
-    domains: Domains,
-    protections: Record<Resistance, number>,
-    bonuses: StaticBonuses,
-    preservedBonuses: StaticBonuses,
-) => {
-    const preservedSkills = new Set<SkillKey>(preservedBonuses.skills)
-    const preservedDomains = new Set<DomainKey>(preservedBonuses.domains)
-    const preservedProtections = new Set<Resistance>(preservedBonuses.protections.map(({ resistance }) => resistance))
-
-    for (const skill of bonuses.skills) {
-        if (!preservedSkills.has(skill)) {
-            skills[skill].hasSkill = false
-        }
-    }
-
-    for (const domain of bonuses.domains) {
-        if (!preservedDomains.has(domain)) {
-            domains[domain].hasDomain = false
-        }
-    }
-
-    for (const { resistance, amount } of bonuses.protections) {
-        if (!preservedProtections.has(resistance)) {
-            protections[resistance] = Math.max(0, protections[resistance] - amount)
-        }
-    }
-}
-
-const getClassProvidedBonuses = (coreTraits: CoreTraits | null): StaticBonuses => {
-    if (!coreTraits) return emptyStaticBonuses()
-
-    return {
-        skills: [coreTraits.skill, ...coreTraits.abilities.flatMap((ability) => ability.staticBonuses.skills)],
-        domains: [coreTraits.domain, ...coreTraits.abilities.flatMap((ability) => ability.staticBonuses.domains)],
-        protections: coreTraits.abilities.flatMap((ability) => ability.staticBonuses.protections),
-    }
-}

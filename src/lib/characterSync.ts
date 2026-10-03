@@ -1,7 +1,22 @@
 import { v4 as uuid } from "uuid"
 import { getEmptyCharacter, type Character } from "@/hiveborn/game_data/character"
-import { useCharacterStore, type ArchivedCharacter } from "@/hiveborn/character_sheet/character_states"
-import type { CloudCharacter } from "./api"
+import { useCharacterStore, type ArchivedCharacter, type CharacterState } from "@/hiveborn/character_sheet/character_states"
+import type { CloudCharacter, api } from "./api"
+
+/** Browser persistence keeps its historical schema; synchronization owns its metadata. */
+export type CharacterReplica = {
+    read: () => CharacterState
+    write: (updates: Partial<CharacterState>) => void
+    subscribe: (changed: () => void) => () => void
+}
+const browserReplica: CharacterReplica = {
+    read: () => useCharacterStore.getState(),
+    write: (updates) => useCharacterStore.getState().applySynchronizedState(updates),
+    subscribe: (changed) => useCharacterStore.subscribe(changed),
+}
+export type CharacterTransport = Pick<typeof api, "characters" | "createCharacter" | "updateCharacter" | "deleteCharacter"> & {
+    observe?: (refresh: () => void) => () => void
+}
 
 const canonical = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(canonical)
@@ -35,8 +50,8 @@ const archive = (character: CloudCharacter, accountId: string): ArchivedCharacte
 })
 
 /** Reconcile by identity, retaining both sides of divergent edits. Never infer a deletion from absence. */
-export function reconcileCharacters(remote: CloudCharacter[], accountId: string) {
-    const state = useCharacterStore.getState()
+export function reconcileCharacters(remote: CloudCharacter[], accountId: string, replica = browserReplica) {
+    const state = replica.read()
     const previousAccount = state.cloudAccountId ?? localStorage.getItem(`hiveborn-cloud-character-account:${window.location.origin}`)
     const remaining = new Map(remote.map((character) => [character.id, character]))
     const characters: Character[] = []
@@ -102,7 +117,7 @@ export function reconcileCharacters(remote: CloudCharacter[], accountId: string)
     }
     if (!characters.length) add(getEmptyCharacter())
     currentCharacterIndex = Math.min(currentCharacterIndex, characters.length - 1)
-    useCharacterStore.setState({
+    replica.write({
         characters,
         cloudCharacterIds: ids,
         cloudCharacterVersions: versions,
@@ -115,21 +130,23 @@ export function reconcileCharacters(remote: CloudCharacter[], accountId: string)
 }
 
 /** Apply a response by UUID, not array position: edits/deletes can happen during requests. */
-export function acknowledgeCharacter(snapshot: Character, server: CloudCharacter, accountId: string) {
-    const state = useCharacterStore.getState()
+export function acknowledgeCharacter(snapshot: Character, server: CloudCharacter, accountId: string, replica = browserReplica) {
+    const state = replica.read()
     const index = state.characters.findIndex((character) => character.uuid === snapshot.uuid)
     if (index < 0) {
         // A sheet deleted during upload still needs its newly assigned cloud ID
         // so the durable deletion queue can soft-delete the saved row.
-        useCharacterStore.setState({
+        replica.write({
             archivedCharacters: state.archivedCharacters.map((entry) =>
-                entry.character.uuid === snapshot.uuid && !entry.synced
+                entry.character.uuid === snapshot.uuid && !entry.synced && (entry.accountId === null || entry.accountId === accountId)
                     ? { ...entry, character: { ...entry.character, uuid: server.data.uuid }, cloudId: server.id, accountId }
                     : entry,
             ),
         })
         return
     }
+    // Group events can arrive before an older HTTP acknowledgement.
+    if (state.cloudCharacterIds[index] === server.id && state.cloudCharacterVersions[index] > server.version) return
     const characters = [...state.characters]
     const ids = [...state.cloudCharacterIds]
     const versions = [...state.cloudCharacterVersions]
@@ -148,7 +165,7 @@ export function acknowledgeCharacter(snapshot: Character, server: CloudCharacter
             bases.push(server.conflict.data)
         }
     }
-    useCharacterStore.setState({
+    replica.write({
         characters,
         cloudCharacterIds: ids,
         cloudCharacterVersions: versions,
@@ -158,11 +175,139 @@ export function acknowledgeCharacter(snapshot: Character, server: CloudCharacter
     })
 }
 
-export function acknowledgeDeletion(archiveId: string, server?: CloudCharacter) {
-    const state = useCharacterStore.getState()
+export function acknowledgeDeletion(archiveId: string, server?: CloudCharacter, replica = browserReplica) {
+    const state = replica.read()
     const entry = state.archivedCharacters.find((item) => item.archiveId === archiveId)
     if (!entry) return
     const archivedCharacters = state.archivedCharacters.map((item) => (item.archiveId === archiveId ? { ...item, synced: true } : item))
     if (server && !sameCharacter(server.data, entry.character)) archivedCharacters.push(archive(server, entry.accountId!))
-    useCharacterStore.setState({ archivedCharacters })
+    replica.write({ archivedCharacters })
+}
+
+/** Group WebSocket delivery uses the same replica and identity rules as HTTP sync. */
+export function receiveRemoteCharacter(server: CloudCharacter, accountId: string, replica = browserReplica) {
+    const state = replica.read()
+    if (state.cloudAccountId !== accountId) return
+    const index = state.cloudCharacterIds.indexOf(server.id)
+    if (index < 0 || server.version <= state.cloudCharacterVersions[index]) return
+    const local = state.characters[index]
+    const base = state.cloudCharacterBases[index]
+    if (!local || !base || !sameCharacter(local, base)) return
+    acknowledgeCharacter(local, server, accountId, replica)
+}
+
+/** Starts one account-owned, serial, retrying queue. Stopping retires every response.
+ * Browser edits/deletions remain durable independently of the account or transport.
+ */
+export function startCharacterSync(
+    accountId: string,
+    transport: CharacterTransport,
+    options: {
+        replica?: CharacterReplica
+        onFailure?: (error: unknown, firstFailure: boolean) => void
+    } = {},
+) {
+    const replica = options.replica ?? browserReplica
+    let stopped = false
+    let running = false
+    let refresh = true
+    let requested = false
+    let failed = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const schedule = (delay = 700) => {
+        if (stopped) return
+        requested = true
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+            timer = undefined
+            if (running) return // finally schedules requests arriving during an upload.
+            requested = false
+            void sync()
+        }, delay)
+    }
+    const sync = async () => {
+        if (stopped || running) return
+        running = true
+        try {
+            if (refresh) {
+                refresh = false
+                try {
+                    const response = await transport.characters(true)
+                    if (stopped) return
+                    reconcileCharacters(response.characters, accountId, replica)
+                } catch (error) {
+                    refresh = true
+                    throw error
+                }
+            }
+            const snapshot = replica.read()
+            for (const entry of snapshot.archivedCharacters) {
+                if (stopped) return
+                if (entry.synced || !entry.cloudId || entry.accountId !== accountId) continue
+                try {
+                    const response = await transport.deleteCharacter(entry.cloudId)
+                    if (stopped) return
+                    acknowledgeDeletion(entry.archiveId, response.character, replica)
+                } catch (error) {
+                    if ((error as { status?: number }).status !== 404) throw error
+                    if (!stopped) acknowledgeDeletion(entry.archiveId, undefined, replica)
+                }
+            }
+            for (const sheet of snapshot.characters) {
+                if (stopped) return
+                const state = replica.read()
+                if (state.cloudAccountId !== accountId) return
+                const index = state.characters.findIndex((character) => character.uuid === sheet.uuid)
+                if (index < 0) continue
+                const current = state.characters[index]
+                const id = state.cloudCharacterIds[index]
+                const base = state.cloudCharacterBases[index] ?? current
+                const changes = characterChanges(base, current)
+                if (id && !Object.keys(changes).length) continue
+                try {
+                    const saved = id
+                        ? await transport.updateCharacter(id, { baseVersion: state.cloudCharacterVersions[index] || 1, baseData: base, changes })
+                        : await transport.createCharacter(current)
+                    if (stopped) {
+                        // A delete made before logout still needs the saved identity for
+                        // recovery on the next login; never apply a retired active response.
+                        if (!replica.read().characters.some((character) => character.uuid === current.uuid))
+                            acknowledgeCharacter(current, saved, accountId, replica)
+                        return
+                    }
+                    acknowledgeCharacter(current, saved, accountId, replica)
+                } catch (error) {
+                    if ([404, 409].includes((error as { status?: number }).status ?? 0)) refresh = true
+                    throw error
+                }
+            }
+            failed = false
+        } catch (error) {
+            if (!stopped) {
+                options.onFailure?.(error, !failed)
+                failed = true
+                schedule(2000)
+            }
+        } finally {
+            running = false
+            if (!stopped && requested && timer === undefined) schedule()
+        }
+    }
+    const unsubscribe = replica.subscribe(() => schedule())
+    const requestRefresh = () => {
+        refresh = true
+        schedule()
+    }
+    const stopObserving = transport.observe?.(requestRefresh)
+    void sync()
+    return {
+        refresh: requestRefresh,
+        stop: () => {
+            if (stopped) return
+            stopped = true
+            unsubscribe()
+            stopObserving?.()
+            clearTimeout(timer)
+        },
+    }
 }

@@ -7,13 +7,11 @@ import { abilitiesByClassOrCalling, Ability, comesWithPick, PickFromOption } fro
 import { CharacterClass } from "@/hiveborn/game_data/classes"
 import { iconByDomain } from "@/hiveborn/game_data/domains"
 import { iconBySkill } from "@/hiveborn/game_data/skills"
-import { formatRulesText, hasTitledEntry, insertAbilityIntoText } from "@/hiveborn/character_sheet/markdown_formatting"
+import { formatRulesText, hasTitledEntry } from "@/hiveborn/character_sheet/markdown_formatting"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { Dispatch, SetStateAction, useState } from "react"
 import { MdOutlineShield } from "react-icons/md"
 import { useCharacterStore } from "../character_states"
-import { useApplyPickedBonus } from "../hooks/useApplyPickedBonus"
-import { useApplyStaticBonuses } from "../hooks/useApplyStaticBonuses"
 import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
 
 type PickingFromState = [Ability | undefined, Dispatch<SetStateAction<Ability | undefined>>]
@@ -44,8 +42,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     const [pickingFromAbility, setPickingFromAbility] = pickingFromState
     const [abilityType, setAbilityType] = useState("minor")
     const abilities = useCharacterStore.use.abilities()
-    const setAbilities = useCharacterStore.use.setAbilities()
-    const applyStaticBonuses = useApplyStaticBonuses()
+    const applyProgression = useCharacterStore.use.applyProgression()
 
     const isAbilityPickedAlready = (ability: Ability) => hasTitledEntry(abilities, ability.name)
     // TODOdin: Consider just expecting characterClass.trim().lowercase() to include a CharacterClass instead of a match
@@ -97,8 +94,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                         onClick={() => {
                             if (isAlreadyPickedMajor) return
 
-                            setAbilities(insertAbilityIntoText(abilities, ability))
-                            applyStaticBonuses(ability.staticBonuses)
+                            applyProgression({ type: "ability", ability })
 
                             if (comesWithPick(ability)) {
                                 setPickingFromAbility(ability)
@@ -168,7 +164,7 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
 const PickFrom = ({ pickingFromState }: { pickingFromState: PickingFromState }) => {
     const [pickingFromAbility, setPickingFromAbility] = pickingFromState
     const [selection, setSelection] = useState<PickFromOption>()
-    const applyPickedBonus = useApplyPickedBonus()
+    const applyProgression = useCharacterStore.use.applyProgression()
 
     if (!pickingFromAbility || !comesWithPick(pickingFromAbility)) {
         setPickingFromAbility(undefined)
@@ -177,7 +173,7 @@ const PickFrom = ({ pickingFromState }: { pickingFromState: PickingFromState }) 
     }
 
     const confirmSelection = () => {
-        if (selection) applyPickedBonus(selection, pickingFromAbility)
+        if (selection) applyProgression({ type: "pick", selection, ability: pickingFromAbility })
 
         setPickingFromAbility(undefined)
     }

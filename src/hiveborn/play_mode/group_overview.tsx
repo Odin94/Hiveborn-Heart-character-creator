@@ -6,6 +6,7 @@ import { Markdown } from "@/components/ui/markdown"
 import ThemeToggle from "@/components/theme-toggle"
 import { api, API_URL, tokenStorage, type CloudCharacter, type GroupCharacter, type PlayGroup, type PlayGroupInvitation, type User } from "@/lib/api"
 import { usePlayModeStore } from "@/lib/playMode"
+import { receiveRemoteCharacter } from "@/lib/characterSync"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { ReadOnlyStressCounter } from "@/hiveborn/character_sheet/components/stress_counter/stress_counter"
 import { TagReferenceDialog, type ReferenceTag } from "@/hiveborn/character_sheet/components/shared/tag_reference_dialog"
@@ -31,7 +32,6 @@ const lastGroupStorageKey = (userId: string) => `hiveborn-last-play-group:${wind
 const otherPlayersBeatsStorageKey = (userId: string) => `hiveborn-show-other-players-beats:${window.location.origin}:${userId}`
 const ROLL_LIFETIME_MS = 10 * 60 * 1_000
 const ROLL_FADE_TICK_MS = 10 * 1_000
-const FALLOUT_ROLL_MATCH_WINDOW_MS = 60_000
 
 const totalStress = (character: GroupCharacter) => Object.values(character.data.stress).reduce((sum, value) => sum + value, 0)
 const rollCharacterName = (character: Pick<CloudCharacter, "name">) => character.name || "Unnamed hiveborn"
@@ -44,7 +44,6 @@ const relativeTime = (date: string, now = Date.now()) => {
     if (minutes < 60) return `${minutes}m ago`
     return `${Math.floor(minutes / 60)}h ago`
 }
-const falloutOutcomeForRoll = (result: string) => /^(minor|major) fallout\b/i.exec(result.trim())?.[1]?.toLowerCase() as "minor" | "major" | undefined
 
 const classCardThemes: Record<string, string> = {
     Cleaver: "bg-gradient-to-br from-red-500/18 via-stone-300/18 to-card dark:from-red-950/70 dark:via-stone-900/60 dark:to-card",
@@ -111,7 +110,6 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const localCharacters = useCharacterStore.use.characters()
     const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
     const setCurrentCharacter = useCharacterStore.use.setCurrentCharacter()
-    const applyRemoteCloudCharacter = useCharacterStore.use.applyRemoteCloudCharacter()
 
     const refresh = useCallback(async () => {
         try {
@@ -190,7 +188,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     const event = JSON.parse(message.data) as LiveGroupEvent
                     setGroups((current) => applyLiveCharacterUpdate(current, group.id, event))
                     if (event.type === "character.updated" && event.userId === user.id) {
-                        applyRemoteCloudCharacter(event.character.id, event.character.data, event.character.version)
+                        receiveRemoteCharacter(event.character, user.id)
                     }
                 } catch {
                     // A malformed live event never prevents the authoritative refresh below.
@@ -209,7 +207,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             if (reconnectTimer) window.clearTimeout(reconnectTimer)
             socket?.close()
         }
-    }, [applyRemoteCloudCharacter, group?.id, scheduleRefresh, user.id])
+    }, [group?.id, scheduleRefresh, user.id])
 
     const createGroup = async () => {
         try {
@@ -327,13 +325,12 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
     const groupEquipment = characters.map((character) => character.data.equipment).join("\n")
     const groupResources = characters.map((character) => character.data.resources).join("\n")
-    const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && roll.label === "Fallout"))
     const groupCreationKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== "Enter" || !createName.trim()) return
         event.preventDefault()
         void createGroup()
     }
-    const assignFallout = async (fallout: FalloutOption, characterId: string, autoAssign = false, fallbackOnEligibilityConflict = false) => {
+    const assignFallout = async (fallout: FalloutOption, characterId: string | undefined, autoAssign = false, fallbackOnEligibilityConflict = false) => {
         if (!group) return
         if (assigningFallout) return
         setAssigningFallout(true)
@@ -376,16 +373,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
         }
     }
     const selectFallout = (fallout: FalloutOption) => {
-        const recentOutcome = latestFalloutRoll ? falloutOutcomeForRoll(latestFalloutRoll.result) : undefined
-        const matchesRecentRoll = recentOutcome && (fallout.severity === "critical" || fallout.severity === recentOutcome)
-        const canAutoAssign =
-            latestFalloutRoll && !latestFalloutRoll.falloutAssignedAt && rollAge(latestFalloutRoll.createdAt, Date.now()) < FALLOUT_ROLL_MATCH_WINDOW_MS
-        if (latestFalloutRoll?.characterId && matchesRecentRoll && canAutoAssign) {
-            void assignFallout(fallout, latestFalloutRoll.characterId, true, true)
-            return
-        }
-        setSelectedFallout(fallout)
-        setManualFalloutPickerOpen(true)
+        void assignFallout(fallout, undefined, true, true)
     }
     const hasFadingRolls = visibleRolls.length > 0
     useEffect(() => {

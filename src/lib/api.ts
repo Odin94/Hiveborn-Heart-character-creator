@@ -48,7 +48,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
         headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers },
     })
     const refreshed = response.headers.get("X-New-Token")
-    if (refreshed) tokenStorage.set(refreshed)
+    if (refreshed && tokenStorage.get() === token) tokenStorage.set(refreshed)
     if (!response.ok) {
         const detail = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
         const error = new Error(detail.message ?? detail.error ?? `Request failed (${response.status})`) as ApiRequestError
@@ -96,7 +96,7 @@ export const api = {
             stressUpdate: { type: "all" } | { type: "resistance"; resistance: string } | null
             lastStressResistance: string | null
         }>(`/play-groups/${groupId}/fallout-rolls`, { method: "POST", body: JSON.stringify(payload) }),
-    assignFallout: (groupId: string, payload: { characterId: string; autoAssign?: boolean; fallout: { name: string; description: string } }) =>
+    assignFallout: (groupId: string, payload: { characterId?: string; autoAssign?: boolean; fallout: { name: string; description: string } }) =>
         request<{ character: CloudCharacter; matched: boolean; rollId: string | null }>(`/play-groups/${groupId}/fallout-assignments`, {
             method: "POST",
             body: JSON.stringify(payload),

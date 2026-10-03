@@ -87,13 +87,20 @@ const removeNormalizedEntriesFromText = (text: string, normalizedEntries: Set<st
 }
 
 export const markAbilityPicked = (abilityText: string, ability: Ability, selection: PickFromOption) => {
-    const formattedDescription = formatRulesText(ability.description)
-    const formattedSelection = formatRulesText(`${selection}`)
-    const formattedPickedDescription = `${formattedDescription} (Picked \`${formattedSelection}\`)`
-
-    if (abilityText.includes(formattedDescription)) return abilityText.replace(formattedDescription, formattedPickedDescription)
-
-    return abilityText.replace(ability.description, formattedPickedDescription)
+    const entries = [
+        formatAbilityEntry(ability),
+        `${ability.name} - ${formatRulesText(ability.description)}`,
+        `**${ability.name}** - ${ability.description}`,
+        `${ability.name} - ${ability.description}`,
+    ]
+    for (const entry of entries) {
+        const index = abilityText.indexOf(entry)
+        if (index < 0) continue
+        const end = index + entry.length
+        if (abilityText.slice(end).startsWith(" (Picked `")) return abilityText
+        return `${abilityText.slice(0, end)} (Picked \`${selection}\`)${abilityText.slice(end)}`
+    }
+    return abilityText
 }
 
 export function normalizeMarkdownText(text: string) {

@@ -5,7 +5,8 @@ import { Character, Domains, getEmptyCharacter, Skills } from "../game_data/char
 import { Resistance } from "../game_data/resistances"
 import { createSelectors } from "../../lib/selectors"
 
-export const protectionMaximum = 5
+import { progressCharacter, type Progression } from "./progression"
+export { protectionMaximum } from "./progression"
 const UNDO_CHECKPOINT_DEBOUNCE_MS = 750
 const textCharacterFields = ["name", "characterClass", "calling", "activeBeats", "equipment", "resources", "abilities", "fallout"] as const
 
@@ -56,6 +57,8 @@ export type CharacterState = {
     protections: Record<Resistance, number>
     stress: Record<Resistance, number>
 
+    applyProgression: (change: Progression) => void
+    applySynchronizedState: (updates: Partial<CharacterState>) => void
     setName: (name: string) => void
     setCharacterClass: (characterClass: string) => void
     setCalling: (calling: string) => void
@@ -74,9 +77,6 @@ export type CharacterState = {
     removeCharacter: (index: number) => void
     setCurrentCharacter: (index: number) => void
     setCloudCharacters: (characters: Character[], ids: string[], versions: number[]) => void
-    setCloudCharacterIds: (ids: string[]) => void
-    applyRemoteCloudCharacter: (id: string, character: Character, version: number) => void
-    completeCloudCharacterSync: (id: string, snapshot: Character, character: Character, version: number) => void
     undoCharacterChange: () => void
     getCharacterData: () => Character
 }
@@ -157,6 +157,10 @@ export const useCharacterStore = createSelectors(
 
                 const initialCharacter = getEmptyCharacter()
                 return {
+                    applySynchronizedState: (updates) => {
+                        latestTextCheckpoint = null
+                        set(updates)
+                    },
                     archivedCharacters: [],
                     cloudAccountId: null,
                     importCharacter: (character) => {
@@ -204,6 +208,11 @@ export const useCharacterStore = createSelectors(
                     protections: getEmptyCharacter().protections,
                     stress: getEmptyCharacter().stress,
 
+                    applyProgression: (change) => {
+                        const current = getCurrentCharacter()
+                        const next = progressCharacter(current, change)
+                        if (next !== current) updateCurrentCharacter(next)
+                    },
                     setName: (name) => updateCurrentCharacter({ name }),
                     setCharacterClass: (characterClass) => updateCurrentCharacter({ characterClass }),
                     setCalling: (calling) => updateCurrentCharacter({ calling }),
@@ -335,83 +344,6 @@ export const useCharacterStore = createSelectors(
                             domains: character.domains,
                             protections: character.protections,
                             stress: character.stress,
-                        })
-                    },
-                    setCloudCharacterIds: (cloudCharacterIds) => set({ cloudCharacterIds }),
-                    applyRemoteCloudCharacter: (id, remoteCharacter, version) => {
-                        const state = get()
-                        const index = state.cloudCharacterIds.indexOf(id)
-                        if (index < 0) return
-                        const localCharacter = state.characters[index]
-                        const baseCharacter = state.cloudCharacterBases[index]
-                        // Preserve an edit that has not reached the server yet. The sync layer
-                        // will rebase its field-level patch against this newer server version.
-                        if (!localCharacter || !baseCharacter || JSON.stringify(localCharacter) !== JSON.stringify(baseCharacter)) return
-
-                        const characters = [...state.characters]
-                        const cloudCharacterBases = [...state.cloudCharacterBases]
-                        const cloudCharacterVersions = [...state.cloudCharacterVersions]
-                        characters[index] = cloneCharacter(remoteCharacter)
-                        cloudCharacterBases[index] = cloneCharacter(remoteCharacter)
-                        cloudCharacterVersions[index] = version
-                        const isCurrentCharacter = index === state.currentCharacterIndex
-                        latestTextCheckpoint = null
-                        set({
-                            characters,
-                            cloudCharacterBases,
-                            cloudCharacterVersions,
-                            ...(isCurrentCharacter
-                                ? {
-                                      name: remoteCharacter.name,
-                                      characterClass: remoteCharacter.characterClass,
-                                      calling: remoteCharacter.calling,
-                                      activeBeats: remoteCharacter.activeBeats,
-                                      equipment: remoteCharacter.equipment,
-                                      resources: remoteCharacter.resources,
-                                      abilities: remoteCharacter.abilities,
-                                      fallout: remoteCharacter.fallout,
-                                      skills: remoteCharacter.skills,
-                                      domains: remoteCharacter.domains,
-                                      protections: remoteCharacter.protections,
-                                      stress: remoteCharacter.stress,
-                                  }
-                                : {}),
-                        })
-                    },
-                    completeCloudCharacterSync: (id, snapshot, remoteCharacter, version) => {
-                        const state = get()
-                        const index = state.cloudCharacterIds.indexOf(id)
-                        if (index < 0) return
-                        const characters = [...state.characters]
-                        const cloudCharacterBases = [...state.cloudCharacterBases]
-                        const cloudCharacterVersions = [...state.cloudCharacterVersions]
-                        const shouldApplyServerData = JSON.stringify(characters[index]) === JSON.stringify(snapshot)
-                        if (shouldApplyServerData) characters[index] = cloneCharacter(remoteCharacter)
-                        cloudCharacterBases[index] = cloneCharacter(remoteCharacter)
-                        cloudCharacterVersions[index] = version
-                        const isCurrentCharacter = index === state.currentCharacterIndex
-                        const currentCharacter = characters[index] || getEmptyCharacter()
-                        latestTextCheckpoint = null
-                        set({
-                            characters,
-                            cloudCharacterBases,
-                            cloudCharacterVersions,
-                            ...(isCurrentCharacter
-                                ? {
-                                      name: currentCharacter.name,
-                                      characterClass: currentCharacter.characterClass,
-                                      calling: currentCharacter.calling,
-                                      activeBeats: currentCharacter.activeBeats,
-                                      equipment: currentCharacter.equipment,
-                                      resources: currentCharacter.resources,
-                                      abilities: currentCharacter.abilities,
-                                      fallout: currentCharacter.fallout,
-                                      skills: currentCharacter.skills,
-                                      domains: currentCharacter.domains,
-                                      protections: currentCharacter.protections,
-                                      stress: currentCharacter.stress,
-                                  }
-                                : {}),
                         })
                     },
                     undoCharacterChange: () => {
