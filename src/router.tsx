@@ -14,6 +14,11 @@ const authCallbackRoute = createRoute({
     path: "/auth/callback",
     component: lazyRouteComponent(() => import("./pages/auth-callback"), "AuthCallbackPage"),
 })
+const stageConnectRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/stage-connect",
+    component: lazyRouteComponent(() => import("./components/StageConnectPage"), "StageConnectPage"),
+})
 
 const playRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -27,7 +32,7 @@ const playGroupRoute = createRoute({
     component: lazyRouteComponent(() => import("./pages/play-mode"), "PlayGroupPage"),
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, authCallbackRoute, playRoute, playGroupRoute])
+const routeTree = rootRoute.addChildren([indexRoute, authCallbackRoute, stageConnectRoute, playRoute, playGroupRoute])
 
 export const router = createRouter({ routeTree })
 
