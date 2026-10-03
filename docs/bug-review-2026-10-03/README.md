@@ -35,4 +35,4 @@ The initially reproduced [heavy-startup finding](resolved/H08-export-and-3d-code
 
 ## Review iterations
 
-Round 1 found four additional edge cases: copied writer IDs, journal-only startup recovery, quota-failed drafts overwritten by external hydration, and late authentication responses after another tab changes accounts. All four now have focused regression tests and revisions. IndexedDB transactions also provide safe compaction when Web Locks are unavailable. Independent re-review is pending.
+Round 1 found four additional edge cases: copied writer IDs, journal-only startup recovery, quota-failed drafts overwritten by external hydration, and late authentication responses after another tab changes accounts. All four now have focused regression tests and revisions. IndexedDB transactions also provide safe compaction when Web Locks are unavailable. Round 2 verified all four revisions, including native IndexedDB fallback, and found one remaining issue: the class dialog nested a Markdown wrapper div inside a paragraph. Its wrapper is now a div with the same classes. Round 3 re-review is pending.

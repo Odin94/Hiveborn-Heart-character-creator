@@ -101,9 +101,9 @@ const ClassDropdown = () => {
                                 Resource: <Markdown inline>{formatRulesText(coreTraits.resource)}</Markdown>
                             </div>
 
-                            <p className="text-muted-foreground text-md my-2">
+                            <div className="text-muted-foreground text-md my-2">
                                 Abilities: <Markdown inline>{coreTraits.abilities.map((ability) => `\`${ability.name}\``).join(", ")}</Markdown>
-                            </p>
+                            </div>
 
                             <p>Equipment:</p>
                             {coreTraits.equipment ? (
