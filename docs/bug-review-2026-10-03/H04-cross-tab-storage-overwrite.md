@@ -2,6 +2,8 @@
 
 Severity: **High**. Confirmed using two real anonymous browser tabs at `8a0544f`; reproduction: `../../../harness/cross-tab.js`.
 
+Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+
 ## Reproduction and evidence
 
 Open the same saved browser character in A and B. Edit equipment in A. B does not receive that change. Edit the name in B. Its persist middleware writes its entire stale character array back to the shared localStorage key. Reload A: its equipment edit is gone. The test waited for propagation before editing B and used an isolated context without cloud sync.

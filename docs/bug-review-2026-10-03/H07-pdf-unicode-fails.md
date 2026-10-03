@@ -2,6 +2,8 @@
 
 Severity: **Medium**. Confirmed using the actual browser PDF generator at `8a0544f`.
 
+Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+
 ## Reproduction and evidence
 
 Export a character named `Delver 🦇` or `李华`. `generateCharacterPDF` throws `Failed to generate PDF: WinAnsi cannot encode` and returns no PDF. The control name `Élodie` succeeds and produces a 137,817-byte PDF.

@@ -2,7 +2,7 @@
 
 Status: **Resolved in newer local main**, excluded from the open bug count. Originally medium severity, confirmed at `8a0544f`.
 
-Commit `1864673` defers the PDF and 3D tools. This finding was reproduced before those commits were integrated into the review worktree; the final review checks the updated build separately.
+Commit `1864673` defers the PDF and 3D tools. This finding was reproduced before those commits were integrated into the review worktree; the final review checked the updated build separately. With identical throttling, inputs appeared in **2.82 seconds** (previously 4.43), and entry JavaScript dropped to **403,678 gzip bytes** / **1,316,850 decoded bytes**. See `browser-results.json:H08startupAfter`.
 
 ## Reproduction and evidence
 

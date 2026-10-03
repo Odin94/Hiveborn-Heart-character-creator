@@ -2,6 +2,8 @@
 
 Severity: **High**. Confirmed with a disposable local token at `8a0544f`; production logging exposure follows from the same configuration and has not been inspected in production.
 
+Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+
 ## Reproduction and evidence
 
 Use local test sign-in and watch the running backend's request log. The opening character socket is logged as:

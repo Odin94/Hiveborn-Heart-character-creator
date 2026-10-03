@@ -2,6 +2,8 @@
 
 Severity: **Medium**. Confirmed in the running browser at `8a0544f`.
 
+Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+
 ## Reproduction and evidence
 
 Sign in through the actual local test sign-in control. Make the next `/auth/me` response return 503, then reload. The valid `hiveborn-auth-token` is removed from browser storage. Restore normal responses and reload again: the app still displays Sign in and cloud sync does not resume.

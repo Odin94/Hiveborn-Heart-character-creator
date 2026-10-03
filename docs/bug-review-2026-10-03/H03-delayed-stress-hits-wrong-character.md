@@ -2,6 +2,8 @@
 
 Severity: **High**. Confirmed with the running sheet at `8a0544f`; screenshot: `../../../evidence/hiveborn-stress-wrong-character.png`.
 
+Revalidated on committed revision `545bb09` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
+
 ## Reproduction and evidence
 
 Create A and B, select A, and roll Blood stress. During the 1.6-second animation, delete A (or remove an earlier sheet so A's array position shifts). The completed roll uses the original numeric index, which now refers to B.
