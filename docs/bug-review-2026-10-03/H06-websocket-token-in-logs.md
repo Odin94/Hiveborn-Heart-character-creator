@@ -2,6 +2,8 @@
 
 Severity: **High**. Confirmed with a disposable local token at `8a0544f`; production logging exposure follows from the same configuration and has not been inspected in production.
 
+Status: **Fixed and independently reviewed**. Final app source: `396537f`.
+
 Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
@@ -28,4 +30,4 @@ Regression: establish both socket types with a recognizable fixture credential a
 
 Both WebSocket routes authenticate the first message, never a URL query parameter. Nothing subscribes or changes presence before authentication. Origins and group membership remain enforced. Backend request logging removes query strings and redacts credential headers; transient provider failures close with retryable 1013. Regression: `backend/tests/liveAuthentication.test.ts`.
 
-Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.
+Regression tests and local browser/API validation pass. The third independent review found no remaining actionable feedback; the [review index](README.md) records the complete iteration history and evidence.

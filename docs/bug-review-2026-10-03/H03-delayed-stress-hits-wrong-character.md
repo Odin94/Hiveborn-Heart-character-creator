@@ -2,6 +2,8 @@
 
 Severity: **High**. Confirmed with the running sheet at `8a0544f`; screenshot: `../../../evidence/hiveborn-stress-wrong-character.png`.
 
+Status: **Fixed and independently reviewed**. Final app source: `396537f`.
+
 Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
@@ -24,4 +26,4 @@ Regression: switching selection, deleting the target, deleting an earlier charac
 
 Pending rolls capture the character UUID, resolve it against the latest collection after animation, and cancel if it was deleted. Regression: `src/hiveborn/character_sheet/components/stress_counter/stress_roll_dialog.test.tsx`.
 
-Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.
+Regression tests and local browser/API validation pass. The third independent review found no remaining actionable feedback; the [review index](README.md) records the complete iteration history and evidence.

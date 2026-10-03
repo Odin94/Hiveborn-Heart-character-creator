@@ -2,6 +2,8 @@
 
 Severity: **High**. Confirmed using two real anonymous browser tabs at `8a0544f`; reproduction: `../../../harness/cross-tab.js`.
 
+Status: **Fixed and independently reviewed**. Final app source: `396537f`.
+
 Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
@@ -24,4 +26,4 @@ Regression: two anonymous tabs editing disjoint fields, simultaneous imports, de
 
 Browser writes first save a dedicated tab recovery journal, then reconcile field changes by UUID. Web Locks serialize canonical writes and compact acknowledged journals, avoiding growth per keystroke or reload. Every live storage instance has its own UUID, including duplicated tabs. IndexedDB transactions provide the serialized compaction fallback when Web Locks are unavailable. Missing or corrupt canonical storage is reconstructed from journals; damaged originals are preserved. Failed-journal edits remain in memory and merge safely during external updates. Concurrent overlapping edits create separate UUIDs; archives remain durable. Malformed journals are isolated, and quota failures visibly warn while retaining prior data. Storage events preserve each tab's selected UUID. Regression: `src/lib/durableCharacterStorage.test.ts`.
 
-Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.
+Regression tests and local browser/API validation pass. The third independent review found no remaining actionable feedback; the [review index](README.md) records the complete iteration history and evidence.

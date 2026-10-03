@@ -2,6 +2,8 @@
 
 Severity: **Medium**. Confirmed in the running browser at `8a0544f`.
 
+Status: **Fixed and independently reviewed**. Final app source: `396537f`.
+
 Revalidated on committed revision `88c2eb0` after incorporating the newer local performance work. Uncommitted architecture changes in the primary checkout were outside this review.
 
 ## Reproduction and evidence
@@ -24,4 +26,4 @@ Regression: valid token plus 503, request failure, and later success must retain
 
 Retryable failures retain credentials and confirmed users; initialization stays pending until a definitive result. Reconnect and timed retry recover automatically. Only HTTP 401 invalidates a session. Session-generation guards reject responses after logout or a token/account change, including changes in another tab. Verified rotation retains the same session generation and cannot restore an obsolete session. External authentication changes refresh the account while cloud sync pauses during initialization. Backend provider failures return retryable responses. Regression: `src/hooks/useAuth.test.tsx`.
 
-Implementation is covered by regression tests. Independent review and local browser revalidation are tracked in the repository review index.
+Regression tests and local browser/API validation pass. The third independent review found no remaining actionable feedback; the [review index](README.md) records the complete iteration history and evidence.
