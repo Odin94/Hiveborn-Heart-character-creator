@@ -66,7 +66,7 @@ test("mounted Play Mode workloads", async () => {
         })),
     })) as PlayGroup[]
     vi.mocked(api.groups).mockImplementation(async () => ({
-        groups,
+        groups: JSON.parse(JSON.stringify(groups)) as PlayGroup[],
         invitations: [
             {
                 group: { id: "invite", name: "Invited table", ownerId: "other", createdAt: new Date(start).toISOString() },
@@ -103,7 +103,15 @@ test("mounted Play Mode workloads", async () => {
     expect(container.querySelectorAll("article").length).toBe(30)
     const nativeSetValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!
     try {
-        for (const scenario of ["invite-input", "group-name-input", "roll-age-tick", "local-equipment-update", "live-sheet-update", "group-switch"] as const) {
+        for (const scenario of [
+            "invite-input",
+            "group-name-input",
+            "roll-age-tick",
+            "local-equipment-update",
+            "live-sheet-update",
+            "group-switch",
+            "fresh-json-refresh",
+        ] as const) {
             const samples = []
             for (let round = 0; round < 4; round++) {
                 counter.markdownRenders = 0
@@ -111,31 +119,28 @@ test("mounted Play Mode workloads", async () => {
                 const started = performance.now()
                 for (let index = 0; index < 10; index++) {
                     await act(() => {
-                        if (scenario === "live-sheet-update") {
-                            groups = groups.map((group, groupIndex) =>
-                                groupIndex !== 0
-                                    ? group
-                                    : {
-                                          ...group,
-                                          members: group.members.map((member, memberIndex) =>
-                                              memberIndex !== 1
-                                                  ? member
-                                                  : {
-                                                        ...member,
-                                                        characters: member.characters.map((character) => ({
-                                                            ...character,
-                                                            name: `Updated ${round}-${index}`,
-                                                            data: {
-                                                                ...character.data,
-                                                                name: `Updated ${round}-${index}`,
-                                                                fallout: `Changed ${round}-${index}`,
-                                                            },
-                                                            version: character.version + 1,
-                                                        })),
-                                                    },
-                                          ),
-                                      },
-                            )
+                        if (scenario === "fresh-json-refresh") window.dispatchEvent(new Event("focus"))
+                        else if (scenario === "live-sheet-update") {
+                            groups = groups.map((group) => ({
+                                ...group,
+                                members: group.members.map((member, memberIndex) =>
+                                    memberIndex !== 1
+                                        ? member
+                                        : {
+                                              ...member,
+                                              characters: member.characters.map((character) => ({
+                                                  ...character,
+                                                  name: `Updated ${round}-${index}`,
+                                                  data: {
+                                                      ...character.data,
+                                                      name: `Updated ${round}-${index}`,
+                                                      fallout: `Changed ${round}-${index}`,
+                                                  },
+                                                  version: character.version + 1,
+                                              })),
+                                          },
+                                ),
+                            }))
                             window.dispatchEvent(new Event("focus"))
                         } else if (scenario === "group-switch")
                             root.render(

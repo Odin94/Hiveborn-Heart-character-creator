@@ -34,7 +34,7 @@ try {
                 .split("\n")
                 .filter((line) => line.startsWith('{"benchmark":'))
                 .map((line) => JSON.parse(line))
-            if (results.length !== 7) throw new Error("Missing view benchmark output")
+            if (results.length !== 8) throw new Error("Missing view benchmark output")
             const backend = execFileSync("pnpm", ["exec", "tsx", "scripts/benchmark-groups.ts", ...(source === "baseline" ? [baselineRef] : [])], {
                 cwd: join(root, "backend"),
                 encoding: "utf8",

@@ -1,6 +1,6 @@
 {
     "baselineRef": "545bb09",
-    "implementationRef": "1252dcf",
+    "implementationRef": "2e1f325",
     "frontendPort": 5342,
     "backendPort": 3312,
     "disposableDatabase": "../hiveborn-all-views-data/hiveborn.sqlite",
@@ -17,37 +17,39 @@
         "Auth callback missing code displayed expected local error.",
         "Mounted regression validates live shared sheet refresh and group-switch permission/modal changes, and optional chunk failure stress reconciliation.",
         "Mounted OAuth regression verifies one-time code exchange across auth context updates.",
-        "Incoming fixture invitations displayed; declined smoke-invite-decline and accepted smoke-invite-accept through native UI; accepted group appeared in sidebar."
+        "Incoming fixture invitations displayed; declined smoke-invite-decline and accepted smoke-invite-accept through native UI; accepted group appeared in sidebar.",
+        "Final version-only and metadata-only refresh regressions and advancing age-label regression passed; final34frontend tests."
     ],
     "authenticatedPlay": {
+        "ageLabels": ["Sheet updated 19m ago", "Sheet updated 15m ago", "Sheet updated 17m ago", "Sheet updated 17m ago", "Sheet updated 17m ago"],
         "cards": 5,
+        "heading": "Performance smoke table",
         "js": [
             {
                 "bytes": 717568,
-                "file": "index-iGNWDQ_H.js"
+                "file": "index-D_E34yb3.js"
             },
             {
                 "bytes": 1432,
-                "file": "play-mode-Div1AsxC.js"
+                "file": "play-mode-D9TOzunE.js"
             },
             {
                 "bytes": 31753,
-                "file": "button-DCCRbNaW.js"
+                "file": "button-Cdb5S6Pt.js"
             },
             {
-                "bytes": 30699,
-                "file": "group_overview-DnSXDPsL.js"
+                "bytes": 31311,
+                "file": "group_overview-BZ5842e1.js"
             },
             {
                 "bytes": 285185,
-                "file": "fallout--zX9ljJE.js"
+                "file": "fallout-CzPOvvCu.js"
             },
             {
                 "bytes": 72,
-                "file": "fallout_timing-C5kJj0lz.js"
+                "file": "fallout_timing-Ba_-BvSW.js"
             }
-        ],
-        "text": "Character sheets\nPlay groups\nPerformance smoke tableSecond performance table\nTable references\nCreate group\nAuto-update stress after fallout\nOff lets the player update their own sheet.\nShow me other players\u2019 beats\n\nLIVE PLAY TABLE\n\nPerformance smoke table\n\nCharacter changes and shared rolls update immediately for everyone here.\n1 online\n\nInvite by nickname\nInvite\nGame masters\n\nChoose any number of members, or leave the group without a GM.\n\nPerformanceKeeper (owner)\nSmokePlayer0\nSmokePlayer1\nSmokePlayer2\nSmokePlayer3\nYour characters in this group\nUnnamed hiveborn\nRemove\n\nYOUR CHARACTER ONLINE\n\nUnnamed hiveborn\n\nSheet updated 5m ago\n\n0 stress\nCl"
+        ]
     },
     "callback": {
         "js": [

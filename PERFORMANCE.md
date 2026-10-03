@@ -144,7 +144,8 @@ blanket memoization or delayed browser saves were not justified by this audit.
 ## All routes and views follow-up
 
 The expanded audit starts at `545bb09` (the completed first pass); implementation
-is `1252dcf`. Earlier comparisons above remain historical first-pass results.
+is `2e1f325` (route implementation `1252dcf`, polling/age follow-ups
+`5c7f518` and `2e1f325`). Earlier comparisons above remain historical first-pass results.
 Baseline production assets and source were retained outside git before edits at
 `../hiveborn-all-views-baseline-build`. Production builds use the same lockfile,
 `VITE_API_URL=http://localhost:3312`, and no frontend analytics key. The optional
@@ -165,8 +166,8 @@ separate from the authenticated group view.
 | `/` sheet                                   |           1,316,850 |          1,316,972 | Essentially flat; no second-pass startup gain claimed |
 | `/auth/callback`                            |           1,316,850 |            718,344 | 45.4% less JS                                         |
 | Anonymous `/play` or `/play/$groupId` guard |           1,316,850 |            750,753 | 43.0% less JS                                         |
-| Authenticated `/play` group list/table      |           1,839,666 |          1,066,709 | 42.0% less JS                                         |
-| Authenticated `/play/$groupId` detail       |           1,839,666 |          1,066,709 | Same shared route closure                             |
+| Authenticated `/play` group list/table      |           1,839,666 |          1,067,321 | 42.0% less JS                                         |
+| Authenticated `/play/$groupId` detail       |           1,839,666 |          1,067,321 | Same shared route closure                             |
 
 Group UI loads only after authentication. This adds a small lazy-module hop for
 first authenticated entry, accepted to keep table references and sheet viewers
@@ -182,24 +183,34 @@ and records three rounds per run. Two baseline/after pairs reverse run order,
 producing six samples per variant. Timers advance the ten-second age tick and
 existing fifteen-second refresh together. Markdown counts measure entries into
 a thin wrapper around the real memoized Markdown component, not parser calls.
+API mocks decode fresh JSON on every groups request, including unchanged polls.
 Profiler time is React render work, not browser paint, INP or layout. Concurrent
 builds/tests on this machine make timings illustrative; deterministic child
 work and bytes are the primary outcomes.
 
-| Workload, 10 updates/sample                    | Unchanged Markdown subtree entries before → after | Play commits before → after | Median React render ms before → after |
-| ---------------------------------------------- | ------------------------------------------------: | --------------------------: | ------------------------------------: |
-| Invite nickname input                          |                                           310 → 0 |                     10 → 10 |                        123.06 → 55.90 |
-| New group name input                           |                                           310 → 0 |                     10 → 10 |                        125.84 → 61.27 |
-| Ten-second age ticks plus scheduled refresh    |                                       496–527 → 0 |               16–17 → 16–17 |                       198.07 → 103.74 |
-| Local sheet equipment edits while Play mounted |                                           310 → 0 |                      10 → 0 |                         125.24 → 0.00 |
-| Server changes one other-player sheet          |                                          310 → 10 |                     10 → 10 |                        113.67 → 81.59 |
-| Switch between populated groups                |                                         310 → 310 |                     10 → 10 |                       117.37 → 117.48 |
+| Workload, 10 updates/sample                    | Markdown subtree entries before → after | Play commits before → after | Median React render ms before → after |
+| ---------------------------------------------- | --------------------------------------: | --------------------------: | ------------------------------------: |
+| Invite nickname input                          |                                 310 → 0 |                     10 → 10 |                         60.13 → 30.67 |
+| New group name input                           |                                 310 → 0 |                     10 → 10 |                         54.91 → 36.46 |
+| Ten-second age ticks plus scheduled refresh    |                             496–527 → 0 |               16–17 → 16–17 |                        102.09 → 73.67 |
+| Local sheet equipment edits while Play mounted |                                 310 → 0 |                      10 → 0 |                          54.28 → 0.00 |
+| Server changes one other-player sheet          |                                310 → 10 |                     10 → 10 |                         61.06 → 41.76 |
+| Switch between populated groups                |                               310 → 310 |                     10 → 10 |                         55.00 → 59.62 |
+| Unchanged full JSON focus refresh              |                                 310 → 0 |                     10 → 10 |                         55.23 → 36.12 |
 
 Server-update and group-switch workloads assert changed names/headings in the
 DOM. Group switching deliberately refreshes callbacks, permissions and cards;
 it shows no deterministic rendering gain, and no speedup is claimed. A separate
 mounted regression verifies that an already-open shared sheet displays fresh
 abilities/name and closes when switching to a table without that sheet.
+
+Unchanged HTTP snapshots retain sheet data identity by globally unique ID,
+version, update timestamp and name; all response metadata remains fresh. Every
+server sheet mutation advances its version. A version-only content change with
+an unchanged timestamp, and nickname/presence/GM-only updates, have regression
+coverage. Relative sheet-age labels consume a small clock context separately
+from the heavy cards, updating on the existing ten-second fading-roll timer and
+fifteen-second HTTP refresh. No new timers were introduced.
 
 The equipment tag reference is an audited unchanged case: its real dialog has
 26 bounded tags, memoized relevance/search blobs and local search state. Ten
@@ -212,7 +223,7 @@ sheets per group. The new overview loader batches group/member/assigned-sheet
 reads and parses each unique assigned sheet once. It still uses one indexed,
 limited roll read per group to retain 200-roll limits for both busy and quiet
 tables. Queries fall **122 → 25**, identical response size **1,318,269 bytes**;
-14 samples per variant have median route times **18.793 → 6.612 ms**. This
+14 samples per variant have median route times **13.424 → 3.614 ms**. This
 includes authentication and response serialization, excludes TCP/network and
 production data. Membership, assignment, deletion, requested ordering, online
 status and independent roll limits have regression coverage.
@@ -302,8 +313,13 @@ background throttling precludes animation/FCP/INP latency claims. One canvas was
 observed mounted and removed after its overlay; detailed resource cleanup is
 also checked in source.
 
-Frontend formatting/lint/typecheck, production build and all 33 tests passed;
+Frontend formatting/lint/typecheck, production build and all 34 tests passed;
 backend build and all eight tests passed. New regressions cover assignment and
 membership scoping, busy/quiet roll limits, live shared-sheet refresh, permission
-changes on group switching, optional animation failure and one-time OAuth code
-exchange. No network send/push/PR or production changes were performed.
+changes on group switching, optional animation failure, advancing age labels and one-time OAuth code
+exchange. No push/PR or production changes were performed.
+
+Independent follow-up review accepted a complete snapshot comparator, fresh-JSON
+polling verification and advancing age labels. The final source re-review at
+`2e1f325` independently passed the four targeted Play/OAuth tests and found no
+remaining valuable actionable source recommendations.

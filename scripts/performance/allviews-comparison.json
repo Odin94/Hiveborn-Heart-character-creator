@@ -1,7 +1,7 @@
 {
     "baselineRef": "545bb09",
-    "optimizedRef": "1252dcf3ca10cbbb45635e11efe2cf2f1e321a04",
-    "workingTree": "scripts/performance/compare-render.mjs | 16 ++++++++++------\n 1 file changed, 10 insertions(+), 6 deletions(-)",
+    "optimizedRef": "2e1f325f9456e4f6e6fa65a118b810b3d4f6baf2",
+    "workingTree": "scripts/performance/allviews-comparison.json       | 1002 --------------------\n scripts/performance/allviews-routes-optimized.json |   42 +-\n scripts/performance/compare-views.mjs              |    2 +-\n scripts/performance/views.bench.test.tsx           |   59 +-\n 4 files changed, 54 insertions(+), 1051 deletions(-)",
     "node": "v24.15.0",
     "platform": "darwin",
     "architecture": "arm64",
@@ -18,26 +18,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 209.64658299999996,
-                            "renderMs": 123.67975100001217,
+                            "elapsedMs": 164.73279200000013,
+                            "renderMs": 114.30815300000131,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 266.27270899999985,
-                            "renderMs": 149.2432770000214,
+                            "elapsedMs": 106.85183400000005,
+                            "renderMs": 59.80820200000767,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 312.273334,
-                            "renderMs": 220.61856199999465,
+                            "elapsedMs": 107.05833400000006,
+                            "renderMs": 60.44875899998556,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 149.2432770000214,
-                    "medianElapsedMs": 266.27270899999985
+                    "medianRenderMs": 60.44875899998556,
+                    "medianElapsedMs": 107.05833400000006
                 },
                 {
                     "benchmark": "play-group-name-input",
@@ -47,26 +47,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 212.9458749999999,
-                            "renderMs": 118.59389800005602,
+                            "elapsedMs": 98.14441600000009,
+                            "renderMs": 57.1541179999856,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 256.06720799999994,
-                            "renderMs": 133.08598200001143,
+                            "elapsedMs": 100.44116699999995,
+                            "renderMs": 56.50575599999138,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 401.7852919999996,
-                            "renderMs": 287.29741099993316,
+                            "elapsedMs": 98.88687500000015,
+                            "renderMs": 57.064039999985425,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 133.08598200001143,
-                    "medianElapsedMs": 256.06720799999994
+                    "medianRenderMs": 57.064039999985425,
+                    "medianElapsedMs": 98.88687500000015
                 },
                 {
                     "benchmark": "play-roll-age-tick",
@@ -76,26 +76,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 437.2712080000001,
-                            "renderMs": 288.8936750000066,
+                            "elapsedMs": 239.8664580000002,
+                            "renderMs": 148.0335400000081,
                             "commits": 17,
                             "markdownRenders": 527
                         },
                         {
-                            "elapsedMs": 448.8596669999997,
-                            "renderMs": 257.55915299999106,
+                            "elapsedMs": 202.90445799999998,
+                            "renderMs": 111.83251300002485,
                             "commits": 17,
                             "markdownRenders": 527
                         },
                         {
-                            "elapsedMs": 357.89637500000026,
-                            "renderMs": 216.8266859999303,
+                            "elapsedMs": 173.1937499999999,
+                            "renderMs": 92.34125200001972,
                             "commits": 16,
                             "markdownRenders": 496
                         }
                     ],
-                    "medianRenderMs": 257.55915299999106,
-                    "medianElapsedMs": 437.2712080000001
+                    "medianRenderMs": 111.83251300002485,
+                    "medianElapsedMs": 202.90445799999998
                 },
                 {
                     "benchmark": "play-local-equipment-update",
@@ -105,26 +105,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 279.09391700000015,
-                            "renderMs": 164.96530899985737,
+                            "elapsedMs": 92.92108300000018,
+                            "renderMs": 57.000874000034855,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 281.27929199999926,
-                            "renderMs": 161.1989920001124,
+                            "elapsedMs": 90.81849999999986,
+                            "renderMs": 56.408970000024055,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 486.5197500000004,
-                            "renderMs": 347.76711700002306,
+                            "elapsedMs": 96.71779199999992,
+                            "renderMs": 58.195664000009856,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 164.96530899985737,
-                    "medianElapsedMs": 281.27929199999926
+                    "medianRenderMs": 57.000874000034855,
+                    "medianElapsedMs": 92.92108300000018
                 },
                 {
                     "benchmark": "play-live-sheet-update",
@@ -134,26 +134,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 308.91512499999953,
-                            "renderMs": 184.14023699987683,
+                            "elapsedMs": 138.83333300000004,
+                            "renderMs": 64.55234699998437,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 231.215416,
-                            "renderMs": 138.92917099983515,
+                            "elapsedMs": 142.1479589999999,
+                            "renderMs": 73.39187800002082,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 196.171875,
-                            "renderMs": 121.61707300025773,
+                            "elapsedMs": 136.69262499999968,
+                            "renderMs": 63.79509000001963,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 138.92917099983515,
-                    "medianElapsedMs": 231.215416
+                    "medianRenderMs": 64.55234699998437,
+                    "medianElapsedMs": 138.83333300000004
                 },
                 {
                     "benchmark": "play-group-switch",
@@ -163,26 +163,55 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 276.6427079999994,
-                            "renderMs": 166.5229650000074,
+                            "elapsedMs": 113.31883299999981,
+                            "renderMs": 74.65448100000413,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 206.90808299999844,
-                            "renderMs": 133.93553299996165,
+                            "elapsedMs": 98.28475000000026,
+                            "renderMs": 56.726064999954815,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 664.1538330000003,
-                            "renderMs": 443.4270439998709,
+                            "elapsedMs": 119.97212500000023,
+                            "renderMs": 70.38018899994131,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 166.5229650000074,
-                    "medianElapsedMs": 276.6427079999994
+                    "medianRenderMs": 70.38018899994131,
+                    "medianElapsedMs": 113.31883299999981
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 150.73599999999988,
+                            "renderMs": 67.74447000007694,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 134.85549999999967,
+                            "renderMs": 65.00314000005346,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 126.00604099999964,
+                            "renderMs": 56.832518999995955,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 65.00314000005346,
+                    "medianElapsedMs": 134.85549999999967
                 },
                 {
                     "benchmark": "equipment-reference-search",
@@ -190,18 +219,18 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 39.930875000000015,
-                            "renderMs": 20.492191999997658,
+                            "elapsedMs": 15.906999999999982,
+                            "renderMs": 8.075809000001414,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 36.51404100000002,
-                            "renderMs": 14.628249999999525,
+                            "elapsedMs": 15.767125000000021,
+                            "renderMs": 7.540791999999897,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 115.24866700000007,
-                            "renderMs": 52.041483999998945,
+                            "elapsedMs": 13.585417000000007,
+                            "renderMs": 7.049971999999343,
                             "commits": 20
                         }
                     ],
@@ -216,42 +245,42 @@
                 "assignedSheetsPerGroup": 5,
                 "samples": [
                     {
-                        "elapsedMs": 28.054709000000003,
+                        "elapsedMs": 15.243167000000085,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 29.120125000000144,
+                        "elapsedMs": 30.440416000000027,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 19.20004199999994,
+                        "elapsedMs": 36.345957999999996,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 36.37000000000012,
+                        "elapsedMs": 15.020875000000046,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 23.05704199999991,
+                        "elapsedMs": 16.877958000000035,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 21.742708999999877,
+                        "elapsedMs": 51.31762500000002,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 26.39995799999997,
+                        "elapsedMs": 51.95979200000011,
                         "queries": 122,
                         "responseBytes": 1318269
                     }
                 ],
-                "medianMs": 26.39995799999997
+                "medianMs": 30.440416000000027
             }
         },
         {
@@ -266,26 +295,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 152.11791599999992,
-                            "renderMs": 66.8633960000052,
+                            "elapsedMs": 58.8670410000002,
+                            "renderMs": 33.016359999994165,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 83.73233300000015,
-                            "renderMs": 55.818049000004066,
+                            "elapsedMs": 43.76745800000003,
+                            "renderMs": 27.753214000007574,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 86.54841699999997,
-                            "renderMs": 51.706884000014725,
+                            "elapsedMs": 45.83249999999998,
+                            "renderMs": 25.432342000008703,
                             "commits": 10,
                             "markdownRenders": 0
                         }
                     ],
-                    "medianRenderMs": 55.818049000004066,
-                    "medianElapsedMs": 86.54841699999997
+                    "medianRenderMs": 27.753214000007574,
+                    "medianElapsedMs": 45.83249999999998
                 },
                 {
                     "benchmark": "play-group-name-input",
@@ -295,26 +324,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 101.18833300000006,
-                            "renderMs": 59.216180999998414,
+                            "elapsedMs": 74.49195800000007,
+                            "renderMs": 44.32055299999206,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 95.453125,
-                            "renderMs": 50.738335999983974,
+                            "elapsedMs": 90.47762499999999,
+                            "renderMs": 48.31206600000269,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 196.99516700000004,
-                            "renderMs": 150.2160979999844,
+                            "elapsedMs": 102.18254200000001,
+                            "renderMs": 68.03486899998825,
                             "commits": 10,
                             "markdownRenders": 0
                         }
                     ],
-                    "medianRenderMs": 59.216180999998414,
-                    "medianElapsedMs": 101.18833300000006
+                    "medianRenderMs": 48.31206600000269,
+                    "medianElapsedMs": 90.47762499999999
                 },
                 {
                     "benchmark": "play-roll-age-tick",
@@ -324,26 +353,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 183.4884579999998,
-                            "renderMs": 127.73889300002702,
+                            "elapsedMs": 130.35516599999983,
+                            "renderMs": 66.63139699995895,
                             "commits": 17,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 156.25441600000022,
-                            "renderMs": 98.03126199995404,
+                            "elapsedMs": 182.27954199999976,
+                            "renderMs": 117.08309799998551,
                             "commits": 17,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 173.37112499999967,
-                            "renderMs": 100.98449899999832,
+                            "elapsedMs": 105.36254199999985,
+                            "renderMs": 52.990636999988055,
                             "commits": 16,
                             "markdownRenders": 0
                         }
                     ],
-                    "medianRenderMs": 100.98449899999832,
-                    "medianElapsedMs": 173.37112499999967
+                    "medianRenderMs": 66.63139699995895,
+                    "medianElapsedMs": 130.35516599999983
                 },
                 {
                     "benchmark": "play-local-equipment-update",
@@ -353,26 +382,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 1.8721669999999904,
+                            "elapsedMs": 0.24637500000017099,
                             "renderMs": 0,
                             "commits": 0,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 1.0072089999998752,
+                            "elapsedMs": 0.24970799999982773,
                             "renderMs": 0,
                             "commits": 0,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 0.6903749999996762,
+                            "elapsedMs": 0.2887919999998303,
                             "renderMs": 0,
                             "commits": 0,
                             "markdownRenders": 0
                         }
                     ],
                     "medianRenderMs": 0,
-                    "medianElapsedMs": 1.0072089999998752
+                    "medianElapsedMs": 0.24970799999982773
                 },
                 {
                     "benchmark": "play-live-sheet-update",
@@ -382,26 +411,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 174.8083340000003,
-                            "renderMs": 100.72773900001403,
+                            "elapsedMs": 93.22341600000027,
+                            "renderMs": 42.76293999999098,
                             "commits": 10,
                             "markdownRenders": 10
                         },
                         {
-                            "elapsedMs": 127.46537500000022,
-                            "renderMs": 78.97807799999191,
+                            "elapsedMs": 89.29470899999978,
+                            "renderMs": 39.14697899996099,
                             "commits": 10,
                             "markdownRenders": 10
                         },
                         {
-                            "elapsedMs": 125.95741700000053,
-                            "renderMs": 84.21034800000825,
+                            "elapsedMs": 102.17658299999994,
+                            "renderMs": 45.039619999977276,
                             "commits": 10,
                             "markdownRenders": 10
                         }
                     ],
-                    "medianRenderMs": 84.21034800000825,
-                    "medianElapsedMs": 127.46537500000022
+                    "medianRenderMs": 42.76293999999098,
+                    "medianElapsedMs": 93.22341600000027
                 },
                 {
                     "benchmark": "play-group-switch",
@@ -411,26 +440,55 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 265.7669999999998,
-                            "renderMs": 198.07380700015256,
+                            "elapsedMs": 98.58354199999985,
+                            "renderMs": 61.86946300000136,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 171.50950000000012,
-                            "renderMs": 116.41690700001254,
+                            "elapsedMs": 95.99049999999988,
+                            "renderMs": 61.131595000068955,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 191.73375000000033,
-                            "renderMs": 118.5355400000426,
+                            "elapsedMs": 109.05799999999999,
+                            "renderMs": 68.97829299999239,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 118.5355400000426,
-                    "medianElapsedMs": 191.73375000000033
+                    "medianRenderMs": 61.86946300000136,
+                    "medianElapsedMs": 98.58354199999985
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 84.2156670000004,
+                            "renderMs": 36.329872000017986,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 91.92441700000018,
+                            "renderMs": 37.16521100001137,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 88.93254200000001,
+                            "renderMs": 35.9185220000395,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 36.329872000017986,
+                    "medianElapsedMs": 88.93254200000001
                 },
                 {
                     "benchmark": "equipment-reference-search",
@@ -438,18 +496,18 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 56.111625000000004,
-                            "renderMs": 23.305959999999914,
+                            "elapsedMs": 17.871667000000002,
+                            "renderMs": 8.635171000000923,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 53.77833300000009,
-                            "renderMs": 18.267168999997807,
+                            "elapsedMs": 17.47724999999997,
+                            "renderMs": 8.145255999999165,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 38.3510839999999,
-                            "renderMs": 18.034572999999455,
+                            "elapsedMs": 13.722708000000011,
+                            "renderMs": 7.171253999999465,
                             "commits": 20
                         }
                     ],
@@ -464,42 +522,42 @@
                 "assignedSheetsPerGroup": 5,
                 "samples": [
                     {
-                        "elapsedMs": 5.191166000000067,
+                        "elapsedMs": 3.9729169999999385,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 7.74308300000007,
+                        "elapsedMs": 3.720874999999978,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 7.3131249999999,
+                        "elapsedMs": 3.79200000000003,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 5.877582999999959,
+                        "elapsedMs": 3.960958000000005,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 11.708750000000009,
+                        "elapsedMs": 3.858875000000012,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 6.947333999999955,
+                        "elapsedMs": 3.61099999999999,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 7.29099999999994,
+                        "elapsedMs": 3.403750000000059,
                         "queries": 25,
                         "responseBytes": 1318269
                     }
                 ],
-                "medianMs": 7.29099999999994
+                "medianMs": 3.79200000000003
             }
         },
         {
@@ -514,26 +572,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 110.75745800000004,
-                            "renderMs": 61.72270900000808,
+                            "elapsedMs": 197.33712500000001,
+                            "renderMs": 140.40786200000662,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 83.38708300000008,
-                            "renderMs": 51.80072800001062,
+                            "elapsedMs": 110.71499999999992,
+                            "renderMs": 69.79882100000577,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 103.62412500000028,
-                            "renderMs": 55.978649000015594,
+                            "elapsedMs": 46.537458000000015,
+                            "renderMs": 28.317786000016667,
                             "commits": 10,
                             "markdownRenders": 0
                         }
                     ],
-                    "medianRenderMs": 55.978649000015594,
-                    "medianElapsedMs": 103.62412500000028
+                    "medianRenderMs": 69.79882100000577,
+                    "medianElapsedMs": 110.71499999999992
                 },
                 {
                     "benchmark": "play-group-name-input",
@@ -543,26 +601,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 199.0405420000002,
-                            "renderMs": 148.39625100002058,
+                            "elapsedMs": 38.12879100000009,
+                            "renderMs": 24.296029000011913,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 98.21704199999976,
-                            "renderMs": 59.9126570000094,
+                            "elapsedMs": 51.66704099999993,
+                            "renderMs": 28.605473999994047,
                             "commits": 10,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 119.6683750000002,
-                            "renderMs": 62.62326699999312,
+                            "elapsedMs": 45.09870799999999,
+                            "renderMs": 27.6149460000031,
                             "commits": 10,
                             "markdownRenders": 0
                         }
                     ],
-                    "medianRenderMs": 62.62326699999312,
-                    "medianElapsedMs": 119.6683750000002
+                    "medianRenderMs": 27.6149460000031,
+                    "medianElapsedMs": 45.09870799999999
                 },
                 {
                     "benchmark": "play-roll-age-tick",
@@ -572,26 +630,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 170.43087500000001,
-                            "renderMs": 106.49133699994809,
+                            "elapsedMs": 134.219916,
+                            "renderMs": 68.73454599999172,
                             "commits": 17,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 170.06941600000027,
-                            "renderMs": 113.02777500001912,
+                            "elapsedMs": 147.46962499999995,
+                            "renderMs": 78.61079400000244,
                             "commits": 17,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 147.633875,
-                            "renderMs": 90.25629299995671,
+                            "elapsedMs": 166.14795900000013,
+                            "renderMs": 108.40108299997678,
                             "commits": 16,
                             "markdownRenders": 0
                         }
                     ],
-                    "medianRenderMs": 106.49133699994809,
-                    "medianElapsedMs": 170.06941600000027
+                    "medianRenderMs": 78.61079400000244,
+                    "medianElapsedMs": 147.46962499999995
                 },
                 {
                     "benchmark": "play-local-equipment-update",
@@ -601,26 +659,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 0.5887920000000122,
+                            "elapsedMs": 0.25937500000009095,
                             "renderMs": 0,
                             "commits": 0,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 0.37550000000010186,
+                            "elapsedMs": 0.22345899999982066,
                             "renderMs": 0,
                             "commits": 0,
                             "markdownRenders": 0
                         },
                         {
-                            "elapsedMs": 0.6199999999998909,
+                            "elapsedMs": 0.23583300000018426,
                             "renderMs": 0,
                             "commits": 0,
                             "markdownRenders": 0
                         }
                     ],
                     "medianRenderMs": 0,
-                    "medianElapsedMs": 0.5887920000000122
+                    "medianElapsedMs": 0.23583300000018426
                 },
                 {
                     "benchmark": "play-live-sheet-update",
@@ -630,26 +688,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 126.88491700000031,
-                            "renderMs": 90.33187000003,
+                            "elapsedMs": 96.86391700000013,
+                            "renderMs": 44.459580999985064,
                             "commits": 10,
                             "markdownRenders": 10
                         },
                         {
-                            "elapsedMs": 110.70316700000012,
-                            "renderMs": 68.86933600003067,
+                            "elapsedMs": 94.3253749999999,
+                            "renderMs": 40.7564700000039,
                             "commits": 10,
                             "markdownRenders": 10
                         },
                         {
-                            "elapsedMs": 120.72679100000005,
-                            "renderMs": 75.40013000001272,
+                            "elapsedMs": 89.26891699999987,
+                            "renderMs": 37.184716999985994,
                             "commits": 10,
                             "markdownRenders": 10
                         }
                     ],
-                    "medianRenderMs": 75.40013000001272,
-                    "medianElapsedMs": 120.72679100000005
+                    "medianRenderMs": 40.7564700000039,
+                    "medianElapsedMs": 94.3253749999999
                 },
                 {
                     "benchmark": "play-group-switch",
@@ -659,26 +717,55 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 146.0988750000006,
-                            "renderMs": 91.4781560000556,
+                            "elapsedMs": 90.77479200000016,
+                            "renderMs": 58.06169800001362,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 214.03754200000003,
-                            "renderMs": 158.94251399993937,
+                            "elapsedMs": 92.579792,
+                            "renderMs": 58.11609799998723,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 150.34395800000038,
-                            "renderMs": 88.6882070000147,
+                            "elapsedMs": 93.39924999999994,
+                            "renderMs": 57.580883000011454,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 91.4781560000556,
-                    "medianElapsedMs": 150.34395800000038
+                    "medianRenderMs": 58.06169800001362,
+                    "medianElapsedMs": 92.579792
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 81.48275000000012,
+                            "renderMs": 35.351447000005464,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 125.55379099999982,
+                            "renderMs": 79.04669999998305,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 80.02929200000017,
+                            "renderMs": 33.92181200001596,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 35.351447000005464,
+                    "medianElapsedMs": 81.48275000000012
                 },
                 {
                     "benchmark": "equipment-reference-search",
@@ -686,18 +773,18 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 27.370041999999955,
-                            "renderMs": 12.380731999999227,
+                            "elapsedMs": 15.40991600000001,
+                            "renderMs": 7.827422000000183,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 33.98795899999993,
-                            "renderMs": 15.433122999999568,
+                            "elapsedMs": 16.275125000000003,
+                            "renderMs": 7.394563999999946,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 28.84504199999992,
-                            "renderMs": 13.353590999999824,
+                            "elapsedMs": 12.509832999999958,
+                            "renderMs": 6.633992000000035,
                             "commits": 20
                         }
                     ],
@@ -712,42 +799,42 @@
                 "assignedSheetsPerGroup": 5,
                 "samples": [
                     {
-                        "elapsedMs": 4.902041999999938,
+                        "elapsedMs": 3.6422079999999823,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 6.276750000000106,
+                        "elapsedMs": 3.6177920000000086,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 4.889957999999979,
+                        "elapsedMs": 3.567625000000021,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 4.806542000000036,
+                        "elapsedMs": 3.5626250000000255,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 7.108125000000086,
+                        "elapsedMs": 3.4990830000000415,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 7.391457999999943,
+                        "elapsedMs": 3.475667000000044,
                         "queries": 25,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 5.526666999999975,
+                        "elapsedMs": 3.2137500000000045,
                         "queries": 25,
                         "responseBytes": 1318269
                     }
                 ],
-                "medianMs": 5.526666999999975
+                "medianMs": 3.5626250000000255
             }
         },
         {
@@ -762,26 +849,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 222.478292,
-                            "renderMs": 122.4321429999793,
+                            "elapsedMs": 88.20541700000001,
+                            "renderMs": 54.84010199999511,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 151.40391699999986,
-                            "renderMs": 86.13372800001275,
+                            "elapsedMs": 149.83395799999994,
+                            "renderMs": 106.79399199999682,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 147.9620420000001,
-                            "renderMs": 84.27280600000199,
+                            "elapsedMs": 96.41212500000006,
+                            "renderMs": 59.212109999995846,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 86.13372800001275,
-                    "medianElapsedMs": 151.40391699999986
+                    "medianRenderMs": 59.212109999995846,
+                    "medianElapsedMs": 96.41212500000006
                 },
                 {
                     "benchmark": "play-group-name-input",
@@ -791,26 +878,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 212.22408300000006,
-                            "renderMs": 142.74420600001713,
+                            "elapsedMs": 84.43820800000003,
+                            "renderMs": 51.132611999968276,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 133.49787500000002,
-                            "renderMs": 76.51952200003188,
+                            "elapsedMs": 90.29470900000001,
+                            "renderMs": 52.2594910000048,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 144.60258399999975,
-                            "renderMs": 78.90669500001195,
+                            "elapsedMs": 87.35183299999994,
+                            "renderMs": 53.3206759999689,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 78.90669500001195,
-                    "medianElapsedMs": 144.60258399999975
+                    "medianRenderMs": 52.2594910000048,
+                    "medianElapsedMs": 87.35183299999994
                 },
                 {
                     "benchmark": "play-roll-age-tick",
@@ -820,26 +907,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 207.61254199999985,
-                            "renderMs": 125.41703100002087,
+                            "elapsedMs": 161.72466699999995,
+                            "renderMs": 87.94861600000036,
                             "commits": 17,
                             "markdownRenders": 527
                         },
                         {
-                            "elapsedMs": 211.63208399999985,
-                            "renderMs": 124.78994799998236,
+                            "elapsedMs": 160.41545900000006,
+                            "renderMs": 88.81134199999997,
                             "commits": 17,
                             "markdownRenders": 527
                         },
                         {
-                            "elapsedMs": 264.88741600000003,
-                            "renderMs": 179.3225959999313,
+                            "elapsedMs": 202.457042,
+                            "renderMs": 131.2035799999935,
                             "commits": 16,
                             "markdownRenders": 496
                         }
                     ],
-                    "medianRenderMs": 125.41703100002087,
-                    "medianElapsedMs": 211.63208399999985
+                    "medianRenderMs": 88.81134199999997,
+                    "medianElapsedMs": 161.72466699999995
                 },
                 {
                     "benchmark": "play-local-equipment-update",
@@ -849,26 +936,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 114.10066599999982,
-                            "renderMs": 70.75272199999836,
+                            "elapsedMs": 80.13479199999983,
+                            "renderMs": 52.153787000022476,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 142.7037919999998,
-                            "renderMs": 89.28280499999528,
+                            "elapsedMs": 80.01141700000016,
+                            "renderMs": 50.29316899997639,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 132.24524999999994,
-                            "renderMs": 79.27334700000847,
+                            "elapsedMs": 80.07483300000013,
+                            "renderMs": 51.388842000008935,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 79.27334700000847,
-                    "medianElapsedMs": 132.24524999999994
+                    "medianRenderMs": 51.388842000008935,
+                    "medianElapsedMs": 80.07483300000013
                 },
                 {
                     "benchmark": "play-live-sheet-update",
@@ -878,26 +965,26 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 151.7524170000006,
-                            "renderMs": 105.72049400002925,
+                            "elapsedMs": 121.74870899999996,
+                            "renderMs": 58.33417899997903,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 128.64133399999992,
-                            "renderMs": 79.99628200006373,
+                            "elapsedMs": 111.19516600000043,
+                            "renderMs": 53.367674000023726,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 133.42845899999975,
-                            "renderMs": 80.34932800002025,
+                            "elapsedMs": 114.24941700000045,
+                            "renderMs": 54.419533999993746,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 80.34932800002025,
-                    "medianElapsedMs": 133.42845899999975
+                    "medianRenderMs": 54.419533999993746,
+                    "medianElapsedMs": 114.24941700000045
                 },
                 {
                     "benchmark": "play-group-switch",
@@ -907,26 +994,55 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 119.56062500000007,
-                            "renderMs": 74.18573800002832,
+                            "elapsedMs": 83.21491699999979,
+                            "renderMs": 52.7015100000076,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 166.60579199999938,
-                            "renderMs": 100.79488599998513,
+                            "elapsedMs": 85.86704199999986,
+                            "renderMs": 53.282360999950015,
                             "commits": 10,
                             "markdownRenders": 310
                         },
                         {
-                            "elapsedMs": 126.64800000000014,
-                            "renderMs": 76.79130900007294,
+                            "elapsedMs": 76.83200000000033,
+                            "renderMs": 49.73841599994148,
                             "commits": 10,
                             "markdownRenders": 310
                         }
                     ],
-                    "medianRenderMs": 76.79130900007294,
-                    "medianElapsedMs": 126.64800000000014
+                    "medianRenderMs": 52.7015100000076,
+                    "medianElapsedMs": 83.21491699999979
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 111.02358299999969,
+                            "renderMs": 53.63491900001645,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 109.7840000000001,
+                            "renderMs": 51.6017190000357,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 107.10604200000034,
+                            "renderMs": 50.83129299999882,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 51.6017190000357,
+                    "medianElapsedMs": 109.7840000000001
                 },
                 {
                     "benchmark": "equipment-reference-search",
@@ -934,18 +1050,18 @@
                     "updatesPerSample": 10,
                     "samples": [
                         {
-                            "elapsedMs": 27.312874999999963,
-                            "renderMs": 12.564919999999177,
+                            "elapsedMs": 17.58824999999996,
+                            "renderMs": 7.864350000000172,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 24.427708000000052,
-                            "renderMs": 11.113168999999175,
+                            "elapsedMs": 13.767708000000027,
+                            "renderMs": 7.046484999999109,
                             "commits": 20
                         },
                         {
-                            "elapsedMs": 23.48837500000002,
-                            "renderMs": 10.89105499999954,
+                            "elapsedMs": 14.848415999999986,
+                            "renderMs": 7.199096999999426,
                             "commits": 20
                         }
                     ],
@@ -960,42 +1076,42 @@
                 "assignedSheetsPerGroup": 5,
                 "samples": [
                     {
-                        "elapsedMs": 15.41066699999999,
+                        "elapsedMs": 11.427332999999976,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 16.444833000000017,
+                        "elapsedMs": 11.826958999999988,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 14.766166999999996,
+                        "elapsedMs": 10.797791999999959,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 18.38595799999996,
+                        "elapsedMs": 10.491957999999954,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 15.063750000000027,
+                        "elapsedMs": 10.289457999999968,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 15.76075000000003,
+                        "elapsedMs": 10.162374999999997,
                         "queries": 122,
                         "responseBytes": 1318269
                     },
                     {
-                        "elapsedMs": 16.72066700000005,
+                        "elapsedMs": 10.42795799999999,
                         "queries": 122,
                         "responseBytes": 1318269
                     }
                 ],
-                "medianMs": 15.76075000000003
+                "medianMs": 10.491957999999954
             }
         }
     ]
