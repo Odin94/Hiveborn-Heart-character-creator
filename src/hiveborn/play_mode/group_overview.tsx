@@ -94,6 +94,45 @@ function applyLiveCharacterUpdate(groups: PlayGroup[], groupId: string, event: L
     })
 }
 
+// Every server sheet mutation advances its version; HTTP JSON decoding alone
+// must not invalidate otherwise unchanged sheet subtrees. Keep response metadata
+// fresh (membership, permissions, names and presence), sharing only sheet data.
+function preserveGroupSheetData(current: PlayGroup[], next: PlayGroup[]) {
+    const previousSheets = new Map(
+        current.flatMap((group) => group.members.flatMap((member) => member.characters.map((character) => [character.id, character] as const))),
+    )
+    return next.map((group) => ({
+        ...group,
+        members: group.members.map((member) => ({
+            ...member,
+            characters: member.characters.map((character) => {
+                const previous = previousSheets.get(character.id)
+                return previous && previous.version === character.version && previous.updatedAt === character.updatedAt && previous.name === character.name
+                    ? { ...character, data: previous.data }
+                    : character
+            }),
+        })),
+    }))
+}
+
+function sameCharacterSnapshot(a: CharacterWithOwner | null, b: CharacterWithOwner | null) {
+    return (
+        a === b ||
+        Boolean(
+            a &&
+            b &&
+            a.id === b.id &&
+            a.version === b.version &&
+            a.name === b.name &&
+            a.data === b.data &&
+            a.updatedAt === b.updatedAt &&
+            a.ownerId === b.ownerId &&
+            a.nickname === b.nickname &&
+            a.isOnline === b.isOnline,
+        )
+    )
+}
+
 export default function GroupOverview({ user, selectedGroupId, onClose, onSelectGroup }: GroupOverviewProps) {
     const [groups, setGroups] = useState<PlayGroup[]>([])
     const [ownCharacters, setOwnCharacters] = useState<CloudCharacter[]>([])
@@ -120,7 +159,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const refresh = useCallback(async () => {
         try {
             const [nextGroups, nextCharacters] = await Promise.all([api.groups(), api.characters()])
-            setGroups(nextGroups.groups)
+            setGroups((current) => preserveGroupSheetData(current, nextGroups.groups))
             setInvitations(nextGroups.invitations)
             setOwnCharacters(nextCharacters.characters)
         } catch (error) {
@@ -1007,17 +1046,8 @@ const CharacterCard = memo(
         )
     },
     (previous, next) => {
-        const a = previous.character,
-            b = next.character
         return (
-            a.id === b.id &&
-            a.version === b.version &&
-            a.name === b.name &&
-            a.data === b.data &&
-            a.updatedAt === b.updatedAt &&
-            a.ownerId === b.ownerId &&
-            a.nickname === b.nickname &&
-            a.isOnline === b.isOnline &&
+            sameCharacterSnapshot(previous.character, next.character) &&
             previous.own === next.own &&
             previous.gameMaster === next.gameMaster &&
             previous.rollingFallout === next.rollingFallout &&
@@ -1028,83 +1058,78 @@ const CharacterCard = memo(
     },
 )
 
-const CharacterSheetModal = memo(function CharacterSheetModal({
-    character,
-    showBeats,
-    onClose,
-}: {
-    character: CharacterWithOwner | null
-    showBeats: boolean
-    onClose: () => void
-}) {
-    return (
-        <Dialog open={Boolean(character)} onOpenChange={(open) => !open && onClose()}>
-            {character && (
-                <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-6xl overflow-y-auto p-0 sm:max-w-6xl">
-                    <DialogHeader className="sticky top-0 z-10 border-b bg-background p-6">
-                        <DialogTitle className="text-3xl">{character.name || "Unnamed hiveborn"}</DialogTitle>
-                        <DialogDescription>{character.nickname ?? "Group player"}’s read-only character sheet</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-6 p-6 md:grid-cols-2">
-                        <SheetSection title="Identity">
-                            <div>
-                                <p className="font-bold">Class</p>
-                                <Markdown>{character.data.characterClass || "—"}</Markdown>
-                            </div>
-                            <div>
-                                <p className="font-bold">Calling</p>
-                                <Markdown>{character.data.calling || "—"}</Markdown>
-                            </div>
-                            {showBeats && (
+const CharacterSheetModal = memo(
+    function CharacterSheetModal({ character, showBeats, onClose }: { character: CharacterWithOwner | null; showBeats: boolean; onClose: () => void }) {
+        return (
+            <Dialog open={Boolean(character)} onOpenChange={(open) => !open && onClose()}>
+                {character && (
+                    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-6xl overflow-y-auto p-0 sm:max-w-6xl">
+                        <DialogHeader className="sticky top-0 z-10 border-b bg-background p-6">
+                            <DialogTitle className="text-3xl">{character.name || "Unnamed hiveborn"}</DialogTitle>
+                            <DialogDescription>{character.nickname ?? "Group player"}’s read-only character sheet</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-6 p-6 md:grid-cols-2">
+                            <SheetSection title="Identity">
                                 <div>
-                                    <p className="font-bold">Active beats</p>
-                                    <Markdown>{character.data.activeBeats || "—"}</Markdown>
+                                    <p className="font-bold">Class</p>
+                                    <Markdown>{character.data.characterClass || "—"}</Markdown>
                                 </div>
-                            )}
-                        </SheetSection>
-                        <SheetSection title="Stress & protections">
-                            <ReadOnlyStressCounter stress={character.data.stress} protections={character.data.protections} />
-                        </SheetSection>
-                        <SheetSection title="Fallout">
-                            <Markdown>{character.data.fallout || "None recorded"}</Markdown>
-                        </SheetSection>
-                        <SheetSection title="Abilities">
-                            <Markdown>{character.data.abilities || "—"}</Markdown>
-                        </SheetSection>
-                        <SheetSection title="Skills">
-                            <Markdown>{selectedFeaturesMarkdown(character.data.skills)}</Markdown>
-                        </SheetSection>
-                        <SheetSection title="Domains">
-                            <Markdown>{selectedFeaturesMarkdown(character.data.domains)}</Markdown>
-                        </SheetSection>
-                        <SheetSection
-                            title="Equipment"
-                            tagReference={{
-                                title: "EQUIPMENT TAGS IN USE",
-                                tags: equipmentTags,
-                                primaryText: character.data.equipment,
-                                primarySourceLabel: "Equipment",
-                            }}
-                        >
-                            <Markdown>{character.data.equipment || "—"}</Markdown>
-                        </SheetSection>
-                        <SheetSection
-                            title="Resources"
-                            tagReference={{
-                                title: "RESOURCE TAGS IN USE",
-                                tags: resourceTags,
-                                primaryText: character.data.resources,
-                                primarySourceLabel: "Resources",
-                            }}
-                        >
-                            <Markdown>{character.data.resources || "—"}</Markdown>
-                        </SheetSection>
-                    </div>
-                </DialogContent>
-            )}
-        </Dialog>
-    )
-})
+                                <div>
+                                    <p className="font-bold">Calling</p>
+                                    <Markdown>{character.data.calling || "—"}</Markdown>
+                                </div>
+                                {showBeats && (
+                                    <div>
+                                        <p className="font-bold">Active beats</p>
+                                        <Markdown>{character.data.activeBeats || "—"}</Markdown>
+                                    </div>
+                                )}
+                            </SheetSection>
+                            <SheetSection title="Stress & protections">
+                                <ReadOnlyStressCounter stress={character.data.stress} protections={character.data.protections} />
+                            </SheetSection>
+                            <SheetSection title="Fallout">
+                                <Markdown>{character.data.fallout || "None recorded"}</Markdown>
+                            </SheetSection>
+                            <SheetSection title="Abilities">
+                                <Markdown>{character.data.abilities || "—"}</Markdown>
+                            </SheetSection>
+                            <SheetSection title="Skills">
+                                <Markdown>{selectedFeaturesMarkdown(character.data.skills)}</Markdown>
+                            </SheetSection>
+                            <SheetSection title="Domains">
+                                <Markdown>{selectedFeaturesMarkdown(character.data.domains)}</Markdown>
+                            </SheetSection>
+                            <SheetSection
+                                title="Equipment"
+                                tagReference={{
+                                    title: "EQUIPMENT TAGS IN USE",
+                                    tags: equipmentTags,
+                                    primaryText: character.data.equipment,
+                                    primarySourceLabel: "Equipment",
+                                }}
+                            >
+                                <Markdown>{character.data.equipment || "—"}</Markdown>
+                            </SheetSection>
+                            <SheetSection
+                                title="Resources"
+                                tagReference={{
+                                    title: "RESOURCE TAGS IN USE",
+                                    tags: resourceTags,
+                                    primaryText: character.data.resources,
+                                    primarySourceLabel: "Resources",
+                                }}
+                            >
+                                <Markdown>{character.data.resources || "—"}</Markdown>
+                            </SheetSection>
+                        </div>
+                    </DialogContent>
+                )}
+            </Dialog>
+        )
+    },
+    (previous, next) => sameCharacterSnapshot(previous.character, next.character) && previous.showBeats === next.showBeats && previous.onClose === next.onClose,
+)
 
 type TagReference = {
     title: string

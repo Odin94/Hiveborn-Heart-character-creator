@@ -75,6 +75,10 @@ it("reconciles successful fallout stress changes when the optional animation chu
 
 it("refreshes an open shared sheet and updates permissions when switching tables", async () => {
     let data = { ...getEmptyCharacter(), name: "Shared Witch", abilities: "Old ability" }
+    let version = 1,
+        online = true,
+        gameMaster = true,
+        nickname = "Other player"
     const groups = () =>
         [
             {
@@ -85,19 +89,19 @@ it("refreshes an open shared sheet and updates permissions when switching tables
                 members: [
                     {
                         id: "other",
-                        nickname: "Other player",
+                        nickname,
                         joinedAt: new Date().toISOString(),
-                        isOnline: true,
+                        isOnline: online,
                         isGameMaster: false,
-                        characters: [{ id: "sheet", name: data.name, data, version: 1, updatedAt: new Date().toISOString() }],
+                        characters: [{ id: "sheet", name: data.name, data, version, updatedAt: "2026-10-03T10:00:00Z" }],
                     },
-                    { id: "owner", nickname: "Keeper", joinedAt: new Date().toISOString(), isOnline: true, isGameMaster: true, characters: [] },
+                    { id: "owner", nickname: "Keeper", joinedAt: new Date().toISOString(), isOnline: true, isGameMaster: gameMaster, characters: [] },
                 ],
                 rolls: [],
             },
             { id: "other-table", name: "Second table", ownerId: "other", createdAt: new Date().toISOString(), members: [], rolls: [] },
         ] as PlayGroup[]
-    vi.mocked(api.groups).mockImplementation(async () => ({ groups: groups(), invitations: [] }))
+    vi.mocked(api.groups).mockImplementation(async () => ({ groups: JSON.parse(JSON.stringify(groups())) as PlayGroup[], invitations: [] }))
     vi.mocked(api.characters).mockResolvedValue({ characters: [] })
     const container = document.createElement("div")
     document.body.append(container)
@@ -110,10 +114,22 @@ it("refreshes an open shared sheet and updates permissions when switching tables
         const button = Array.from(container.querySelectorAll("button")).find((entry) => entry.textContent === "View sheet")!
         await act(() => button.click())
         expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Old ability")
+        version++
         data = { ...data, name: "Updated Witch", abilities: "Fresh ability" }
         await act(async () => window.dispatchEvent(new Event("focus")))
         expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Fresh ability")
         expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Updated Witch")
+        version++
+        data = { ...data, abilities: "Version-only ability change" }
+        await act(async () => window.dispatchEvent(new Event("focus")))
+        expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Version-only ability change")
+        online = false
+        gameMaster = false
+        nickname = "Renamed player"
+        await act(async () => window.dispatchEvent(new Event("focus")))
+        expect(container.querySelector("article")?.textContent).toContain("away")
+        expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Renamed player")
+        expect(container.textContent).not.toContain("Auto-update stress after fallout")
         await act(async () => root.render(<GroupOverview user={user} selectedGroupId="other-table" onClose={onClose} onSelectGroup={onSelectGroup} />))
         expect(document.querySelector('[role="dialog"]')).toBeNull()
         expect(container.textContent).toContain("Second table")
