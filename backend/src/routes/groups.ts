@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify"
 import { randomInt } from "node:crypto"
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
+import { and, eq, inArray, isNull, sql } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { applyFallout, FalloutError, type FalloutCommand } from "../fallout/applyFallout.js"
-import { characterDataSchema } from "../characterData.js"
 import { db, schema } from "../db/index.js"
+import { getGroupOverviews } from "../db/groupOverviews.js"
 import { authenticateUser } from "../middleware/auth.js"
 import { trackEvent } from "../utils/tracker.js"
 import { broadcastGroupEvent, broadcastUserCharacterChange, onlineGroupMemberIds } from "../websocket/liveGroups.js"
@@ -172,47 +172,7 @@ export async function assignSoleCharacterToAllGroups(userId: string) {
 }
 
 async function groupOverview(groupId: string) {
-    const group = await db.select().from(schema.groups).where(eq(schema.groups.id, groupId)).get()
-    if (!group) return undefined
-    const members = await db.select().from(schema.groupMembers).where(eq(schema.groupMembers.groupId, groupId))
-    const onlineMemberIds = new Set(onlineGroupMemberIds(groupId))
-    const userIds = members.map((member) => member.userId)
-    const users = userIds.length ? await db.select().from(schema.users).where(inArray(schema.users.id, userIds)) : []
-    const characters = userIds.length
-        ? await db
-              .select()
-              .from(schema.characters)
-              .where(and(inArray(schema.characters.userId, userIds), isNull(schema.characters.deletedAt)))
-        : []
-    const assignments = await db.select().from(schema.groupCharacterAssignments).where(eq(schema.groupCharacterAssignments.groupId, groupId))
-    const assignmentsByCharacterId = new Map(assignments.map((assignment) => [assignment.characterId, assignment]))
-    const rolls = await db.select().from(schema.rollEvents).where(eq(schema.rollEvents.groupId, groupId)).orderBy(desc(schema.rollEvents.createdAt)).limit(200)
-    return {
-        id: group.id,
-        name: group.name,
-        ownerId: group.ownerId,
-        createdAt: group.createdAt,
-        members: members.map((member) => {
-            const user = users.find((entry) => entry.id === member.userId)
-            return {
-                id: member.userId,
-                nickname: user?.nickname ?? null,
-                joinedAt: member.joinedAt,
-                isGameMaster: member.isGameMaster,
-                isOnline: onlineMemberIds.has(member.userId),
-                characters: characters
-                    .filter((character) => character.userId === member.userId && assignmentsByCharacterId.has(character.id))
-                    .map((character) => ({
-                        id: character.id,
-                        name: character.name,
-                        data: characterDataSchema.parse(JSON.parse(character.data)),
-                        version: character.version,
-                        updatedAt: character.updatedAt,
-                    })),
-            }
-        }),
-        rolls: rolls.map((roll) => ({ ...roll })),
-    }
+    return getGroupOverviews(db, [groupId], onlineGroupMemberIds)[0]
 }
 
 async function groupInvitationsFor(userId: string) {
@@ -242,7 +202,11 @@ export async function groupRoutes(fastify: FastifyInstance) {
     fastify.get("/play-groups", { preHandler: authenticateUser }, async (request) => {
         const memberships = await db.select().from(schema.groupMembers).where(eq(schema.groupMembers.userId, request.userId!))
         const [groups, invitations] = await Promise.all([
-            Promise.all(memberships.map((member) => groupOverview(member.groupId))),
+            getGroupOverviews(
+                db,
+                memberships.map((member) => member.groupId),
+                onlineGroupMemberIds,
+            ),
             groupInvitationsFor(request.userId!),
         ])
         return { groups: groups.filter(Boolean), invitations }

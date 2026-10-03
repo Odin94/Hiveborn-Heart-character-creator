@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { generateCharacterPDF } from "@/hiveborn/creator/pdf_creator"
 import { Character, characterSchema } from "@/hiveborn/game_data/character"
 import { useUserUuid } from "@/lib/analytics"
 import { useThemeStore } from "@/lib/theme"
@@ -235,6 +234,7 @@ export const PDFDownloadButton = ({ className }: { className?: string }) => {
         const character = getCharacterData()
 
         try {
+            const { generateCharacterPDF } = await import("@/hiveborn/creator/pdf_creator")
             const pdfBytes = await generateCharacterPDF(character, theme)
 
             const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" })

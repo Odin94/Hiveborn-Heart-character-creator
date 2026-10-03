@@ -1,0 +1,93 @@
+{
+    "benchmark": "fallout-lowest-point",
+    "baselineRef": "545bb09",
+    "framesPerSample": 1000,
+    "vertices": 108,
+    "equivalentRotations": 100,
+    "samples": [
+        {
+            "pair": 1,
+            "variant": "optimized",
+            "elapsedMs": 0.5408339999999896,
+            "vertexVectorAllocations": 0,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 1,
+            "variant": "baseline",
+            "elapsedMs": 1.5098749999999939,
+            "vertexVectorAllocations": 108000,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 2,
+            "variant": "baseline",
+            "elapsedMs": 1.2581670000000145,
+            "vertexVectorAllocations": 108000,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 2,
+            "variant": "optimized",
+            "elapsedMs": 0.3328329999999937,
+            "vertexVectorAllocations": 0,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 3,
+            "variant": "optimized",
+            "elapsedMs": 0.3312079999999753,
+            "vertexVectorAllocations": 0,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 3,
+            "variant": "baseline",
+            "elapsedMs": 1.3325000000000102,
+            "vertexVectorAllocations": 108000,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 4,
+            "variant": "baseline",
+            "elapsedMs": 1.7525829999999871,
+            "vertexVectorAllocations": 108000,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 4,
+            "variant": "optimized",
+            "elapsedMs": 0.3331670000000031,
+            "vertexVectorAllocations": 0,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 5,
+            "variant": "optimized",
+            "elapsedMs": 0.31808300000000145,
+            "vertexVectorAllocations": 0,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 5,
+            "variant": "baseline",
+            "elapsedMs": 1.4630829999999833,
+            "vertexVectorAllocations": 108000,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 6,
+            "variant": "baseline",
+            "elapsedMs": 1.174416000000008,
+            "vertexVectorAllocations": 108000,
+            "checksum": -951.7208911606034
+        },
+        {
+            "pair": 6,
+            "variant": "optimized",
+            "elapsedMs": 0.341542000000004,
+            "vertexVectorAllocations": 0,
+            "checksum": -951.7208911606034
+        }
+    ]
+}

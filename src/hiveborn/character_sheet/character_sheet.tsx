@@ -13,7 +13,7 @@ import StressCounter from "./components/stress_counter/stress_counter"
 import { useCharacterStore } from "./character_states"
 
 const CharacterSheet = () => {
-    const { removeCharacter } = useCharacterStore()
+    const removeCharacter = useCharacterStore.use.removeCharacter()
     const theme = useThemeStore((state) => state.theme)
 
     return (

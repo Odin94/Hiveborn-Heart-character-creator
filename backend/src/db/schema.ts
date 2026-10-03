@@ -138,26 +138,30 @@ export const groupCharacterAssignments = sqliteTable(
     }),
 )
 
-export const rollEvents = sqliteTable("roll_events", {
-    id: text("id").primaryKey(),
-    groupId: text("group_id")
-        .notNull()
-        .references(() => groups.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-        .notNull()
-        .references(() => users.id, { onDelete: "cascade" }),
-    characterId: text("character_id").references(() => characters.id, { onDelete: "set null" }),
-    characterName: text("character_name").notNull(),
-    label: text("label").notNull(),
-    dice: text("dice").notNull(),
-    result: text("result").notNull(),
-    falloutAssignedAt: integer("fallout_assigned_at", { mode: "timestamp" }),
-    falloutAssignmentEntry: text("fallout_assignment_entry"),
-    falloutAssignmentFollowingText: text("fallout_assignment_following_text"),
-    createdAt: integer("created_at", { mode: "timestamp" })
-        .notNull()
-        .default(sql`(unixepoch())`),
-})
+export const rollEvents = sqliteTable(
+    "roll_events",
+    {
+        id: text("id").primaryKey(),
+        groupId: text("group_id")
+            .notNull()
+            .references(() => groups.id, { onDelete: "cascade" }),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        characterId: text("character_id").references(() => characters.id, { onDelete: "set null" }),
+        characterName: text("character_name").notNull(),
+        label: text("label").notNull(),
+        dice: text("dice").notNull(),
+        result: text("result").notNull(),
+        falloutAssignedAt: integer("fallout_assigned_at", { mode: "timestamp" }),
+        falloutAssignmentEntry: text("fallout_assignment_entry"),
+        falloutAssignmentFollowingText: text("fallout_assignment_following_text"),
+        createdAt: integer("created_at", { mode: "timestamp" })
+            .notNull()
+            .default(sql`(unixepoch())`),
+    },
+    (table) => ({ groupCreatedAtIdx: index("roll_events_group_created_at_idx").on(table.groupId, table.createdAt) }),
+)
 
 export const groupRelations = relations(groups, ({ many }) => ({
     members: many(groupMembers),

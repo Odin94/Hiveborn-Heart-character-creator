@@ -1,0 +1,29 @@
+{
+    "build": "../hiveborn-all-views-baseline-build",
+    "common": {
+        "rawJsBytes": 1316850,
+        "files": ["assets/index-CPvu7bGi.js"]
+    },
+    "routes": {
+        "/": {
+            "rawJsBytes": 1316850,
+            "files": ["assets/index-CPvu7bGi.js"]
+        },
+        "/auth/callback": {
+            "rawJsBytes": 1316850,
+            "files": ["assets/index-CPvu7bGi.js"]
+        },
+        "/play-anonymous-guard": {
+            "rawJsBytes": 1316850,
+            "files": ["assets/index-CPvu7bGi.js"]
+        },
+        "/play": {
+            "rawJsBytes": 1839666,
+            "files": ["assets/index-CPvu7bGi.js", "assets/group_overview-DD5Qn-0y.js"]
+        },
+        "/play/$groupId": {
+            "rawJsBytes": 1839666,
+            "files": ["assets/index-CPvu7bGi.js", "assets/group_overview-DD5Qn-0y.js"]
+        }
+    }
+}

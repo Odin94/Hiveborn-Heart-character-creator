@@ -1,0 +1,7 @@
+{
+    "benchmark": "production-initial-js",
+    "entries": [{ "file": "assets/index-Ckd_i9HB.js", "bytes": 2266341, "gzipBytes": 710866 }],
+    "initialBytes": 2266341,
+    "initialGzipBytes": 710866,
+    "totalJsBytes": 2266341
+}

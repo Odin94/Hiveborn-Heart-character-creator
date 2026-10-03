@@ -1,0 +1,1118 @@
+{
+    "baselineRef": "545bb09",
+    "optimizedRef": "2e1f325f9456e4f6e6fa65a118b810b3d4f6baf2",
+    "workingTree": "scripts/performance/allviews-comparison.json       | 1002 --------------------\n scripts/performance/allviews-routes-optimized.json |   42 +-\n scripts/performance/compare-views.mjs              |    2 +-\n scripts/performance/views.bench.test.tsx           |   59 +-\n 4 files changed, 54 insertions(+), 1051 deletions(-)",
+    "node": "v24.15.0",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "runs": [
+        {
+            "pair": 0,
+            "source": "baseline",
+            "results": [
+                {
+                    "benchmark": "play-invite-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 164.73279200000013,
+                            "renderMs": 114.30815300000131,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 106.85183400000005,
+                            "renderMs": 59.80820200000767,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 107.05833400000006,
+                            "renderMs": 60.44875899998556,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 60.44875899998556,
+                    "medianElapsedMs": 107.05833400000006
+                },
+                {
+                    "benchmark": "play-group-name-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 98.14441600000009,
+                            "renderMs": 57.1541179999856,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 100.44116699999995,
+                            "renderMs": 56.50575599999138,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 98.88687500000015,
+                            "renderMs": 57.064039999985425,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 57.064039999985425,
+                    "medianElapsedMs": 98.88687500000015
+                },
+                {
+                    "benchmark": "play-roll-age-tick",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 239.8664580000002,
+                            "renderMs": 148.0335400000081,
+                            "commits": 17,
+                            "markdownRenders": 527
+                        },
+                        {
+                            "elapsedMs": 202.90445799999998,
+                            "renderMs": 111.83251300002485,
+                            "commits": 17,
+                            "markdownRenders": 527
+                        },
+                        {
+                            "elapsedMs": 173.1937499999999,
+                            "renderMs": 92.34125200001972,
+                            "commits": 16,
+                            "markdownRenders": 496
+                        }
+                    ],
+                    "medianRenderMs": 111.83251300002485,
+                    "medianElapsedMs": 202.90445799999998
+                },
+                {
+                    "benchmark": "play-local-equipment-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 92.92108300000018,
+                            "renderMs": 57.000874000034855,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 90.81849999999986,
+                            "renderMs": 56.408970000024055,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 96.71779199999992,
+                            "renderMs": 58.195664000009856,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 57.000874000034855,
+                    "medianElapsedMs": 92.92108300000018
+                },
+                {
+                    "benchmark": "play-live-sheet-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 138.83333300000004,
+                            "renderMs": 64.55234699998437,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 142.1479589999999,
+                            "renderMs": 73.39187800002082,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 136.69262499999968,
+                            "renderMs": 63.79509000001963,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 64.55234699998437,
+                    "medianElapsedMs": 138.83333300000004
+                },
+                {
+                    "benchmark": "play-group-switch",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 113.31883299999981,
+                            "renderMs": 74.65448100000413,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 98.28475000000026,
+                            "renderMs": 56.726064999954815,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 119.97212500000023,
+                            "renderMs": 70.38018899994131,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 70.38018899994131,
+                    "medianElapsedMs": 113.31883299999981
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 150.73599999999988,
+                            "renderMs": 67.74447000007694,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 134.85549999999967,
+                            "renderMs": 65.00314000005346,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 126.00604099999964,
+                            "renderMs": 56.832518999995955,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 65.00314000005346,
+                    "medianElapsedMs": 134.85549999999967
+                },
+                {
+                    "benchmark": "equipment-reference-search",
+                    "tags": 26,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 15.906999999999982,
+                            "renderMs": 8.075809000001414,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 15.767125000000021,
+                            "renderMs": 7.540791999999897,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 13.585417000000007,
+                            "renderMs": 7.049971999999343,
+                            "commits": 20
+                        }
+                    ],
+                    "audit": "unchanged bounded local search"
+                }
+            ],
+            "backend": {
+                "benchmark": "authenticated-group-overviews",
+                "source": "545bb09",
+                "groups": 20,
+                "savedSheets": 100,
+                "assignedSheetsPerGroup": 5,
+                "samples": [
+                    {
+                        "elapsedMs": 15.243167000000085,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 30.440416000000027,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 36.345957999999996,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 15.020875000000046,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 16.877958000000035,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 51.31762500000002,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 51.95979200000011,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    }
+                ],
+                "medianMs": 30.440416000000027
+            }
+        },
+        {
+            "pair": 0,
+            "source": "optimized",
+            "results": [
+                {
+                    "benchmark": "play-invite-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 58.8670410000002,
+                            "renderMs": 33.016359999994165,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 43.76745800000003,
+                            "renderMs": 27.753214000007574,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 45.83249999999998,
+                            "renderMs": 25.432342000008703,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 27.753214000007574,
+                    "medianElapsedMs": 45.83249999999998
+                },
+                {
+                    "benchmark": "play-group-name-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 74.49195800000007,
+                            "renderMs": 44.32055299999206,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 90.47762499999999,
+                            "renderMs": 48.31206600000269,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 102.18254200000001,
+                            "renderMs": 68.03486899998825,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 48.31206600000269,
+                    "medianElapsedMs": 90.47762499999999
+                },
+                {
+                    "benchmark": "play-roll-age-tick",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 130.35516599999983,
+                            "renderMs": 66.63139699995895,
+                            "commits": 17,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 182.27954199999976,
+                            "renderMs": 117.08309799998551,
+                            "commits": 17,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 105.36254199999985,
+                            "renderMs": 52.990636999988055,
+                            "commits": 16,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 66.63139699995895,
+                    "medianElapsedMs": 130.35516599999983
+                },
+                {
+                    "benchmark": "play-local-equipment-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 0.24637500000017099,
+                            "renderMs": 0,
+                            "commits": 0,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 0.24970799999982773,
+                            "renderMs": 0,
+                            "commits": 0,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 0.2887919999998303,
+                            "renderMs": 0,
+                            "commits": 0,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 0,
+                    "medianElapsedMs": 0.24970799999982773
+                },
+                {
+                    "benchmark": "play-live-sheet-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 93.22341600000027,
+                            "renderMs": 42.76293999999098,
+                            "commits": 10,
+                            "markdownRenders": 10
+                        },
+                        {
+                            "elapsedMs": 89.29470899999978,
+                            "renderMs": 39.14697899996099,
+                            "commits": 10,
+                            "markdownRenders": 10
+                        },
+                        {
+                            "elapsedMs": 102.17658299999994,
+                            "renderMs": 45.039619999977276,
+                            "commits": 10,
+                            "markdownRenders": 10
+                        }
+                    ],
+                    "medianRenderMs": 42.76293999999098,
+                    "medianElapsedMs": 93.22341600000027
+                },
+                {
+                    "benchmark": "play-group-switch",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 98.58354199999985,
+                            "renderMs": 61.86946300000136,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 95.99049999999988,
+                            "renderMs": 61.131595000068955,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 109.05799999999999,
+                            "renderMs": 68.97829299999239,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 61.86946300000136,
+                    "medianElapsedMs": 98.58354199999985
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 84.2156670000004,
+                            "renderMs": 36.329872000017986,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 91.92441700000018,
+                            "renderMs": 37.16521100001137,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 88.93254200000001,
+                            "renderMs": 35.9185220000395,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 36.329872000017986,
+                    "medianElapsedMs": 88.93254200000001
+                },
+                {
+                    "benchmark": "equipment-reference-search",
+                    "tags": 26,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 17.871667000000002,
+                            "renderMs": 8.635171000000923,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 17.47724999999997,
+                            "renderMs": 8.145255999999165,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 13.722708000000011,
+                            "renderMs": 7.171253999999465,
+                            "commits": 20
+                        }
+                    ],
+                    "audit": "unchanged bounded local search"
+                }
+            ],
+            "backend": {
+                "benchmark": "authenticated-group-overviews",
+                "source": "working-tree",
+                "groups": 20,
+                "savedSheets": 100,
+                "assignedSheetsPerGroup": 5,
+                "samples": [
+                    {
+                        "elapsedMs": 3.9729169999999385,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.720874999999978,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.79200000000003,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.960958000000005,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.858875000000012,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.61099999999999,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.403750000000059,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    }
+                ],
+                "medianMs": 3.79200000000003
+            }
+        },
+        {
+            "pair": 1,
+            "source": "optimized",
+            "results": [
+                {
+                    "benchmark": "play-invite-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 197.33712500000001,
+                            "renderMs": 140.40786200000662,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 110.71499999999992,
+                            "renderMs": 69.79882100000577,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 46.537458000000015,
+                            "renderMs": 28.317786000016667,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 69.79882100000577,
+                    "medianElapsedMs": 110.71499999999992
+                },
+                {
+                    "benchmark": "play-group-name-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 38.12879100000009,
+                            "renderMs": 24.296029000011913,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 51.66704099999993,
+                            "renderMs": 28.605473999994047,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 45.09870799999999,
+                            "renderMs": 27.6149460000031,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 27.6149460000031,
+                    "medianElapsedMs": 45.09870799999999
+                },
+                {
+                    "benchmark": "play-roll-age-tick",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 134.219916,
+                            "renderMs": 68.73454599999172,
+                            "commits": 17,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 147.46962499999995,
+                            "renderMs": 78.61079400000244,
+                            "commits": 17,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 166.14795900000013,
+                            "renderMs": 108.40108299997678,
+                            "commits": 16,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 78.61079400000244,
+                    "medianElapsedMs": 147.46962499999995
+                },
+                {
+                    "benchmark": "play-local-equipment-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 0.25937500000009095,
+                            "renderMs": 0,
+                            "commits": 0,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 0.22345899999982066,
+                            "renderMs": 0,
+                            "commits": 0,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 0.23583300000018426,
+                            "renderMs": 0,
+                            "commits": 0,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 0,
+                    "medianElapsedMs": 0.23583300000018426
+                },
+                {
+                    "benchmark": "play-live-sheet-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 96.86391700000013,
+                            "renderMs": 44.459580999985064,
+                            "commits": 10,
+                            "markdownRenders": 10
+                        },
+                        {
+                            "elapsedMs": 94.3253749999999,
+                            "renderMs": 40.7564700000039,
+                            "commits": 10,
+                            "markdownRenders": 10
+                        },
+                        {
+                            "elapsedMs": 89.26891699999987,
+                            "renderMs": 37.184716999985994,
+                            "commits": 10,
+                            "markdownRenders": 10
+                        }
+                    ],
+                    "medianRenderMs": 40.7564700000039,
+                    "medianElapsedMs": 94.3253749999999
+                },
+                {
+                    "benchmark": "play-group-switch",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 90.77479200000016,
+                            "renderMs": 58.06169800001362,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 92.579792,
+                            "renderMs": 58.11609799998723,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 93.39924999999994,
+                            "renderMs": 57.580883000011454,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 58.06169800001362,
+                    "medianElapsedMs": 92.579792
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 81.48275000000012,
+                            "renderMs": 35.351447000005464,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 125.55379099999982,
+                            "renderMs": 79.04669999998305,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        },
+                        {
+                            "elapsedMs": 80.02929200000017,
+                            "renderMs": 33.92181200001596,
+                            "commits": 10,
+                            "markdownRenders": 0
+                        }
+                    ],
+                    "medianRenderMs": 35.351447000005464,
+                    "medianElapsedMs": 81.48275000000012
+                },
+                {
+                    "benchmark": "equipment-reference-search",
+                    "tags": 26,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 15.40991600000001,
+                            "renderMs": 7.827422000000183,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 16.275125000000003,
+                            "renderMs": 7.394563999999946,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 12.509832999999958,
+                            "renderMs": 6.633992000000035,
+                            "commits": 20
+                        }
+                    ],
+                    "audit": "unchanged bounded local search"
+                }
+            ],
+            "backend": {
+                "benchmark": "authenticated-group-overviews",
+                "source": "working-tree",
+                "groups": 20,
+                "savedSheets": 100,
+                "assignedSheetsPerGroup": 5,
+                "samples": [
+                    {
+                        "elapsedMs": 3.6422079999999823,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.6177920000000086,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.567625000000021,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.5626250000000255,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.4990830000000415,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.475667000000044,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 3.2137500000000045,
+                        "queries": 25,
+                        "responseBytes": 1318269
+                    }
+                ],
+                "medianMs": 3.5626250000000255
+            }
+        },
+        {
+            "pair": 1,
+            "source": "baseline",
+            "results": [
+                {
+                    "benchmark": "play-invite-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 88.20541700000001,
+                            "renderMs": 54.84010199999511,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 149.83395799999994,
+                            "renderMs": 106.79399199999682,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 96.41212500000006,
+                            "renderMs": 59.212109999995846,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 59.212109999995846,
+                    "medianElapsedMs": 96.41212500000006
+                },
+                {
+                    "benchmark": "play-group-name-input",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 84.43820800000003,
+                            "renderMs": 51.132611999968276,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 90.29470900000001,
+                            "renderMs": 52.2594910000048,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 87.35183299999994,
+                            "renderMs": 53.3206759999689,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 52.2594910000048,
+                    "medianElapsedMs": 87.35183299999994
+                },
+                {
+                    "benchmark": "play-roll-age-tick",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 161.72466699999995,
+                            "renderMs": 87.94861600000036,
+                            "commits": 17,
+                            "markdownRenders": 527
+                        },
+                        {
+                            "elapsedMs": 160.41545900000006,
+                            "renderMs": 88.81134199999997,
+                            "commits": 17,
+                            "markdownRenders": 527
+                        },
+                        {
+                            "elapsedMs": 202.457042,
+                            "renderMs": 131.2035799999935,
+                            "commits": 16,
+                            "markdownRenders": 496
+                        }
+                    ],
+                    "medianRenderMs": 88.81134199999997,
+                    "medianElapsedMs": 161.72466699999995
+                },
+                {
+                    "benchmark": "play-local-equipment-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 80.13479199999983,
+                            "renderMs": 52.153787000022476,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 80.01141700000016,
+                            "renderMs": 50.29316899997639,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 80.07483300000013,
+                            "renderMs": 51.388842000008935,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 51.388842000008935,
+                    "medianElapsedMs": 80.07483300000013
+                },
+                {
+                    "benchmark": "play-live-sheet-update",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 121.74870899999996,
+                            "renderMs": 58.33417899997903,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 111.19516600000043,
+                            "renderMs": 53.367674000023726,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 114.24941700000045,
+                            "renderMs": 54.419533999993746,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 54.419533999993746,
+                    "medianElapsedMs": 114.24941700000045
+                },
+                {
+                    "benchmark": "play-group-switch",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 83.21491699999979,
+                            "renderMs": 52.7015100000076,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 85.86704199999986,
+                            "renderMs": 53.282360999950015,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 76.83200000000033,
+                            "renderMs": 49.73841599994148,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 52.7015100000076,
+                    "medianElapsedMs": 83.21491699999979
+                },
+                {
+                    "benchmark": "play-fresh-json-refresh",
+                    "characters": 30,
+                    "groups": 12,
+                    "rolls": 200,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 111.02358299999969,
+                            "renderMs": 53.63491900001645,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 109.7840000000001,
+                            "renderMs": 51.6017190000357,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        },
+                        {
+                            "elapsedMs": 107.10604200000034,
+                            "renderMs": 50.83129299999882,
+                            "commits": 10,
+                            "markdownRenders": 310
+                        }
+                    ],
+                    "medianRenderMs": 51.6017190000357,
+                    "medianElapsedMs": 109.7840000000001
+                },
+                {
+                    "benchmark": "equipment-reference-search",
+                    "tags": 26,
+                    "updatesPerSample": 10,
+                    "samples": [
+                        {
+                            "elapsedMs": 17.58824999999996,
+                            "renderMs": 7.864350000000172,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 13.767708000000027,
+                            "renderMs": 7.046484999999109,
+                            "commits": 20
+                        },
+                        {
+                            "elapsedMs": 14.848415999999986,
+                            "renderMs": 7.199096999999426,
+                            "commits": 20
+                        }
+                    ],
+                    "audit": "unchanged bounded local search"
+                }
+            ],
+            "backend": {
+                "benchmark": "authenticated-group-overviews",
+                "source": "545bb09",
+                "groups": 20,
+                "savedSheets": 100,
+                "assignedSheetsPerGroup": 5,
+                "samples": [
+                    {
+                        "elapsedMs": 11.427332999999976,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 11.826958999999988,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 10.797791999999959,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 10.491957999999954,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 10.289457999999968,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 10.162374999999997,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    },
+                    {
+                        "elapsedMs": 10.42795799999999,
+                        "queries": 122,
+                        "responseBytes": 1318269
+                    }
+                ],
+                "medianMs": 10.491957999999954
+            }
+        }
+    ]
+}

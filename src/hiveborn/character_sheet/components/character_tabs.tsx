@@ -1,6 +1,6 @@
 import { useIsLargeScreen } from "@/hooks/useIsLargeScreen"
 import { useCharacterStore } from "../character_states"
-import { Character } from "../../game_data/character"
+import { useShallow } from "zustand/react/shallow"
 import { ChevronDown, Dices, Plus, X } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
@@ -12,14 +12,19 @@ interface CharacterTabsProps {
 }
 
 const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
-    const { characters, currentCharacterIndex, setCurrentCharacter, addCharacter } = useCharacterStore()
+    // Tabs only display identities and names; sheet text/stress edits don't change them.
+    const names = useCharacterStore(useShallow((state) => state.characters.map((character) => character.name)))
+    const ids = useCharacterStore(useShallow((state) => state.characters.map((character) => character.uuid)))
+    const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
+    const setCurrentCharacter = useCharacterStore.use.setCurrentCharacter()
+    const addCharacter = useCharacterStore.use.addCharacter()
     const setDiceRollerOpen = useDiceRollerStore.use.setOpen()
     const isLargeScreen = useIsLargeScreen()
     const [isMobileTabsVisible, setIsMobileTabsVisible] = useState(false)
     const [deletingIndex, setDeletingIndex] = useState<number | null>(null)
 
     const handleDeleteCharacter = (index: number) => {
-        if (deletingIndex === index && characters.length > 1) {
+        if (deletingIndex === index && names.length > 1) {
             onDeleteCharacter(index)
             setDeletingIndex(null)
         }
@@ -29,14 +34,13 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
         setDeletingIndex(index)
     }
 
-    const renderCharacterTab = (character: Character, index: number) => {
-        const characterName = character?.name || ""
+    const renderCharacterTab = (characterName: string, index: number) => {
         const displayName = characterName.split(" ")[0] || `Character ${index + 1}`
         const truncatedName = displayName.length > 13 ? displayName.substring(0, 11) + "..." : displayName
 
         return (
             <div
-                key={character.uuid}
+                key={ids[index]}
                 className={`relative group flex w-40 cursor-pointer items-center gap-2 rounded-r-lg border border-primary/15 py-3 pl-6 shadow-lg transition-[margin,transform,box-shadow,background-color] duration-200 ease-out hover:duration-150 animate-in slide-in-from-left-4 fade-in ${
                     currentCharacterIndex === index
                         ? "bg-secondary text-secondary-foreground shadow-primary/10"
@@ -50,7 +54,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                 }}
             >
                 <span className={`text-sm font-medium whitespace-nowrap`}>{truncatedName}</span>
-                {characters.length > 1 && (
+                {names.length > 1 && (
                     <Dialog>
                         <DialogTrigger asChild>
                             <button
@@ -125,7 +129,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
             {/* Desktop version - Left side (screens >= 2100px) */}
             {isLargeScreen && (
                 <div className="fixed left-0 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-1 transition-all duration-200">
-                    {characters.map(renderCharacterTab)}
+                    {names.map(renderCharacterTab)}
 
                     {renderAddCharacterButton()}
                     {renderDiceRollerButton()}
@@ -164,7 +168,7 @@ const CharacterTabs = ({ onDeleteCharacter }: CharacterTabsProps) => {
                     >
                         <div className="bg-card/90 backdrop-blur-sm border-t border-border rounded-lg">
                             <div className="flex flex-col items-center gap-3 p-4">
-                                <div className="flex flex-wrap items-center justify-center gap-2">{characters.map(renderCharacterTab)}</div>
+                                <div className="flex flex-wrap items-center justify-center gap-2">{names.map(renderCharacterTab)}</div>
 
                                 {renderAddCharacterButton()}
                                 {renderDiceRollerButton()}

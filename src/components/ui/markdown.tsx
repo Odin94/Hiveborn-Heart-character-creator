@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { memo, type ReactNode } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 const BLANK_LINE_SPACER = "\u00a0"
 
-function Markdown({ children, className, inline = false }: { children: string; className?: string; inline?: boolean }) {
+const Markdown = memo(function Markdown({ children, className, inline = false }: { children: string; className?: string; inline?: boolean }) {
     const markdown = inline ? children : preserveExtraBlankLines(children)
 
     return (
@@ -31,7 +31,7 @@ function Markdown({ children, className, inline = false }: { children: string; c
             </ReactMarkdown>
         </div>
     )
-}
+})
 
 const preserveExtraBlankLines = (markdown: string) => {
     return markdown.replace(/\n(?:[ \t]*\n){2,}/g, (blankLineRun) => {

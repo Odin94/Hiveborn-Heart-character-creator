@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { useShallow } from "zustand/react/shallow"
 import { v4 as uuid } from "uuid"
 import { persist } from "zustand/middleware"
 import { Character, Domains, getEmptyCharacter, Skills } from "../game_data/character"
@@ -449,7 +450,15 @@ export const useCharacterStore = createSelectors(
 )
 
 export const useMultiCharacter = () => {
-    const { characters, currentCharacterIndex, addCharacter, removeCharacter, setCurrentCharacter } = useCharacterStore()
+    const { characters, currentCharacterIndex, addCharacter, removeCharacter, setCurrentCharacter } = useCharacterStore(
+        useShallow((state) => ({
+            characters: state.characters,
+            currentCharacterIndex: state.currentCharacterIndex,
+            addCharacter: state.addCharacter,
+            removeCharacter: state.removeCharacter,
+            setCurrentCharacter: state.setCurrentCharacter,
+        })),
+    )
 
     return {
         characters,
