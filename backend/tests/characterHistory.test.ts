@@ -94,3 +94,29 @@ test("downtime produces one current snapshot and new characters get their own ba
         sqlite.close()
     }
 })
+
+test("mixed checkpoints keep not-due sheets unchanged and include the seven-day boundary", () => {
+    const { sqlite, db, history } = fixture()
+    try {
+        captureCharacterHistory(db, day(0))
+        // Not-due edits wait until their next checkpoint; deleted sheets get none.
+        db.update(schema.characters).set({ data: '{"name":"Not due"}' }).where(eq(schema.characters.id, "sheet")).run()
+        db.insert(schema.characters).values({ id: "new", userId: "owner", name: "New", data: '{"name":"New"}' }).run()
+        db.insert(schema.characters)
+            .values({ id: "deleted", userId: "owner", name: "Deleted", data: '{"name":"Deleted"}', deletedAt: day(1) })
+            .run()
+        captureCharacterHistory(db, day(6))
+        assert.equal(history().length, 2)
+        assert.equal(
+            db.select().from(schema.characterHistoryCheckpoints).where(eq(schema.characterHistoryCheckpoints.characterId, "sheet")).get()?.checkedAt.getTime(),
+            day(0).getTime(),
+        )
+        db.update(schema.characters).set({ data: '{"name":"Changed"}', version: 2 }).where(eq(schema.characters.id, "sheet")).run()
+        captureCharacterHistory(db, day(7))
+        assert.equal(history().length, 3)
+        assert.equal(history().filter((row) => row.characterId === "sheet").length, 2)
+        assert.equal(db.select().from(schema.characterHistoryCheckpoints).all().length, 2)
+    } finally {
+        sqlite.close()
+    }
+})

@@ -30,9 +30,8 @@ const DiceRoller = () => {
     const setRisk = useDiceRollerStore.use.setRisk()
     const characterSkills = useCharacterStore.use.skills()
     const characterDomains = useCharacterStore.use.domains()
-    const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
-    const cloudCharacterIds = useCharacterStore.use.cloudCharacterIds()
-    const characters = useCharacterStore.use.characters()
+    const cloudCharacterId = useCharacterStore((state) => state.cloudCharacterIds[state.currentCharacterIndex])
+    const characterName = useCharacterStore((state) => state.characters[state.currentCharacterIndex]?.name || `Character ${state.currentCharacterIndex + 1}`)
     const activeGroupId = usePlayModeStore((state) => state.activeGroupId)
     const activeGroupName = usePlayModeStore((state) => state.activeGroupName)
     const activeGroupCharacterIds = usePlayModeStore((state) => state.activeGroupCharacterIds)
@@ -49,8 +48,6 @@ const DiceRoller = () => {
     const rollTimeoutRef = useRef<number | undefined>(undefined)
     const trainedSkills = useMemo(() => skills.filter((skill) => characterSkills[skill]?.hasSkill), [characterSkills])
     const trainedDomains = useMemo(() => domains.filter((domain) => characterDomains[domain]?.hasDomain), [characterDomains])
-    const cloudCharacterId = cloudCharacterIds[currentCharacterIndex]
-    const characterName = characters[currentCharacterIndex]?.name || `Character ${currentCharacterIndex + 1}`
     const canShareRoll = Boolean(activeGroupId && cloudCharacterId && activeGroupCharacterIds.includes(cloudCharacterId))
 
     const diceCount = useMemo(() => {

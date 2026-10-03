@@ -1,0 +1,1 @@
+CREATE INDEX `roll_events_group_created_at_idx` ON `roll_events` (`group_id`,`created_at`);

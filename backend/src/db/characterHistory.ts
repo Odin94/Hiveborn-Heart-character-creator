@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto"
-import { eq, isNull, lte } from "drizzle-orm"
+import { and, eq, isNull, lte, or } from "drizzle-orm"
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import * as schema from "./schema.js"
 
@@ -25,14 +25,23 @@ export function captureCharacterHistory(db: BetterSQLite3Database<typeof schema>
             tx.delete(schema.characterHistory)
                 .where(lte(schema.characterHistory.capturedAt, new Date(now.getTime() - 4 * WEEK_MS)))
                 .run()
-            const characters = tx.select().from(schema.characters).where(isNull(schema.characters.deletedAt)).all()
-            for (const character of characters) {
-                const checkpoint = tx
-                    .select()
-                    .from(schema.characterHistoryCheckpoints)
-                    .where(eq(schema.characterHistoryCheckpoints.characterId, character.id))
-                    .get()
-                if (checkpoint && now.getTime() - checkpoint.checkedAt.getTime() < WEEK_MS) continue
+            // Filter before loading sheet JSON. Hourly checks usually have no due
+            // characters, so avoid transferring every sheet and querying each checkpoint.
+            const due = tx
+                .select({ character: schema.characters, checkpoint: schema.characterHistoryCheckpoints })
+                .from(schema.characters)
+                .leftJoin(schema.characterHistoryCheckpoints, eq(schema.characterHistoryCheckpoints.characterId, schema.characters.id))
+                .where(
+                    and(
+                        isNull(schema.characters.deletedAt),
+                        or(
+                            isNull(schema.characterHistoryCheckpoints.characterId),
+                            lte(schema.characterHistoryCheckpoints.checkedAt, new Date(now.getTime() - WEEK_MS)),
+                        ),
+                    ),
+                )
+                .all()
+            for (const { character, checkpoint } of due) {
                 const dataHash = createHash("sha256")
                     .update(JSON.stringify(canonicalize(JSON.parse(character.data))))
                     .digest("hex")

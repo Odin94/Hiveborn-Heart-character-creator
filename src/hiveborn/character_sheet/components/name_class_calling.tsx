@@ -38,22 +38,24 @@ const NameClassCalling = () => {
     const setName = useCharacterStore.use.setName()
     const characterClass = useCharacterStore.use.characterClass()
     const setCharacterClass = useCharacterStore.use.setCharacterClass()
-    const abilities = useCharacterStore.use.abilities()
-    const setAbilities = useCharacterStore.use.setAbilities()
     const calling = useCharacterStore.use.calling()
     const setCalling = useCharacterStore.use.setCalling()
-    const existingSkills = useCharacterStore.use.skills()
-    const setSkills = useCharacterStore.use.setSkills()
-    const existingDomains = useCharacterStore.use.domains()
-    const setDomains = useCharacterStore.use.setDomains()
-    const resources = useCharacterStore.use.resources()
-    const setResources = useCharacterStore.use.setResources()
-    const equipment = useCharacterStore.use.equipment()
-    const setEquipment = useCharacterStore.use.setEquipment()
-    const protections = useCharacterStore.use.protections()
-    const setProtections = useCharacterStore.use.setProtections()
 
     const applyCoreTraits = ({ pickedEquipment, previousClass }: { pickedEquipment: string; previousClass: CharacterClass | null }) => {
+        const {
+            abilities,
+            equipment,
+            resources,
+            skills: existingSkills,
+            domains: existingDomains,
+            protections,
+            setAbilities,
+            setEquipment,
+            setResources,
+            setSkills,
+            setDomains,
+            setProtections,
+        } = useCharacterStore.getState()
         if (isCharacterClass(characterClass)) {
             const coreTraits = coreTraitsByCharacter[characterClass]
             const previousCoreTraits = previousClass ? coreTraitsByCharacter[previousClass] : null
@@ -141,6 +143,16 @@ const NameClassCalling = () => {
                             setCalling(calling)
                         }}
                         onConfirm={({ previousCalling }) => {
+                            const {
+                                abilities,
+                                skills: existingSkills,
+                                domains: existingDomains,
+                                protections,
+                                setAbilities,
+                                setSkills,
+                                setDomains,
+                                setProtections,
+                            } = useCharacterStore.getState()
                             // TODOdin: Deal with people putting their ancestry in this field somehow
                             if (isCalling(calling)) {
                                 const callingAbility = abilitiesByClassOrCalling[calling][0]

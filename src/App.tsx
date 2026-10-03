@@ -12,7 +12,7 @@ import {
 } from "./hiveborn/character_sheet/components/character_buttons"
 import { Toaster } from "@/components/ui/sonner"
 import { useUserUuid } from "@/lib/analytics"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, lazy, Suspense, useContext, useEffect, useState } from "react"
 import { usePostHog } from "posthog-js/react"
 import CookieConsent from "./components/cookie-consent"
 import DiceRoller from "./hiveborn/character_sheet/components/dice_roller/dice_roller"
@@ -22,10 +22,11 @@ import { Input } from "./components/ui/input"
 import { api, tokenStorage } from "./lib/api"
 import { useAuth } from "./hooks/useAuth"
 import { useCloudCharacterSync } from "./hooks/useCloudCharacterSync"
-import GroupOverview from "./hiveborn/play_mode/group_overview"
 import { toast } from "sonner"
 import { Outlet, useNavigate } from "@tanstack/react-router"
 import { Undo2 } from "lucide-react"
+
+const GroupOverview = lazy(() => import("./hiveborn/play_mode/group_overview"))
 
 type AuthState = ReturnType<typeof useAuth>
 const AuthContext = createContext<AuthState | null>(null)
@@ -70,7 +71,7 @@ export function CharacterSheetPage() {
     const auth = useAppAuth()
     const navigate = useNavigate()
     const undoCharacterChange = useCharacterStore.use.undoCharacterChange()
-    const characterHistory = useCharacterStore.use.characterHistory()
+    const canUndo = useCharacterStore((state) => state.characterHistory.length > 0)
 
     return (
         <div className="relative min-h-screen bg-background pb-28 sm:pb-0">
@@ -154,7 +155,7 @@ export function CharacterSheetPage() {
                     <Button
                         className="rounded-t-none"
                         variant="secondary"
-                        disabled={characterHistory.length === 0}
+                        disabled={!canUndo}
                         onClick={() => {
                             undoCharacterChange()
                             toast.success("Restored the previous sheet change")
@@ -216,12 +217,20 @@ export function PlayModePage({ groupId }: { groupId?: string }) {
         )
     }
     return (
-        <GroupOverview
-            user={auth.user}
-            selectedGroupId={groupId}
-            onClose={() => void navigate({ to: "/" })}
-            onSelectGroup={(id) => void navigate({ to: "/play/$groupId", params: { groupId: id } })}
-        />
+        <Suspense
+            fallback={
+                <main className="grid min-h-screen place-items-center bg-background p-6" role="status">
+                    Loading Play Mode…
+                </main>
+            }
+        >
+            <GroupOverview
+                user={auth.user}
+                selectedGroupId={groupId}
+                onClose={() => void navigate({ to: "/" })}
+                onSelectGroup={(id) => void navigate({ to: "/play/$groupId", params: { groupId: id } })}
+            />
+        </Suspense>
     )
 }
 
