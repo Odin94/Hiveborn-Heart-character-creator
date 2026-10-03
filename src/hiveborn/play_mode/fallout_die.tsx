@@ -1,9 +1,9 @@
 import * as THREE from "three"
 import { useEffect, useRef, useState } from "react"
-import { getOnPageRollFadeDelayMs, onPageRollPostAnimationLifetimeMs, OnPageRollOverlay } from "@/components/on-page-roll-overlay"
+import { getOnPageRollFadeDelayMs, OnPageRollOverlay } from "@/components/on-page-roll-overlay"
 
-export const falloutRollAnimationMs = 1600
-export const falloutRollOverlayLifetimeMs = falloutRollAnimationMs + onPageRollPostAnimationLifetimeMs
+import { falloutRollAnimationMs } from "./fallout_timing"
+import { lowestPointY } from "./fallout_math"
 
 type Face = {
     value: number
@@ -77,15 +77,6 @@ function makeNumberLabel(face: Face) {
     return label
 }
 
-function lowestPointY(geometry: THREE.BufferGeometry, quaternion: THREE.Quaternion) {
-    const positions = geometry.getAttribute("position")
-    let lowest = Infinity
-    for (let index = 0; index < positions.count; index++) {
-        lowest = Math.min(lowest, new THREE.Vector3().fromBufferAttribute(positions, index).applyQuaternion(quaternion).y)
-    }
-    return lowest
-}
-
 function smoothstep(value: number) {
     return value * value * (3 - 2 * value)
 }
@@ -150,6 +141,10 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         die.add(...labels)
         scene.add(die)
 
+        const vertex = new THREE.Vector3()
+        const base = new THREE.Quaternion()
+        const spin = new THREE.Quaternion()
+        const position = new THREE.Vector3()
         const end = new THREE.Vector3(0, FLOOR_Y, 0)
         const viewerDirection = camera.position.clone().sub(end).normalize().lerp(UP, 0.42).normalize()
         const faceAlignment = new THREE.Quaternion().setFromUnitVectors(targetFace.normal, viewerDirection)
@@ -157,7 +152,7 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         const cameraUp = camera.up.clone().projectOnPlane(viewerDirection).normalize()
         const uprightAngle = Math.atan2(new THREE.Vector3().crossVectors(labelUp, cameraUp).dot(viewerDirection), labelUp.dot(cameraUp))
         const target = new THREE.Quaternion().setFromAxisAngle(viewerDirection, uprightAngle).multiply(faceAlignment)
-        end.y = FLOOR_Y + 0.015 - lowestPointY(geometry, target)
+        end.y = FLOOR_Y + 0.015 - lowestPointY(geometry, target, vertex)
 
         const initial = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random() * 6, Math.random() * 6, Math.random() * 6))
         const start = new THREE.Vector3((Math.random() - 0.5) * 8, 2.7, 4.2)
@@ -179,11 +174,12 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         const frame = (now: number) => {
             const progress = Math.min((now - startedAt) / falloutRollAnimationMs, 1)
             const travel = smoothstep(progress)
-            const base = initial.clone().slerp(target, travel)
-            const spin = new THREE.Quaternion().setFromAxisAngle(spinAxis, Math.PI * 2 * 4 * smoothstep(progress))
+            base.copy(initial).slerp(target, travel)
+            spin.setFromAxisAngle(spinAxis, Math.PI * 2 * 4 * smoothstep(progress))
             die.quaternion.copy(base.multiply(spin))
-            die.position.copy(path.getPoint(travel))
-            die.position.y = FLOOR_Y + 0.015 - lowestPointY(geometry, die.quaternion) + Math.sin(Math.PI * progress * 2) ** 2 * 0.23 * (1 - progress * 0.55)
+            die.position.copy(path.getPoint(travel, position))
+            die.position.y =
+                FLOOR_Y + 0.015 - lowestPointY(geometry, die.quaternion, vertex) + Math.sin(Math.PI * progress * 2) ** 2 * 0.23 * (1 - progress * 0.55)
             if (progress === 1) {
                 die.position.copy(end)
                 die.quaternion.copy(target)

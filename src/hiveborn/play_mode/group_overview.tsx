@@ -13,10 +13,14 @@ import { equipmentTags } from "@/hiveborn/game_data/equipment_tags"
 import { resourceTags } from "@/hiveborn/game_data/resource_tags"
 import { resistances } from "@/hiveborn/game_data/resistances"
 import { falloutOptions, type Fallout as FalloutOption } from "@/hiveborn/game_data/fallout"
-import FalloutDie, { falloutRollOverlayLifetimeMs } from "./fallout_die"
+import { falloutRollOverlayLifetimeMs } from "./fallout_timing"
+import { useShallow } from "zustand/react/shallow"
 import { BookOpen, ChevronLeft, Circle, Dices, Package, Plus, ShieldAlert, Sparkles, Users } from "lucide-react"
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { toast } from "sonner"
+
+const loadFalloutDie = () => import("./fallout_die")
+const FalloutDie = lazy(loadFalloutDie)
 
 type GroupOverviewProps = { user: User; selectedGroupId?: string; onClose: () => void; onSelectGroup: (groupId: string) => void }
 type CharacterWithOwner = GroupCharacter & { ownerId: string; nickname: string | null; isOnline: boolean }
@@ -108,7 +112,7 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
     const refreshTimer = useRef<number | undefined>(undefined)
     const setActiveGroup = usePlayModeStore((state) => state.setActiveGroup)
     const cloudIds = useCharacterStore.use.cloudCharacterIds()
-    const localCharacters = useCharacterStore.use.characters()
+    const localCharacterNames = useCharacterStore(useShallow((state) => state.characters.map((character) => character.name)))
     const currentCharacterIndex = useCharacterStore.use.currentCharacterIndex()
     const setCurrentCharacter = useCharacterStore.use.setCurrentCharacter()
     const applyRemoteCloudCharacter = useCharacterStore.use.applyRemoteCloudCharacter()
@@ -277,56 +281,82 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
             toast.error(error instanceof Error ? error.message : "Could not remove that character")
         }
     }
-    const openCharacter = (character: CharacterWithOwner) => {
-        if (character.ownerId === user.id) {
-            const index = cloudIds.indexOf(character.id)
-            if (index >= 0) {
-                setCurrentCharacter(index)
-                onClose()
+    const openCharacter = useCallback(
+        (character: CharacterWithOwner) => {
+            if (character.ownerId === user.id) {
+                const index = cloudIds.indexOf(character.id)
+                if (index >= 0) {
+                    setCurrentCharacter(index)
+                    onClose()
+                    return
+                }
+                toast.error("Your sheet is still syncing. Try again in a moment.")
                 return
             }
-            toast.error("Your sheet is still syncing. Try again in a moment.")
-            return
-        }
-        setSelectedCharacter(character)
-    }
+            setSelectedCharacter(character)
+        },
+        [cloudIds, setCurrentCharacter, onClose, user.id],
+    )
     const setOtherPlayersBeats = (showBeats: boolean) => {
         setShowOtherPlayersBeats(showBeats)
         localStorage.setItem(otherPlayersBeatsStorageKey(user.id), String(showBeats))
     }
-    const rollFallout = async (character: CharacterWithOwner) => {
-        if (!group) return
-        setRollingFalloutCharacterId(character.id)
-        try {
-            const result = await api.falloutRoll(group.id, { characterId: character.id, applyStressUpdate: autoUpdateStress })
-            setFalloutRoll({ characterName: rollCharacterName(character), roll: result.roll, fallout: result.fallout })
-            await new Promise<void>((resolve) => window.setTimeout(resolve, falloutRollOverlayLifetimeMs))
-            const stressUpdate =
-                result.stressUpdate?.type === "all" ? "set all stress to 0" : result.stressUpdate ? `set ${result.stressUpdate.resistance} stress to 0` : null
-            const message = result.fallout
-                ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${stressUpdate ? ` — ${stressUpdate}` : ""}`
-                : `${character.name}: no fallout (${result.roll} vs ${result.totalStress} stress)`
-            toast(result.fallout ? message : message)
-            await refresh()
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Could not roll fallout")
-        } finally {
-            setFalloutRoll(null)
-            setRollingFalloutCharacterId(null)
-        }
-    }
+    const rollFallout = useCallback(
+        async (character: CharacterWithOwner) => {
+            if (!activeGroupId) return
+            setRollingFalloutCharacterId(character.id)
+            try {
+                // Handle the optional chunk immediately: a failed animation must not
+                // skip reconciliation after the server has applied stress changes.
+                const animation = loadFalloutDie().then(
+                    () => true,
+                    () => false,
+                )
+                const result = await api.falloutRoll(activeGroupId, { characterId: character.id, applyStressUpdate: autoUpdateStress })
+                if (await animation) {
+                    setFalloutRoll({ characterName: rollCharacterName(character), roll: result.roll, fallout: result.fallout })
+                    await new Promise<void>((resolve) => window.setTimeout(resolve, falloutRollOverlayLifetimeMs))
+                }
+                const stressUpdate =
+                    result.stressUpdate?.type === "all"
+                        ? "set all stress to 0"
+                        : result.stressUpdate
+                          ? `set ${result.stressUpdate.resistance} stress to 0`
+                          : null
+                const message = result.fallout
+                    ? `${character.name}: ${result.fallout.toUpperCase()} fallout (${result.roll} vs ${result.totalStress} stress)${stressUpdate ? ` — ${stressUpdate}` : ""}`
+                    : `${character.name}: no fallout (${result.roll} vs ${result.totalStress} stress)`
+                toast(result.fallout ? message : message)
+                await refresh()
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Could not roll fallout")
+            } finally {
+                setFalloutRoll(null)
+                setRollingFalloutCharacterId(null)
+            }
+        },
+        [activeGroupId, autoUpdateStress, refresh],
+    )
 
-    const characters: CharacterWithOwner[] =
-        group?.members.flatMap((member) =>
-            member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname, isOnline: member.isOnline })),
-        ) ?? []
+    const characters = useMemo<CharacterWithOwner[]>(
+        () =>
+            group?.members.flatMap((member) =>
+                member.characters.map((character) => ({ ...character, ownerId: member.id, nickname: member.nickname, isOnline: member.isOnline })),
+            ) ?? [],
+        [group?.members],
+    )
+    const selectedCharacterView = selectedCharacter ? (characters.find((character) => character.id === selectedCharacter.id) ?? null) : null
+    const closeCharacterModal = useCallback(() => setSelectedCharacter(null), [])
     const assignedOwnCharacterIds = new Set(activeGroupCharacterIdsKey ? activeGroupCharacterIdsKey.split(",") : [])
     const unassignedOwnCharacters = ownCharacters.filter((character) => !assignedOwnCharacterIds.has(character.id))
     const isGameMaster = group?.members.find((member) => member.id === user.id)?.isGameMaster ?? false
     const isGroupOwner = group?.ownerId === user.id
-    const visibleRolls = group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? []
-    const groupEquipment = characters.map((character) => character.data.equipment).join("\n")
-    const groupResources = characters.map((character) => character.data.resources).join("\n")
+    const visibleRolls = useMemo(
+        () => group?.rolls.filter((roll) => rollAge(roll.createdAt, rollAgeUpdatedAt) < ROLL_LIFETIME_MS) ?? [],
+        [group?.rolls, rollAgeUpdatedAt],
+    )
+    const groupEquipment = useMemo(() => characters.map((character) => character.data.equipment).join("\n"), [characters])
+    const groupResources = useMemo(() => characters.map((character) => character.data.resources).join("\n"), [characters])
     const latestFalloutRoll = group?.rolls.find((roll) => Boolean(roll.characterId && roll.label === "Fallout"))
     const groupCreationKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== "Enter" || !createName.trim()) return
@@ -564,9 +594,9 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                         onChange={(event) => setCurrentCharacter(Number(event.target.value))}
                                         className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm font-normal"
                                     >
-                                        {localCharacters.map((character, index) => (
+                                        {localCharacterNames.map((name, index) => (
                                             <option key={cloudIds[index] || index} value={index}>
-                                                {character.name || `Character ${index + 1}`}
+                                                {name || `Character ${index + 1}`}
                                             </option>
                                         ))}
                                     </select>
@@ -663,25 +693,20 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                 <p className="mt-2 text-sm text-muted-foreground">Create a character sheet to add it to this group.</p>
                             )}
                         </section>
-                        <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                            {characters.map((character) => (
-                                <CharacterCard
-                                    key={character.id}
-                                    character={character}
-                                    own={character.ownerId === user.id}
-                                    gameMaster={isGameMaster}
-                                    rollingFallout={rollingFalloutCharacterId === character.id}
-                                    onOpen={() => openCharacter(character)}
-                                    onFallout={() => void rollFallout(character)}
-                                    showBeats={character.ownerId === user.id || showOtherPlayersBeats}
-                                />
-                            ))}
-                        </section>
+                        <CharacterCards
+                            characters={characters}
+                            userId={user.id}
+                            gameMaster={isGameMaster}
+                            rollingId={rollingFalloutCharacterId}
+                            onOpen={openCharacter}
+                            onFallout={rollFallout}
+                            showBeats={showOtherPlayersBeats}
+                        />
                         <SharedRolls characters={characters} rolls={visibleRolls} now={rollAgeUpdatedAt} />
                     </>
                 )}
             </main>
-            <CharacterSheetModal character={selectedCharacter} showBeats={showOtherPlayersBeats} onClose={() => setSelectedCharacter(null)} />
+            <CharacterSheetModal character={selectedCharacterView} showBeats={showOtherPlayersBeats} onClose={closeCharacterModal} />
             <Dialog open={manualFalloutPickerOpen} onOpenChange={setManualFalloutPickerOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
@@ -706,7 +731,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                     </div>
                 </DialogContent>
             </Dialog>
-            {falloutRoll && <FalloutDie {...falloutRoll} value={falloutRoll.roll} />}
+            {falloutRoll && (
+                <Suspense fallback={null}>
+                    <FalloutDie {...falloutRoll} value={falloutRoll.roll} />
+                </Suspense>
+            )}
         </div>
     )
 }
@@ -789,16 +818,26 @@ function FalloutReferenceDialog({ onSelect }: { onSelect: (fallout: FalloutOptio
     )
 }
 
-function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwner[]; rolls: PlayGroup["rolls"]; now: number }) {
-    const knownCharacterIds = new Set(characters.map((character) => character.id))
-    const formerCharacters = [
-        ...new Map(
-            rolls
-                .filter((roll) => !roll.characterId || !knownCharacterIds.has(roll.characterId))
-                .map((roll) => [roll.characterId ?? `legacy-${roll.characterName}`, roll.characterName]),
-        ).entries(),
-    ].map(([id, name]) => ({ id, name }))
-    const columns = [...characters.map((character) => ({ id: character.id, name: rollCharacterName(character) })), ...formerCharacters]
+const SharedRolls = memo(function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwner[]; rolls: PlayGroup["rolls"]; now: number }) {
+    const { columns, rollsByCharacter } = useMemo(() => {
+        const known = new Set(characters.map((character) => character.id))
+        const former = new Map<string, string>()
+        const rollsByCharacter = new Map<string, PlayGroup["rolls"]>()
+        for (const roll of rolls) {
+            const id = roll.characterId ?? `legacy-${roll.characterName}`
+            if (!roll.characterId || !known.has(roll.characterId)) former.set(id, roll.characterName)
+            const entries = rollsByCharacter.get(id) ?? []
+            entries.push(roll)
+            rollsByCharacter.set(id, entries)
+        }
+        return {
+            columns: [
+                ...characters.map((character) => ({ id: character.id, name: rollCharacterName(character) })),
+                ...Array.from(former, ([id, name]) => ({ id, name })),
+            ],
+            rollsByCharacter,
+        }
+    }, [characters, rolls])
 
     return (
         <section className="mt-8 rounded-lg bg-card/40 p-4 text-left">
@@ -807,9 +846,7 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
                 <div className="mt-3 overflow-x-auto pb-1">
                     <div className="grid min-w-max grid-flow-col auto-cols-[minmax(13rem,1fr)] gap-4">
                         {columns.map((column) => {
-                            const characterRolls = rolls.filter(
-                                (roll) => roll.characterId === column.id || (!roll.characterId && column.id === `legacy-${roll.characterName}`),
-                            )
+                            const characterRolls = rollsByCharacter.get(column.id) ?? []
                             return (
                                 <section key={column.id} className="min-h-28 rounded-md bg-background/35 p-3">
                                     <h3 className="truncate text-sm font-bold" title={column.name}>
@@ -843,98 +880,163 @@ function SharedRolls({ characters, rolls, now }: { characters: CharacterWithOwne
             )}
         </section>
     )
-}
+})
 
-function CharacterCard({
-    character,
-    own,
+const CharacterCards = memo(function CharacterCards({
+    characters,
+    userId,
     gameMaster,
-    rollingFallout,
+    rollingId,
     onOpen,
     onFallout,
     showBeats,
 }: {
-    character: CharacterWithOwner
-    own: boolean
+    characters: CharacterWithOwner[]
+    userId: string
     gameMaster: boolean
-    rollingFallout: boolean
-    onOpen: () => void
-    onFallout: () => void
+    rollingId: string | null
+    onOpen: (character: CharacterWithOwner) => void
+    onFallout: (character: CharacterWithOwner) => void
     showBeats: boolean
 }) {
-    const data = character.data
     return (
-        <article
-            className={`group flex h-full cursor-pointer flex-col rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none ${getClassCardTheme(data.characterClass)}`}
-            onClick={onOpen}
-        >
-            <div className="flex items-start justify-between gap-3">
-                <div>
-                    <p className="flex items-center gap-1 text-xs uppercase tracking-widest text-primary">
-                        <Circle
-                            className={`size-2 ${character.isOnline ? "fill-emerald-500 text-emerald-500" : "fill-muted-foreground/50 text-muted-foreground/50"}`}
-                        />
-                        {own ? "Your character" : (character.nickname ?? "Player")}
-                        {character.isOnline ? " online" : " away"}
-                    </p>
-                    <h2 className="text-2xl font-black">{character.name || "Unnamed hiveborn"}</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">Sheet updated {relativeTime(character.updatedAt)}</p>
-                </div>
-                <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
-            </div>
-            <dl className="mt-4 grid grid-cols-2 divide-x divide-foreground/10 rounded-lg bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
-                <div className="min-w-0 px-2">
-                    <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                        <BookOpen className="size-3.5" /> Class
-                    </dt>
-                    <dd className="mt-1 truncate font-bold" title={data.characterClass || undefined}>
-                        {data.characterClass || "—"}
-                    </dd>
-                </div>
-                <div className="min-w-0 px-2">
-                    <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                        <Sparkles className="size-3.5" /> Calling
-                    </dt>
-                    <dd className="mt-1 truncate font-bold" title={data.calling || undefined}>
-                        {data.calling || "—"}
-                    </dd>
-                </div>
-            </dl>
-            <div className="mt-4">
-                <p className="text-xs font-bold tracking-wider text-muted-foreground">CURRENT STRESS</p>
-                <div className="mt-1 flex flex-wrap gap-1">
-                    {resistances.map((resistance) => (
-                        <span key={resistance} className="rounded bg-destructive/10 px-2 py-1 text-xs text-destructive">
-                            {resistance}: {data.stress[resistance]}
-                        </span>
-                    ))}
-                </div>
-            </div>
-            <div className="mt-3 rounded border-l-4 border-destructive bg-destructive/5 p-2">
-                <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
-                <Markdown className="text-sm">{data.fallout || "None recorded"}</Markdown>
-            </div>
-            {showBeats && (
-                <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2 text-left">
-                    <p className="text-xs font-bold tracking-wider text-primary">ACTIVE BEATS</p>
-                    <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
-                </div>
-            )}
-            <div className="mt-auto flex gap-2 pt-4" onClick={(event) => event.stopPropagation()}>
-                {gameMaster && (
-                    <Button size="sm" variant="destructive" onClick={onFallout} disabled={rollingFallout || totalStress(character) === 0}>
-                        <Dices /> Roll fallout
-                    </Button>
-                )}
-                <Button size="sm" variant="outline" className="border-0" onClick={onOpen}>
-                    {own ? "Open my sheet" : "View sheet"}
-                </Button>
-            </div>
-        </article>
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {characters.map((character) => (
+                <CharacterCard
+                    key={character.id}
+                    character={character}
+                    own={character.ownerId === userId}
+                    gameMaster={gameMaster}
+                    rollingFallout={rollingId === character.id}
+                    onOpen={onOpen}
+                    onFallout={onFallout}
+                    showBeats={character.ownerId === userId || showBeats}
+                />
+            ))}
+        </section>
     )
-}
+})
 
-function CharacterSheetModal({ character, showBeats, onClose }: { character: CharacterWithOwner | null; showBeats: boolean; onClose: () => void }) {
+const CharacterCard = memo(
+    function CharacterCard({
+        character,
+        own,
+        gameMaster,
+        rollingFallout,
+        onOpen,
+        onFallout,
+        showBeats,
+    }: {
+        character: CharacterWithOwner
+        own: boolean
+        gameMaster: boolean
+        rollingFallout: boolean
+        onOpen: (character: CharacterWithOwner) => void
+        onFallout: (character: CharacterWithOwner) => void
+        showBeats: boolean
+    }) {
+        const data = character.data
+        return (
+            <article
+                className={`group flex h-full cursor-pointer flex-col rounded-xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none ${getClassCardTheme(data.characterClass)}`}
+                onClick={() => onOpen(character)}
+            >
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <p className="flex items-center gap-1 text-xs uppercase tracking-widest text-primary">
+                            <Circle
+                                className={`size-2 ${character.isOnline ? "fill-emerald-500 text-emerald-500" : "fill-muted-foreground/50 text-muted-foreground/50"}`}
+                            />
+                            {own ? "Your character" : (character.nickname ?? "Player")}
+                            {character.isOnline ? " online" : " away"}
+                        </p>
+                        <h2 className="text-2xl font-black">{character.name || "Unnamed hiveborn"}</h2>
+                        <p className="mt-1 text-xs text-muted-foreground">Sheet updated {relativeTime(character.updatedAt)}</p>
+                    </div>
+                    <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold">{totalStress(character)} stress</span>
+                </div>
+                <dl className="mt-4 grid grid-cols-2 divide-x divide-foreground/10 rounded-lg bg-background/35 py-3 text-center text-sm backdrop-blur-[1px]">
+                    <div className="min-w-0 px-2">
+                        <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                            <BookOpen className="size-3.5" /> Class
+                        </dt>
+                        <dd className="mt-1 truncate font-bold" title={data.characterClass || undefined}>
+                            {data.characterClass || "—"}
+                        </dd>
+                    </div>
+                    <div className="min-w-0 px-2">
+                        <dt className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                            <Sparkles className="size-3.5" /> Calling
+                        </dt>
+                        <dd className="mt-1 truncate font-bold" title={data.calling || undefined}>
+                            {data.calling || "—"}
+                        </dd>
+                    </div>
+                </dl>
+                <div className="mt-4">
+                    <p className="text-xs font-bold tracking-wider text-muted-foreground">CURRENT STRESS</p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                        {resistances.map((resistance) => (
+                            <span key={resistance} className="rounded bg-destructive/10 px-2 py-1 text-xs text-destructive">
+                                {resistance}: {data.stress[resistance]}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+                <div className="mt-3 rounded border-l-4 border-destructive bg-destructive/5 p-2">
+                    <p className="text-xs font-bold tracking-wider text-destructive">CURRENT FALLOUTS</p>
+                    <Markdown className="text-sm">{data.fallout || "None recorded"}</Markdown>
+                </div>
+                {showBeats && (
+                    <div className="mt-3 rounded border-l-4 border-primary bg-primary/5 p-2 text-left">
+                        <p className="text-xs font-bold tracking-wider text-primary">ACTIVE BEATS</p>
+                        <Markdown className="text-sm">{data.activeBeats || "None recorded"}</Markdown>
+                    </div>
+                )}
+                <div className="mt-auto flex gap-2 pt-4" onClick={(event) => event.stopPropagation()}>
+                    {gameMaster && (
+                        <Button size="sm" variant="destructive" onClick={() => onFallout(character)} disabled={rollingFallout || totalStress(character) === 0}>
+                            <Dices /> Roll fallout
+                        </Button>
+                    )}
+                    <Button size="sm" variant="outline" className="border-0" onClick={() => onOpen(character)}>
+                        {own ? "Open my sheet" : "View sheet"}
+                    </Button>
+                </div>
+            </article>
+        )
+    },
+    (previous, next) => {
+        const a = previous.character,
+            b = next.character
+        return (
+            a.id === b.id &&
+            a.version === b.version &&
+            a.name === b.name &&
+            a.data === b.data &&
+            a.updatedAt === b.updatedAt &&
+            a.ownerId === b.ownerId &&
+            a.nickname === b.nickname &&
+            a.isOnline === b.isOnline &&
+            previous.own === next.own &&
+            previous.gameMaster === next.gameMaster &&
+            previous.rollingFallout === next.rollingFallout &&
+            previous.showBeats === next.showBeats &&
+            previous.onOpen === next.onOpen &&
+            previous.onFallout === next.onFallout
+        )
+    },
+)
+
+const CharacterSheetModal = memo(function CharacterSheetModal({
+    character,
+    showBeats,
+    onClose,
+}: {
+    character: CharacterWithOwner | null
+    showBeats: boolean
+    onClose: () => void
+}) {
     return (
         <Dialog open={Boolean(character)} onOpenChange={(open) => !open && onClose()}>
             {character && (
@@ -1002,7 +1104,7 @@ function CharacterSheetModal({ character, showBeats, onClose }: { character: Cha
             )}
         </Dialog>
     )
-}
+})
 
 type TagReference = {
     title: string

@@ -1,36 +1,31 @@
-import { createRootRoute, createRoute, createRouter, useParams } from "@tanstack/react-router"
-import App, { AuthCallbackPage, CharacterSheetPage, PlayModePage } from "./App"
+import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router"
+import App from "./App"
 
 const rootRoute = createRootRoute({ component: App })
 
 const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/",
-    component: CharacterSheetPage,
+    component: lazyRouteComponent(() => import("./pages/character-sheet"), "CharacterSheetPage"),
 })
 
 const authCallbackRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/auth/callback",
-    component: AuthCallbackPage,
+    component: lazyRouteComponent(() => import("./pages/auth-callback"), "AuthCallbackPage"),
 })
 
 const playRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/play",
-    component: () => <PlayModePage />,
+    component: lazyRouteComponent(() => import("./pages/play-mode"), "PlayModePage"),
 })
 
 const playGroupRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/play/$groupId",
-    component: PlayGroupRoute,
+    component: lazyRouteComponent(() => import("./pages/play-mode"), "PlayGroupPage"),
 })
-
-function PlayGroupRoute() {
-    const { groupId } = useParams({ from: "/play/$groupId" })
-    return <PlayModePage groupId={groupId} />
-}
 
 const routeTree = rootRoute.addChildren([indexRoute, authCallbackRoute, playRoute, playGroupRoute])
 
