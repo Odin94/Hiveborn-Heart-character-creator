@@ -1,9 +1,13 @@
 import { create } from "zustand"
 import { useShallow } from "zustand/react/shallow"
 import { v4 as uuid } from "uuid"
-import { persist } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
 import { Character, Domains, getEmptyCharacter, Skills } from "../game_data/character"
 import { Resistance } from "../game_data/resistances"
+import { applyTraitSelection, recordEarnedChanges } from "./traitGrants"
+import type { CharacterClass } from "../game_data/classes"
+import type { Calling } from "../game_data/callings"
+import { createDurableCharacterStorage } from "@/lib/durableCharacterStorage"
 import { createSelectors } from "../../lib/selectors"
 
 import { progressCharacter, type Progression } from "./progression"
@@ -60,6 +64,7 @@ export type CharacterState = {
 
     applyProgression: (change: Progression) => void
     applySynchronizedState: (updates: Partial<CharacterState>) => void
+    applyTraits: (characterUuid: string, kind: "class" | "calling", selection: CharacterClass | Calling, equipment?: string) => void
     setName: (name: string) => void
     setCharacterClass: (characterClass: string) => void
     setCalling: (calling: string) => void
@@ -80,6 +85,17 @@ export type CharacterState = {
     setCloudCharacters: (characters: Character[], ids: string[], versions: number[]) => void
     undoCharacterChange: () => void
     getCharacterData: () => Character
+}
+
+let externalActiveCharacter: Character | undefined
+const rehydrateExternal = async () => {
+    const state = useCharacterStore.getState()
+    externalActiveCharacter = state.characters[state.currentCharacterIndex]
+    try {
+        await useCharacterStore.persist.rehydrate()
+    } finally {
+        externalActiveCharacter = undefined
+    }
 }
 
 export const useCharacterStore = createSelectors(
@@ -214,6 +230,10 @@ export const useCharacterStore = createSelectors(
                         const next = progressCharacter(current, change)
                         if (next !== current) updateCurrentCharacter(next)
                     },
+                    applyTraits: (characterUuid, kind, selection, equipment) => {
+                        const index = get().characters.findIndex((character) => character.uuid === characterUuid)
+                        if (index >= 0) updateCharacter(index, applyTraitSelection(get().characters[index], kind, selection, equipment))
+                    },
                     setName: (name) => updateCurrentCharacter({ name }),
                     setCharacterClass: (characterClass) => updateCurrentCharacter({ characterClass }),
                     setCalling: (calling) => updateCurrentCharacter({ calling }),
@@ -222,9 +242,9 @@ export const useCharacterStore = createSelectors(
                     setResources: (resources) => updateCurrentCharacter({ resources }),
                     setAbilities: (abilities) => updateCurrentCharacter({ abilities }),
                     setFallout: (fallout) => updateCurrentCharacter({ fallout }),
-                    setSkills: (skills) => updateCurrentCharacter({ skills }),
-                    setDomains: (domains) => updateCurrentCharacter({ domains }),
-                    setProtections: (protections) => updateCurrentCharacter({ protections }),
+                    setSkills: (skills) => updateCurrentCharacter(recordEarnedChanges(getCurrentCharacter(), { skills })),
+                    setDomains: (domains) => updateCurrentCharacter(recordEarnedChanges(getCurrentCharacter(), { domains })),
+                    setProtections: (protections) => updateCurrentCharacter(recordEarnedChanges(getCurrentCharacter(), { protections })),
                     setStressForCharacter: (index, stress) => {
                         const currentStress = get().characters[index]?.stress ?? getEmptyCharacter().stress
                         const lastStressResistance = (Object.keys(stress) as Resistance[]).find((resistance) => stress[resistance] > currentStress[resistance])
@@ -403,6 +423,7 @@ export const useCharacterStore = createSelectors(
             },
             {
                 name: "hiveborn-character-storage",
+                storage: createJSONStorage(() => createDurableCharacterStorage(localStorage, undefined, () => void rehydrateExternal())),
                 version: 1,
                 migrate: (persisted) => persisted as CharacterState,
                 merge: (persisted, current) => {
@@ -423,7 +444,23 @@ export const useCharacterStore = createSelectors(
                         seen.add(id)
                         return { ...getEmptyCharacter(), ...character, uuid: id }
                     })
-                    const currentCharacterIndex = Math.max(0, Math.min(saved.currentCharacterIndex ?? 0, characters.length - 1))
+                    const retainedDraftIndex = externalActiveCharacter
+                        ? characters.findIndex((character) => {
+                              const { uuid: _savedUuid, ...savedDraft } = character
+                              const { uuid: _localUuid, ...localDraft } = externalActiveCharacter!
+                              return JSON.stringify(savedDraft) === JSON.stringify(localDraft)
+                          })
+                        : -1
+                    const retainedIndex =
+                        retainedDraftIndex >= 0
+                            ? retainedDraftIndex
+                            : externalActiveCharacter
+                              ? characters.findIndex((character) => character.uuid === externalActiveCharacter!.uuid)
+                              : -1
+                    const currentCharacterIndex = Math.max(
+                        0,
+                        Math.min(retainedIndex >= 0 ? retainedIndex : (saved.currentCharacterIndex ?? 0), characters.length - 1),
+                    )
                     return {
                         ...current,
                         ...saved,
@@ -470,3 +507,7 @@ export const useMultiCharacter = () => {
         getAllCharacters: () => characters,
     }
 }
+
+window.addEventListener("storage", (event) => {
+    if (event.key === "hiveborn-character-storage" || event.key?.startsWith("hiveborn-character-journal:")) void rehydrateExternal()
+})

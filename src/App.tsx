@@ -26,7 +26,7 @@ function App() {
         }
     }, [userUuid, setUserUuid])
 
-    useCloudCharacterSync(auth.user?.id)
+    useCloudCharacterSync(auth.user?.id, auth.loading)
 
     useEffect(() => {
         // Keep authenticated account activity on the WorkOS user identity.

@@ -91,6 +91,9 @@ export function reconcileCharacters(remote: CloudCharacter[], accountId: string,
             if (previousAccount === accountId && base && sameCharacter(base, server.data)) {
                 // Only this browser changed. Its pending patch remains safe.
                 add(local, server, server.data)
+            } else if (previousAccount === accountId && base && sameCharacter(local, base)) {
+                // A clean browser adopts the remote edit without creating a copy.
+                add(server.data, server, server.data)
             } else {
                 // Ambiguous or concurrent versions get separate identities.
                 add({ ...local, uuid: uuid() })

@@ -15,9 +15,17 @@ const observeCharacters = (refresh: () => void) => {
         const url = new URL(API_URL)
         url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
         url.pathname = "/characters/live"
-        url.searchParams.set("token", token)
+        url.search = ""
         socket = new WebSocket(url)
-        socket.onmessage = refresh
+        socket.onopen = () => socket?.send(JSON.stringify({ type: "auth", token }))
+        socket.onmessage = (message) => {
+            try {
+                if (JSON.parse(message.data).type === "authenticated") return
+            } catch {
+                /* Fetch authoritative data. */
+            }
+            refresh()
+        }
         socket.onclose = (event) => {
             if (!stopped && event.code !== 1008) reconnectTimer = setTimeout(connect, 1500)
         }
@@ -30,8 +38,10 @@ const observeCharacters = (refresh: () => void) => {
     }
 }
 
-export function useCloudCharacterSync(accountId: string | undefined) {
+/** The browser is durable storage; authentication only enables a retrying sync queue. */
+export function useCloudCharacterSync(accountId: string | undefined, authenticationPending = false) {
     useEffect(() => {
+        if (authenticationPending) return
         if (!accountId) {
             usePlayModeStore.getState().setActiveGroup(null)
             return
@@ -47,5 +57,5 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             },
         )
         return sync.stop
-    }, [accountId])
+    }, [accountId, authenticationPending])
 }

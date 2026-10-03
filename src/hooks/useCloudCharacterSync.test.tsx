@@ -51,6 +51,7 @@ it.each([false, true])("preserves browser-only sheets across reloads (previous c
 
     // Recreate startup: discard memory, hydrate saved browser data, mount sync.
     useCharacterStore.setState(useCharacterStore.getInitialState(), true)
+    localStorage.clear()
     localStorage.setItem(storageKey, saved)
     await useCharacterStore.persist.rehydrate()
     await act(() =>

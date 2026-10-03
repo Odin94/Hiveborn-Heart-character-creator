@@ -8,10 +8,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Markdown } from "@/components/ui/markdown"
-import { formatEquipmentEntry, formatRulesText } from "@/hiveborn/character_sheet/markdown_formatting"
-import { CharacterClass, characterClasses, coreTraitsByCharacter, isCharacterClass } from "@/hiveborn/game_data/classes"
+import { formatEquipmentEntry, formatRulesText } from "../markdown_formatting"
+import { CharacterClass, characterClasses, coreTraitsByCharacter } from "@/hiveborn/game_data/classes"
 import { useCharacterStore } from "../character_states"
-import { Calling, callings, isCalling } from "@/hiveborn/game_data/callings"
+import { Calling, callings } from "@/hiveborn/game_data/callings"
 import { abilitiesByClassOrCalling } from "@/hiveborn/game_data/abilities"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -27,7 +27,6 @@ const NameClassCalling = () => {
     const setCharacterClass = useCharacterStore.use.setCharacterClass()
     const calling = useCharacterStore.use.calling()
     const setCalling = useCharacterStore.use.setCalling()
-    const applyProgression = useCharacterStore.use.applyProgression()
 
     return (
         <div className="grid w-full grid-cols-1 gap-x-2 gap-y-2 sm:grid-cols-[1fr_6fr]">
@@ -42,7 +41,7 @@ const NameClassCalling = () => {
             <div className="relative flex items-center">
                 <Input value={characterClass} onChange={(e) => setCharacterClass(e.target.value)} className="w-full pr-10" />
                 <div className="absolute right-2">
-                    <ClassDropdown onConfirm={({ characterClass, pickedEquipment }) => applyProgression({ type: "class", characterClass, pickedEquipment })} />
+                    <ClassDropdown />
                 </div>
             </div>
 
@@ -51,18 +50,17 @@ const NameClassCalling = () => {
             <div className="relative flex items-center">
                 <Input value={calling} onChange={(e) => setCalling(e.target.value)} className="w-full pr-10" />
                 <div className="absolute right-2">
-                    <CallingDropdown onConfirm={({ calling }) => applyProgression({ type: "calling", calling })} />
+                    <CallingDropdown />
                 </div>
             </div>
         </div>
     )
 }
 
-const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment: string; characterClass: CharacterClass }) => void }) => {
-    const savedClass = useCharacterStore.use.characterClass()
-    const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null)
-    const characterClass = selectedClass ?? savedClass
-    const coreTraits = isCharacterClass(characterClass) ? coreTraitsByCharacter[characterClass] : null
+const ClassDropdown = () => {
+    const [selection, setSelection] = useState<CharacterClass | null>(null)
+    const [characterUuid, setCharacterUuid] = useState("")
+    const coreTraits = selection ? coreTraitsByCharacter[selection] : null
     const [pickedEquipmentIndex, setPickedEquipmentIndex] = useState("0")
 
     return (
@@ -78,7 +76,9 @@ const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment
                         <DialogTrigger asChild key={c}>
                             <DropdownMenuItem
                                 onSelect={(_e) => {
-                                    setSelectedClass(c)
+                                    setSelection(c)
+                                    setPickedEquipmentIndex("0")
+                                    setCharacterUuid(useCharacterStore.getState().getCharacterData().uuid)
                                 }}
                                 key={c}
                             >
@@ -90,7 +90,7 @@ const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment
             </DropdownMenu>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Apply {characterClass.toUpperCase()} core traits?</DialogTitle>
+                    <DialogTitle>Apply {selection?.toUpperCase()} core traits?</DialogTitle>
                     <DialogDescription></DialogDescription>
                     {coreTraits ? (
                         // TODOdin: Make this Dialog pretty
@@ -101,9 +101,9 @@ const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment
                                 Resource: <Markdown inline>{formatRulesText(coreTraits.resource)}</Markdown>
                             </div>
 
-                            <p className="text-muted-foreground text-md my-2">
+                            <div className="text-muted-foreground text-md my-2">
                                 Abilities: <Markdown inline>{coreTraits.abilities.map((ability) => `\`${ability.name}\``).join(", ")}</Markdown>
-                            </p>
+                            </div>
 
                             <p>Equipment:</p>
                             {coreTraits.equipment ? (
@@ -134,10 +134,12 @@ const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment
                                         className="ml-3"
                                         type="button"
                                         onClick={() => {
-                                            if (isCharacterClass(characterClass))
-                                                onConfirm({ pickedEquipment: coreTraits.pickEquipment[Number(pickedEquipmentIndex)], characterClass })
+                                            if (selection)
+                                                useCharacterStore
+                                                    .getState()
+                                                    .applyTraits(characterUuid, "class", selection, coreTraits.pickEquipment[Number(pickedEquipmentIndex)])
                                             setPickedEquipmentIndex("0")
-                                            setSelectedClass(null)
+                                            setSelection(null)
                                         }}
                                     >
                                         Apply
@@ -152,11 +154,10 @@ const ClassDropdown = ({ onConfirm }: { onConfirm: (selection: { pickedEquipment
     )
 }
 
-const CallingDropdown = ({ onConfirm }: { onConfirm: (selection: { calling: Calling }) => void }) => {
-    const savedCalling = useCharacterStore.use.calling()
-    const [selectedCalling, setSelectedCalling] = useState<Calling | null>(null)
-    const calling = selectedCalling ?? savedCalling
-    const callingAbility = isCalling(calling) ? abilitiesByClassOrCalling[calling][0] : null
+const CallingDropdown = () => {
+    const [selection, setSelection] = useState<Calling | null>(null)
+    const [characterUuid, setCharacterUuid] = useState("")
+    const callingAbility = selection ? abilitiesByClassOrCalling[selection][0] : null
 
     return (
         <Dialog>
@@ -171,7 +172,8 @@ const CallingDropdown = ({ onConfirm }: { onConfirm: (selection: { calling: Call
                         <DialogTrigger asChild key={c}>
                             <DropdownMenuItem
                                 onSelect={(_e) => {
-                                    setSelectedCalling(c)
+                                    setSelection(c)
+                                    setCharacterUuid(useCharacterStore.getState().getCharacterData().uuid)
                                 }}
                                 key={c}
                             >
@@ -183,7 +185,7 @@ const CallingDropdown = ({ onConfirm }: { onConfirm: (selection: { calling: Call
             </DropdownMenu>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Apply {calling.toUpperCase()} stats?</DialogTitle>
+                    <DialogTitle>Apply {selection?.toUpperCase()} stats?</DialogTitle>
                     <DialogDescription></DialogDescription>
                     <div>
                         <div className="text-muted-foreground text-md my-2">
@@ -200,8 +202,8 @@ const CallingDropdown = ({ onConfirm }: { onConfirm: (selection: { calling: Call
                                     className="ml-3"
                                     type="button"
                                     onClick={() => {
-                                        if (isCalling(calling)) onConfirm({ calling })
-                                        setSelectedCalling(null)
+                                        if (selection) useCharacterStore.getState().applyTraits(characterUuid, "calling", selection)
+                                        setSelection(null)
                                     }}
                                 >
                                     Apply

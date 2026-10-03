@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify"
+import type { FastifyInstance, FastifyRequest } from "fastify"
 import websocket from "@fastify/websocket"
 import { and, eq } from "drizzle-orm"
 import { db, schema } from "../db/index.js"
@@ -58,14 +58,12 @@ export async function broadcastUserCharacterChange(userId: string, change: Chara
 export async function registerLiveGroupRoutes(fastify: FastifyInstance) {
     await fastify.register(websocket)
     fastify.get("/characters/live", { websocket: true }, async (socket, request) => {
-        const token = (request.query as { token?: string }).token
-        if (!token) return socket.close(1008, "Missing token")
-        if (!isAllowedFrontendOrigin(request.headers.origin)) return socket.close(1008, "Untrusted origin")
-        const user = await authenticateToken(token, isLocalhostHost(request.headers.host) && isLoopbackAddress(request.raw.socket.remoteAddress))
-        if (!user) return socket.close(1008, "Unauthorized")
+        const user = await authenticateSocket(socket, request)
+        if (!user || socket.readyState !== socket.OPEN) return
         const sockets = userSubscribers.get(user.id) ?? new Set<WebSocket>()
         sockets.add(socket)
         userSubscribers.set(user.id, sockets)
+        socket.send(JSON.stringify({ type: "authenticated" }))
         socket.on("close", () => {
             sockets.delete(socket)
             if (!sockets.size) userSubscribers.delete(user.id)
@@ -73,20 +71,20 @@ export async function registerLiveGroupRoutes(fastify: FastifyInstance) {
     })
     fastify.get("/play-groups/:id/live", { websocket: true }, async (socket, request) => {
         const params = request.params as { id?: string }
-        const token = (request.query as { token?: string }).token
-        if (!params.id || !token) return socket.close(1008, "Missing group or token")
-        if (!isAllowedFrontendOrigin(request.headers.origin)) return socket.close(1008, "Untrusted origin")
-        const user = await authenticateToken(token, isLocalhostHost(request.headers.host) && isLoopbackAddress(request.raw.socket.remoteAddress))
-        if (!user) return socket.close(1008, "Unauthorized")
+        if (!params.id) return socket.close(1008, "Missing group")
+        const user = await authenticateSocket(socket, request)
+        if (!user || socket.readyState !== socket.OPEN) return
         const membership = await db
             .select()
             .from(schema.groupMembers)
             .where(and(eq(schema.groupMembers.groupId, params.id), eq(schema.groupMembers.userId, user.id)))
             .get()
         if (!membership) return socket.close(1008, "Not a group member")
+        if (socket.readyState !== socket.OPEN) return
         const groupSubscribers = subscribers.get(params.id) ?? new Set<WebSocket>()
         groupSubscribers.add(socket)
         subscribers.set(params.id, groupSubscribers)
+        socket.send(JSON.stringify({ type: "authenticated" }))
         const members = onlineMembers.get(params.id) ?? new Map<string, number>()
         const previousConnections = members.get(user.id) ?? 0
         members.set(user.id, previousConnections + 1)
@@ -104,4 +102,41 @@ export async function registerLiveGroupRoutes(fastify: FastifyInstance) {
             if (!members.size) onlineMembers.delete(params.id!)
         })
     })
+}
+
+/** Subscribe only after the first frame authenticates; credentials never enter URLs. */
+async function authenticateSocket(socket: Parameters<websocket.WebsocketHandler>[0], request: FastifyRequest) {
+    if (!isAllowedFrontendOrigin(request.headers.origin)) {
+        socket.close(1008, "Untrusted origin")
+        return null
+    }
+    const token = await new Promise<string | null>((resolve) => {
+        const finish = (value: string | null) => {
+            clearTimeout(timer)
+            socket.off("message", message)
+            socket.off("close", closed)
+            resolve(value)
+        }
+        const closed = () => finish(null)
+        const message = (data: { toString(): string }) => {
+            try {
+                const payload = JSON.parse(data.toString())
+                finish(payload.type === "auth" && typeof payload.token === "string" && payload.token.length <= 10000 ? payload.token : null)
+            } catch {
+                finish(null)
+            }
+        }
+        const timer = setTimeout(() => finish(null), 5000)
+        socket.once("message", message)
+        socket.once("close", closed)
+    })
+    let user
+    try {
+        user = token ? await authenticateToken(token, isLocalhostHost(request.headers.host) && isLoopbackAddress(request.raw.socket.remoteAddress)) : null
+    } catch {
+        socket.close(1013, "Authentication temporarily unavailable")
+        return null
+    }
+    if (!user) socket.close(1008, "Unauthorized")
+    return user
 }
