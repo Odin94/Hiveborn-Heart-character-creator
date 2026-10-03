@@ -35,20 +35,46 @@ export type PlayGroup = {
     }>
 }
 
+export const AUTH_TOKEN_STORAGE_KEY = TOKEN_KEY
+let knownToken = localStorage.getItem(TOKEN_KEY)
+let sessionGeneration = 0
 export const tokenStorage = {
     get: () => localStorage.getItem(TOKEN_KEY),
-    set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-    remove: () => localStorage.removeItem(TOKEN_KEY),
+    getGeneration: () => {
+        const current = localStorage.getItem(TOKEN_KEY)
+        if (current !== knownToken) {
+            knownToken = current
+            ++sessionGeneration
+        }
+        return sessionGeneration
+    },
+    set: (token: string) => {
+        localStorage.setItem(TOKEN_KEY, token)
+        knownToken = token
+        ++sessionGeneration
+    },
+    remove: () => {
+        localStorage.removeItem(TOKEN_KEY)
+        knownToken = null
+        ++sessionGeneration
+    },
+    rotate: (token: string, expected: string | null, expectedGeneration: number) => {
+        if (localStorage.getItem(TOKEN_KEY) !== expected || tokenStorage.getGeneration() !== expectedGeneration) return
+        localStorage.setItem(TOKEN_KEY, token)
+        knownToken = token
+        // Verified rotation belongs to the same account/session, unlike a new login.
+    },
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const token = tokenStorage.get()
+    const generation = tokenStorage.getGeneration()
     const response = await fetch(`${API_URL}${path}`, {
         ...init,
         headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers },
     })
     const refreshed = response.headers.get("X-New-Token")
-    if (refreshed && tokenStorage.get() === token) tokenStorage.set(refreshed)
+    if (refreshed) tokenStorage.rotate(refreshed, token, generation)
     if (!response.ok) {
         const detail = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
         const error = new Error(detail.message ?? detail.error ?? `Request failed (${response.status})`) as ApiRequestError

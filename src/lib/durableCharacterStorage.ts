@@ -6,7 +6,7 @@ import type { Character } from "@/hiveborn/game_data/character"
 
 type SavedState = Partial<CharacterState> & { characters?: Character[] }
 type Envelope = { state: SavedState; version?: number; writers?: Record<string, { revision: number; state: SavedState }> }
-type Journal = { revision: number; base: SavedState; state: SavedState }
+type Journal = { revision: number; base: SavedState; state: SavedState; version?: number }
 let lastStorageWarning = 0
 const storageFailure = () => {
     if (Date.now() - lastStorageWarning < 5000) return
@@ -135,25 +135,58 @@ export function mergeBrowserCharacters(base: SavedState, current: SavedState, in
     }
 }
 
+let storageLockDatabase: Promise<IDBDatabase> | undefined
+const withIndexedDBLock = (name: string, callback: () => void): Promise<void> => {
+    storageLockDatabase ??= new Promise((resolve, reject) => {
+        const request = indexedDB.open("hiveborn-character-storage-lock", 1)
+        request.onupgradeneeded = () => request.result.createObjectStore("writes")
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => {
+            storageLockDatabase = undefined
+            reject(request.error)
+        }
+    })
+    return storageLockDatabase.then(
+        (database) =>
+            new Promise<void>((resolve, reject) => {
+                // Even without Web Locks, a readwrite transaction owns the object-store
+                // lock across tabs until its synchronous localStorage transaction finishes.
+                const transaction = database.transaction("writes", "readwrite")
+                transaction.objectStore("writes").get(name).onsuccess = () => {
+                    try {
+                        callback()
+                    } catch (error) {
+                        transaction.abort()
+                        reject(error)
+                    }
+                }
+                transaction.oncomplete = () => resolve()
+                transaction.onerror = () => reject(transaction.error)
+                transaction.onabort = () => reject(transaction.error)
+            }),
+    )
+}
+
 /** One bounded durable journal per tab. Canonical write races can always replay a missed writer. */
+// A new document always gets a new identity: Duplicate Tab copies sessionStorage.
 export function browserWriterId(): string {
-    const key = "hiveborn-character-writer"
-    let id = sessionStorage.getItem(key)
-    if (!id) {
-        id = uuid()
-        sessionStorage.setItem(key, id)
-    }
-    return id
+    return uuid()
 }
 
 export function createDurableCharacterStorage(storage: Storage, writerId = browserWriterId(), onExternalChange?: () => void): StateStorage {
     let previous: SavedState | undefined
     let revision = 0
+    let volatileDraft: { base: SavedState; state: SavedState } | undefined
     const prefix = "hiveborn-character-journal:"
     const read = (name: string): Envelope | null => {
         const raw = storage.getItem(name)
-        if (!raw) return null
-        const document = JSON.parse(raw) as Envelope
+        let document: Envelope | null = null
+        try {
+            const parsed = raw ? (JSON.parse(raw) as Envelope) : null
+            if (parsed && isObject(parsed.state) && (!parsed.state.characters || Array.isArray(parsed.state.characters))) document = parsed
+        } catch {
+            console.warn("Recovering a malformed Hiveborn canonical storage record from journals")
+        }
         const journals: [string, Journal][] = []
         for (let index = 0; index < storage.length; index++) {
             const key = storage.key(index)
@@ -174,13 +207,26 @@ export function createDurableCharacterStorage(storage: Storage, writerId = brows
                 }
             }
         }
+        const recoveringCanonical = !document
+        if (!document && journals.length) {
+            const initial = journals[0][1]
+            document = { version: initial.version ?? 1, state: initial.base, writers: {} }
+        }
+        if (!document && volatileDraft) document = { version: 1, state: volatileDraft.base, writers: {} }
+        if (!document) return null
         document.writers ??= {}
+        if (recoveringCanonical && journals.length) {
+            const initialBase = journals[0][1].base
+            for (const [writer, journal] of journals)
+                document.state = mergeBrowserCharacters(initialBase, document.state, journal.base, `${writer}:recovered-base`)
+        }
         for (const [writer, journal] of journals.sort(([a], [b]) => a.localeCompare(b))) {
             const seen = document.writers[writer]
             if ((seen?.revision ?? 0) >= journal.revision) continue
             document.state = mergeBrowserCharacters(seen?.state ?? journal.base, document.state, journal.state, `${writer}:${journal.revision}`)
             document.writers[writer] = { revision: journal.revision, state: journal.state }
         }
+        if (volatileDraft) document.state = mergeBrowserCharacters(volatileDraft.base, document.state, volatileDraft.state, `${writerId}:volatile`)
         return document
     }
     return {
@@ -191,7 +237,7 @@ export function createDurableCharacterStorage(storage: Storage, writerId = brows
         },
         setItem: (name, raw) => {
             const incoming = JSON.parse(raw) as Envelope
-            const base = previous ?? { characters: [] }
+            const base = volatileDraft?.base ?? previous ?? { characters: [] }
             let existing: Journal | undefined
             try {
                 existing = JSON.parse(storage.getItem(`${prefix}${writerId}`) ?? "null") ?? undefined
@@ -199,19 +245,32 @@ export function createDurableCharacterStorage(storage: Storage, writerId = brows
                 /* Keep canonical data intact. */
             }
             revision = Math.max(revision, existing?.revision ?? 0) + 1
-            const journal: Journal = { revision, base: existing?.base ?? base, state: incoming.state }
+            const journal: Journal = { revision, base: existing?.base ?? base, state: incoming.state, version: incoming.version }
             // Write our own recovery copy first. No other tab can overwrite its key.
             try {
                 storage.setItem(`${prefix}${writerId}`, JSON.stringify(journal))
             } catch {
+                volatileDraft = { base: volatileDraft?.base ?? base, state: copy(incoming.state) }
                 storageFailure()
                 return
             }
+            volatileDraft = undefined
             previous = copy(incoming.state)
             const persist = (compact: boolean) => {
                 const recovered = read(name)
                 const document = recovered ?? { ...incoming, writers: { [writerId]: { revision: journal.revision, state: incoming.state } } }
                 document.version = incoming.version
+                const priorRaw = storage.getItem(name)
+                if (priorRaw) {
+                    let valid = false
+                    try {
+                        const prior = JSON.parse(priorRaw) as Envelope
+                        valid = isObject(prior.state) && (!prior.state.characters || Array.isArray(prior.state.characters))
+                    } catch {
+                        /* Preserve damaged bytes before replacement. */
+                    }
+                    if (!valid) storage.setItem(`${name}:damaged:${stableUuid(priorRaw, namespace)}`, priorRaw)
+                }
                 storage.setItem(name, JSON.stringify(document))
                 if (compact) {
                     // Web Locks serialize canonical writes. Remove only the exact acknowledged
@@ -240,7 +299,16 @@ export function createDurableCharacterStorage(storage: Storage, writerId = brows
                 // A journal survives reload/crash before this queued transaction runs.
                 return navigator.locks.request(name, () => persist(true)).catch(storageFailure)
             }
-            // Older browsers retain bounded per-tab recovery journals instead of unsafe pruning.
+            if (typeof indexedDB !== "undefined")
+                return withIndexedDBLock(name, () => persist(true)).catch(() => {
+                    try {
+                        persist(false)
+                    } catch {
+                        storageFailure()
+                    }
+                })
+            // If both coordination APIs are unavailable, retain recovery journals
+            // rather than prune a writer another tab may still need.
             try {
                 persist(false)
             } catch {

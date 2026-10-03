@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import posthog from "posthog-js"
-import { api, tokenStorage, type ApiRequestError, type User } from "@/lib/api"
+import { api, AUTH_TOKEN_STORAGE_KEY, tokenStorage, type ApiRequestError, type User } from "@/lib/api"
 
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null)
@@ -17,6 +17,7 @@ export function useAuth() {
         const attempt = ++requestId.current
         clearTimeout(retryTimer.current)
         const token = tokenStorage.get()
+        const session = tokenStorage.getGeneration()
         if (!token) {
             confirmedUser.current = null
             setUser(null)
@@ -26,14 +27,14 @@ export function useAuth() {
         if (!confirmedUser.current) setLoading(true)
         try {
             const current = await api.me()
-            if (!mounted.current || attempt !== requestId.current || !tokenStorage.get()) return null
+            if (!mounted.current || attempt !== requestId.current || !tokenStorage.get() || tokenStorage.getGeneration() !== session) return null
             confirmedUser.current = current
             setUser(current)
             setLoading(false)
             posthog.identify(current.id, { email: current.email, nickname: current.nickname })
             return current
         } catch (error) {
-            if (!mounted.current || attempt !== requestId.current || tokenStorage.get() !== token) return null
+            if (!mounted.current || attempt !== requestId.current || tokenStorage.getGeneration() !== session) return null
             if ((error as ApiRequestError).status === 401) {
                 tokenStorage.remove()
                 confirmedUser.current = null
@@ -50,18 +51,29 @@ export function useAuth() {
         mounted.current = true
         void refresh()
         const retry = () => void refresh()
+        const sessionChanged = (event: StorageEvent) => {
+            if (event.key !== AUTH_TOKEN_STORAGE_KEY) return
+            cancelRequests()
+            confirmedUser.current = null
+            setUser(null)
+            setLoading(Boolean(tokenStorage.get()))
+            void refresh()
+        }
+        window.addEventListener("storage", sessionChanged)
         window.addEventListener("online", retry)
         return () => {
             mounted.current = false
             cancelRequests()
             window.removeEventListener("online", retry)
+            window.removeEventListener("storage", sessionChanged)
         }
     }, [refresh, cancelRequests])
     const devLogin = useCallback(async () => {
         const attempt = ++requestId.current
         clearTimeout(retryTimer.current)
+        const session = tokenStorage.getGeneration()
         const result = await api.devLogin()
-        if (!mounted.current || attempt !== requestId.current) return null
+        if (!mounted.current || attempt !== requestId.current || tokenStorage.getGeneration() !== session) return null
         tokenStorage.set(result.token)
         confirmedUser.current = result.user
         setUser(result.user)
@@ -72,12 +84,13 @@ export function useAuth() {
     const logout = useCallback(async () => {
         const attempt = ++requestId.current
         clearTimeout(retryTimer.current)
+        const session = tokenStorage.getGeneration()
         // Invalidate in-flight refreshes immediately, before the logout request resolves.
         confirmedUser.current = null
         try {
             await api.logout()
         } finally {
-            if (attempt === requestId.current) {
+            if (attempt === requestId.current && tokenStorage.getGeneration() === session) {
                 tokenStorage.remove()
                 if (mounted.current) {
                     setUser(null)
@@ -89,8 +102,9 @@ export function useAuth() {
     }, [])
     const updateProfile = useCallback(async (nickname: string) => {
         const attempt = requestId.current
+        const session = tokenStorage.getGeneration()
         const updated = await api.updateProfile(nickname)
-        if (mounted.current && attempt === requestId.current && tokenStorage.get()) {
+        if (mounted.current && attempt === requestId.current && tokenStorage.get() && tokenStorage.getGeneration() === session) {
             confirmedUser.current = updated
             setUser(updated)
         }

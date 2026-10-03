@@ -18,7 +18,7 @@ Initial committed snapshot: `8a0544f`. Final revalidation: `88c2eb0` plus docume
 
 ## Verification and scope
 
-Baseline: 34 frontend tests and 8 backend tests. Fix validation currently includes 60 frontend tests and 9 backend tests. Frontend and backend production builds/typechecks pass. The clean larger-collection probe (21 sheets, 15,500 characters of notes per imported sheet, repeated edits) did not reproduce storage exhaustion or obvious editing delay.
+Baseline: 34 frontend tests and 8 backend tests. Fix validation currently includes 69 frontend tests and 9 backend tests. Frontend and backend production builds/typechecks pass. The clean larger-collection probe (21 sheets, 15,500 characters of notes per imported sheet, repeated edits) did not reproduce storage exhaustion or obvious editing delay.
 
 All three apps were launched locally against disposable SQLite databases. Browser/API probes cover anonymous persistence, cross-tab editing, import/export, authenticated sync, conflicts, reload/recovery, character switching, and the reported interaction bugs. Default sheets were inspected at 390 × 844 with no horizontal overflow or page errors. Passing existing tests did not prevent the reported bugs.
 
@@ -32,3 +32,7 @@ Shared [browser results](../../../evidence/browser-results.json), [screenshots](
 - [Screenshot: second reproduction](../../../evidence/hiveborn-stress-wrong-character.png)
 
 The initially reproduced [heavy-startup finding](resolved/H08-export-and-3d-code-block-startup.md) is **resolved by the newer performance commits** and excluded from the open count. Controlled cold load improved from 4.43 to 2.82 seconds under identical throttling.
+
+## Review iterations
+
+Round 1 found four additional edge cases: copied writer IDs, journal-only startup recovery, quota-failed drafts overwritten by external hydration, and late authentication responses after another tab changes accounts. All four now have focused regression tests and revisions. IndexedDB transactions also provide safe compaction when Web Locks are unavailable. Independent re-review is pending.

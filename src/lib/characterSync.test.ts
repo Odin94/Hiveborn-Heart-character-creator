@@ -1,4 +1,4 @@
-import { beforeEach, expect, it } from "vitest"
+import { beforeEach, expect, it, vi } from "vitest"
 import { getEmptyCharacter, characterSchema } from "@/hiveborn/game_data/character"
 import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { acknowledgeCharacter, acknowledgeDeletion, reconcileCharacters, sameCharacter } from "./characterSync"
@@ -223,4 +223,33 @@ it("storage events adopt another tab's data without moving this tab's selected U
     await Promise.resolve()
     expect(store.getState().getCharacterData().uuid).toBe(selected.uuid)
     expect(store.getState().characters[0].equipment).toBe("Remote lantern")
+})
+
+it.each([false, true])("retains a quota-failed in-memory edit across an external storage update (conflict: %s)", async (conflict) => {
+    const original = sheet("Original")
+    store.getState().setCloudCharacters([original], [""], [0])
+    const canonical = localStorage.getItem("hiveborn-character-storage")!
+    const setItem = Storage.prototype.setItem
+    const failure = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+        if (key.startsWith("hiveborn-character-journal:")) throw new DOMException("Full", "QuotaExceededError")
+        setItem.call(this, key, value)
+    })
+    try {
+        store.getState().setName("Private unsaved draft")
+    } finally {
+        failure.mockRestore()
+    }
+    const remote = JSON.parse(canonical)
+    if (conflict) remote.state.characters[0].name = "Other tab name"
+    else remote.state.characters[0].equipment = "Remote equipment"
+    localStorage.setItem("hiveborn-character-storage", JSON.stringify(remote))
+    window.dispatchEvent(new StorageEvent("storage", { key: "hiveborn-character-storage" }))
+    await Promise.resolve()
+    expect(store.getState().getCharacterData().name).toBe("Private unsaved draft")
+    if (conflict)
+        expect(store.getState().characters.map((character) => character.name)).toEqual(expect.arrayContaining(["Private unsaved draft", "Other tab name"]))
+    else expect(store.getState().getCharacterData().equipment).toBe("Remote equipment")
+    store.getState().setAbilities("Next successfully saved edit")
+    await store.persist.rehydrate()
+    expect(store.getState().characters.some((character) => character.name === "Private unsaved draft")).toBe(true)
 })

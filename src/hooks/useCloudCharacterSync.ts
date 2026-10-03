@@ -6,8 +6,9 @@ import { useCharacterStore } from "@/hiveborn/character_sheet/character_states"
 import { acknowledgeCharacter, acknowledgeDeletion, characterChanges, reconcileCharacters } from "@/lib/characterSync"
 
 /** The browser is durable storage; authentication only enables a retrying sync queue. */
-export function useCloudCharacterSync(accountId: string | undefined) {
+export function useCloudCharacterSync(accountId: string | undefined, authenticationPending = false) {
     useEffect(() => {
+        if (authenticationPending) return
         if (!accountId) {
             usePlayModeStore.getState().setActiveGroup(null)
             return
@@ -120,5 +121,5 @@ export function useCloudCharacterSync(accountId: string | undefined) {
             window.clearTimeout(reconnectTimer)
             socket?.close()
         }
-    }, [accountId])
+    }, [accountId, authenticationPending])
 }

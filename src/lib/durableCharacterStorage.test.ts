@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { getEmptyCharacter } from "@/hiveborn/game_data/character"
-import { createDurableCharacterStorage, mergeBrowserCharacters } from "./durableCharacterStorage"
+import { browserWriterId, createDurableCharacterStorage, mergeBrowserCharacters } from "./durableCharacterStorage"
 const key = "hiveborn-character-storage"
 const character = { ...getEmptyCharacter(), name: "Original" }
 const state = {
@@ -96,4 +96,43 @@ it("a journal write failure leaves the earlier canonical sheet intact", () => {
         failure.mockRestore()
     }
     expect(localStorage.getItem(key)).toBe(original)
+})
+
+it("never reuses writer identities cloned through sessionStorage", () => {
+    sessionStorage.setItem("hiveborn-character-writer", "copied-id")
+    const a = browserWriterId(),
+        b = browserWriterId()
+    expect(a).not.toBe(b)
+    expect(a).not.toBe("copied-id")
+    expect(b).not.toBe("copied-id")
+})
+it("recovers a journal-only first save after canonical storage rejects the write", async () => {
+    const original = Storage.prototype.setItem
+    const failure = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, name, value) {
+        if (name === key) throw new DOMException("Full", "QuotaExceededError")
+        original.call(this, name, value)
+    })
+    try {
+        const storage = createDurableCharacterStorage(localStorage, "first-save")
+        storage.getItem(key)
+        await storage.setItem(key, envelope(state))
+        expect(localStorage.getItem(key)).toBe(null)
+        expect(JSON.parse(createDurableCharacterStorage(localStorage, "reloaded").getItem(key) as string).state.characters).toEqual([character])
+    } finally {
+        failure.mockRestore()
+    }
+})
+it("recovers valid journals around a corrupt canonical record and retains damaged original bytes", async () => {
+    localStorage.setItem(key, "{corrupt-original")
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {})
+    try {
+        const storage = createDurableCharacterStorage(localStorage, "recover")
+        storage.getItem(key)
+        await storage.setItem(key, envelope(state))
+        expect(JSON.parse(createDurableCharacterStorage(localStorage, "reload").getItem(key) as string).state.characters).toEqual([character])
+        const backup = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)!).find((name) => name.startsWith(`${key}:damaged:`))!
+        expect(localStorage.getItem(backup)).toBe("{corrupt-original")
+    } finally {
+        warning.mockRestore()
+    }
 })

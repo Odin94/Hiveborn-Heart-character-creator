@@ -4,9 +4,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { api, tokenStorage, type ApiRequestError } from "@/lib/api"
 import { useAuth } from "./useAuth"
 vi.mock("@/lib/api", () => ({
+    AUTH_TOKEN_STORAGE_KEY: "token",
     api: { me: vi.fn(), logout: vi.fn(), devLogin: vi.fn() },
     tokenStorage: {
         get: () => localStorage.getItem("token"),
+        getGeneration: () => localStorage.getItem("token"),
         set: (token: string) => localStorage.setItem("token", token),
         remove: () => localStorage.removeItem("token"),
     },
@@ -75,4 +77,35 @@ it("does not apply a refresh response after logout", async () => {
     await act(async () => resolve(user))
     expect(tokenStorage.get()).toBe(null)
     expect(auth.user).toBe(null)
+})
+
+it("rejects a stale successful /me after the stored token changes, even before the storage event arrives", async () => {
+    let resolve!: (value: typeof user) => void
+    vi.mocked(api.me).mockReturnValueOnce(
+        new Promise((done) => {
+            resolve = done
+        }),
+    )
+    await act(async () => root.render(<Auth />))
+    tokenStorage.set("another-account")
+    await act(async () => resolve(user))
+    expect(auth.user).toBe(null)
+    expect(auth.loading).toBe(true)
+})
+it("refreshes the new account after another tab changes authentication and ignores the old response", async () => {
+    let resolve!: (value: typeof user) => void
+    const other = { ...user, id: "other-account", email: "other@example.com" }
+    vi.mocked(api.me)
+        .mockReturnValueOnce(
+            new Promise((done) => {
+                resolve = done
+            }),
+        )
+        .mockResolvedValueOnce(other)
+    await act(async () => root.render(<Auth />))
+    tokenStorage.set("another-account")
+    await act(async () => window.dispatchEvent(new StorageEvent("storage", { key: "token" })))
+    await act(async () => resolve(user))
+    expect(auth.user).toEqual(other)
+    expect(auth.loading).toBe(false)
 })
