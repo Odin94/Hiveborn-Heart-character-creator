@@ -56,7 +56,12 @@ it("embeds a valid TrueType font that Poppler can render and extract", async (co
         writeFileSync(path, bytes)
         const rendered = spawnSync("pdftoppm", ["-f", "1", "-l", "1", "-scale-to", "1200", "-png", path, join(directory, "sheet")], { encoding: "utf8" })
         expect(rendered.status).toBe(0)
-        expect(rendered.stderr).not.toMatch(/invalid|couldn.t create|syntax error/i)
+        // Windows Poppler warns about optional system display fonts even when embedded fonts render correctly.
+        const renderErrors = rendered.stderr.replace(
+            /^Syntax Error: No display font for '(?:Symbol|ArialNarrow|HelveticaNarrow|BookAntiqua|ArialUnicode)(?:[,-](?:BoldItalic|Bold|Italic))?'\r?$/gm,
+            "",
+        )
+        expect(renderErrors).not.toMatch(/invalid|couldn.t create|syntax error/i)
         const extracted = spawnSync("pdftotext", [path, "-"], { encoding: "utf8" })
         expect(extracted.stdout).toContain("李华 中文")
     } finally {
