@@ -75,7 +75,7 @@ export const TagReferenceDialog = ({
     return (
         <DialogContent
             aria-describedby={undefined}
-            className="tag-reference-dialog data-[state=open]:duration-120 flex h-[min(48rem,calc(100dvh-1rem))] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-4 sm:max-h-[calc(100vh-2rem)] sm:p-6"
+            className="tag-reference-dialog data-[state=open]:duration-120 flex h-[min(48rem,calc(100dvh-1rem))] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-4 sm:max-h-[calc(100dvh-2rem)] sm:p-6"
             onKeyDownCapture={redirectTypingToSearch}
         >
             <DialogHeader className="shrink-0">

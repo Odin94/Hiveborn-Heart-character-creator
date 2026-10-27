@@ -78,7 +78,7 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
 
     return (
         <DialogContent
-            className={`flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)] sm:w-[44rem] sm:max-w-[44rem] ${
+            className={`flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:w-[44rem] sm:max-w-[min(44rem,calc(100vw-2rem))] ${
                 beatOptions.length === 0 ? "h-auto" : "h-[calc(100dvh-1rem)] sm:h-[min(50rem,calc(100dvh-2rem))]"
             }`}
         >

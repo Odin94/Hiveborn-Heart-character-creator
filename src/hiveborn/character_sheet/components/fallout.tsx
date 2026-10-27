@@ -115,7 +115,7 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     )
 
     return (
-        <DialogContent className="flex h-[calc(100dvh-1rem)] max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-h-[calc(100vh-2rem)] sm:w-176 sm:max-w-176">
+        <DialogContent className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-h-[calc(100dvh-2rem)] sm:w-176 sm:max-w-[min(44rem,calc(100vw-2rem))]">
             <DialogHeader className="min-h-0 flex-1 overflow-hidden">
                 <DialogTitle>FALLOUT</DialogTitle>
                 <DialogDescription></DialogDescription>

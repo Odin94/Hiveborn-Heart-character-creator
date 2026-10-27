@@ -45,18 +45,20 @@ function DialogContent({ className, children, ...props }: React.ComponentProps<t
                 )}
                 {...props}
             >
+                <div className="pointer-events-none sticky top-0 z-50 -mb-4 flex h-0 shrink-0 justify-end">
+                    <DialogPrimitive.Close className="pointer-events-auto ring-offset-background focus:ring-ring bg-popover relative top-0 right-0 h-9 w-9 shrink-0 rounded-md border border-primary/20 p-2 text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4">
+                        <XIcon />
+                        <span className="sr-only">Close</span>
+                    </DialogPrimitive.Close>
+                </div>
                 {children}
-                <DialogPrimitive.Close className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-md p-1.5 text-muted-foreground opacity-75 transition-[color,background-color,opacity,transform] duration-150 hover:bg-accent hover:text-foreground hover:opacity-100 active:scale-[.97] focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-                    <XIcon />
-                    <span className="sr-only">Close</span>
-                </DialogPrimitive.Close>
             </DialogPrimitive.Content>
         </DialogPortal>
     )
 }
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-    return <div data-slot="dialog-header" className={cn("flex flex-col gap-2 text-center sm:text-left", className)} {...props} />
+    return <div data-slot="dialog-header" className={cn("flex flex-col gap-2 pr-10 text-center sm:text-left", className)} {...props} />
 }
 
 function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {

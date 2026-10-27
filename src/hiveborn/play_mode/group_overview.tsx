@@ -1062,7 +1062,7 @@ const CharacterSheetModal = memo(
         return (
             <Dialog open={Boolean(character)} onOpenChange={(open) => !open && onClose()}>
                 {character && (
-                    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-6xl overflow-y-auto p-0 sm:max-w-6xl">
+                    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[min(72rem,calc(100vw-2rem))]">
                         <DialogHeader className="sticky top-0 z-10 border-b bg-background p-6">
                             <DialogTitle className="text-3xl">{character.name || "Unnamed hiveborn"}</DialogTitle>
                             <DialogDescription>{character.nickname ?? "Group player"}’s read-only character sheet</DialogDescription>
