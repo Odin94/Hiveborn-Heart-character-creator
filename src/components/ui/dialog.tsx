@@ -45,13 +45,13 @@ function DialogContent({ className, children, ...props }: React.ComponentProps<t
                 )}
                 {...props}
             >
-                <div className="pointer-events-none sticky top-0 z-50 -mb-4 flex h-0 shrink-0 justify-end">
+                {children}
+                <div className="pointer-events-none order-first sticky top-0 z-50 -mb-4 flex h-0 shrink-0 justify-end">
                     <DialogPrimitive.Close className="pointer-events-auto ring-offset-background focus:ring-ring bg-popover relative top-0 right-0 h-9 w-9 shrink-0 rounded-md border border-primary/20 p-2 text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4">
                         <XIcon />
                         <span className="sr-only">Close</span>
                     </DialogPrimitive.Close>
                 </div>
-                {children}
             </DialogPrimitive.Content>
         </DialogPortal>
     )
