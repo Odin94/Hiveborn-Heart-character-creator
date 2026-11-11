@@ -2,8 +2,13 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const textareaClassName =
-    "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-b-md border bg-background/45 px-3 py-2 text-sm font-bold transition-[color,background-color,border-color,box-shadow] duration-150 outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none scrollbar"
+const textareaClassName = cn(
+    "flex field-sizing-content min-h-20 w-full resize-none rounded-md border border-input bg-sunken px-3 py-2.5 text-foreground shadow-xs scrollbar",
+    "text-base sm:text-sm leading-relaxed placeholder:text-muted-foreground/75",
+    "transition-[color,background-color,border-color] duration-150 ease-out",
+    "hover:border-border-strong focus-visible:border-ring",
+    "disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive",
+)
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
     return <textarea data-slot="textarea" className={cn(textareaClassName, className)} {...props} />

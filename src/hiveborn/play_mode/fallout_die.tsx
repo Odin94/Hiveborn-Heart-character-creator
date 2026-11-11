@@ -4,6 +4,7 @@ import { getOnPageRollFadeDelayMs, OnPageRollOverlay } from "@/components/on-pag
 
 import { falloutRollAnimationMs } from "./fallout_timing"
 import { lowestPointY } from "./fallout_math"
+import { prefersReducedMotion } from "@/hiveborn/character_sheet/components/dice_roller/reduced_motion"
 
 type Face = {
     value: number
@@ -57,11 +58,12 @@ function makeNumberLabel(face: Face) {
     const source = document.createElement("canvas")
     source.width = source.height = 256
     const context = source.getContext("2d")!
-    context.fillStyle = "#fff6df"
-    context.strokeStyle = "#321016"
-    context.lineWidth = 17
+    // Bone ink with a dried-blood outline, set in the display face (Grenze) like the rest of the app.
+    context.fillStyle = "#fbf6ec"
+    context.strokeStyle = "#2a0a0e"
+    context.lineWidth = 16
     context.lineJoin = "round"
-    context.font = "800 154px Georgia, serif"
+    context.font = "700 168px Grenze, Georgia, serif"
     context.textAlign = "center"
     context.textBaseline = "middle"
     context.strokeText(String(face.value), 128, 136)
@@ -117,7 +119,8 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         scene.add(keyLight)
         const fillLight = new THREE.HemisphereLight(0xffe7b0, 0x24111b, 2.1)
         scene.add(fillLight)
-        const rimLight = new THREE.DirectionalLight(0xa760ff, 1.3)
+        // Cold Vermissian-iron rim against the warm heart-light key.
+        const rimLight = new THREE.DirectionalLight(0x8ea6cf, 1.5)
         rimLight.position.set(-5, 3, -4)
         scene.add(rimLight)
 
@@ -132,7 +135,8 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         const targetFace = faces.find((face) => face.value === value)
         if (!targetFace) throw new Error("Could not map fallout die face")
         const die = new THREE.Group()
-        const dieMaterial = new THREE.MeshStandardMaterial({ color: 0x9f1239, roughness: 0.24, metalness: 0.3, flatShading: true })
+        // Crimson resin, matching the CSS dice (--hb-crimson-600).
+        const dieMaterial = new THREE.MeshStandardMaterial({ color: 0xa31d25, roughness: 0.26, metalness: 0.28, flatShading: true })
         const body = new THREE.Mesh(geometry, dieMaterial)
         body.castShadow = true
         body.receiveShadow = true
@@ -158,13 +162,17 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
         const start = new THREE.Vector3((Math.random() - 0.5) * 8, 2.7, 4.2)
         const path = new THREE.CubicBezierCurve3(start, new THREE.Vector3(-3.4, 3.4, 2), new THREE.Vector3(2.8, 1.1, 1), end)
         const spinAxis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, -1).normalize()
-        const startedAt = performance.now()
+        // Reduced motion: the die is already resting on its result in the first frame.
+        const startedAt = performance.now() - (prefersReducedMotion() ? falloutRollAnimationMs : 0)
         let frameId = 0
 
         const resize = () => {
             const { width, height } = stage.getBoundingClientRect()
             renderer.setSize(width, height, false)
             camera.aspect = width / height
+            // Portrait screens: widen the vertical FOV so the die keeps its horizontal framing.
+            camera.fov =
+                camera.aspect < 1.2 ? Math.min(75, THREE.MathUtils.radToDeg(2 * Math.atan((Math.tan(THREE.MathUtils.degToRad(18)) * 1.2) / camera.aspect))) : 36
             camera.updateProjectionMatrix()
         }
         const resizeObserver = new ResizeObserver(resize)
@@ -208,24 +216,34 @@ export default function FalloutDie({ characterName, value, fallout }: FalloutDie
     }, [value])
 
     const outcome = fallout ? `${fallout[0].toUpperCase()}${fallout.slice(1)} fallout` : "No fallout"
+    const showResult = webglUnavailable || settled
     return (
-        <OnPageRollOverlay className="z-50" fadeDelayMs={getOnPageRollFadeDelayMs(falloutRollAnimationMs)} blockInteraction role="status" aria-live="assertive">
+        <OnPageRollOverlay
+            className="z-(--z-popover)"
+            fadeDelayMs={getOnPageRollFadeDelayMs(falloutRollAnimationMs)}
+            blockInteraction
+            role="status"
+            aria-live="assertive"
+        >
+            <div className="heart-roll-vignette" data-strength="strong" aria-hidden="true" />
             <div ref={stageRef} className="relative h-full w-full overflow-hidden">
                 <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
-                <div className="absolute inset-x-0 top-8 px-6 text-center drop-shadow-md">
-                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Fallout roll</p>
-                    <h2 className="mt-1 text-2xl font-black">{characterName}</h2>
+                <div className="absolute inset-x-0 top-[max(2rem,calc(var(--safe-top)+1.5rem))] px-6 text-center">
+                    <p className="text-xs font-bold tracking-[0.22em] text-crimson-300 uppercase">Fallout roll</p>
+                    <h2 className="mt-1.5 font-display text-3xl leading-tight font-bold text-bone-50 [text-shadow:0_2px_12px_oklch(0_0_0/0.6)] sm:text-4xl">
+                        {characterName}
+                    </h2>
                 </div>
-                <div className="absolute inset-x-0 bottom-10 px-6 text-center drop-shadow-md">
-                    {webglUnavailable || settled ? (
-                        <>
-                            {webglUnavailable && <p className="text-5xl font-black text-primary">{value}</p>}
-                            <p className="mt-1 text-xl font-black text-primary">
+                <div className="absolute inset-x-0 bottom-[max(2.5rem,calc(var(--safe-bottom)+1.5rem))] px-6 text-center">
+                    {showResult ? (
+                        <div className="fallout-die-result animate-hb-rise-in" data-fallout={fallout ?? "none"}>
+                            {webglUnavailable && <p className="font-display text-6xl leading-none font-bold text-bone-50">{value}</p>}
+                            <p className="fallout-die-outcome mt-1 font-display text-3xl leading-tight font-bold [text-shadow:0_2px_12px_oklch(0_0_0/0.6)] sm:text-4xl">
                                 {outcome} · {value}
                             </p>
-                        </>
+                        </div>
                     ) : (
-                        <p className="text-sm text-muted-foreground">The die is settling…</p>
+                        <p className="text-sm font-semibold text-bone-300">The die is settling…</p>
                     )}
                 </div>
             </div>

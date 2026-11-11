@@ -6,10 +6,7 @@ import { cn } from "@/lib/utils"
 function ScrollArea({ className, children, ...props }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
     return (
         <ScrollAreaPrimitive.Root data-slot="scroll-area" className={cn("relative", className)} {...props}>
-            <ScrollAreaPrimitive.Viewport
-                data-slot="scroll-area-viewport"
-                className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
-            >
+            <ScrollAreaPrimitive.Viewport data-slot="scroll-area-viewport" className="size-full rounded-[inherit] outline-none">
                 {children}
             </ScrollAreaPrimitive.Viewport>
             <ScrollBar />
@@ -24,14 +21,17 @@ function ScrollBar({ className, orientation = "vertical", ...props }: React.Comp
             data-slot="scroll-area-scrollbar"
             orientation={orientation}
             className={cn(
-                "flex touch-none p-px transition-colors select-none",
-                orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent",
-                orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent",
+                "group/scrollbar flex touch-none p-[3px] select-none",
+                orientation === "vertical" && "h-full w-2.5",
+                orientation === "horizontal" && "h-2.5 flex-col",
                 className,
             )}
             {...props}
         >
-            <ScrollAreaPrimitive.ScrollAreaThumb data-slot="scroll-area-thumb" className="relative flex-1 rounded-full bg-muted-foreground/50" />
+            <ScrollAreaPrimitive.ScrollAreaThumb
+                data-slot="scroll-area-thumb"
+                className="relative flex-1 rounded-full bg-(--scrollbar-thumb) transition-colors duration-150 ease-out group-hover/scrollbar:bg-(--scrollbar-thumb-hover)"
+            />
         </ScrollAreaPrimitive.ScrollAreaScrollbar>
     )
 }

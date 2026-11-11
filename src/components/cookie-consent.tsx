@@ -14,13 +14,13 @@ type CookieConsentProps = {
 
 const LEARN_MORE_HREF = "https://odin-matthias.de/datenschutzerklaerung"
 
-const CookieHeader = () => <div className="flex items-center gap-2">Collect your Cookie ('Technology', D12)!</div>
+const CookieHeader = () => <span>Collect your Cookie ('Technology', D12)!</span>
 
 const CookieBody = () => (
-    <div className="text-left text-foreground">
+    <div className="text-left text-muted-foreground">
         I use cookies to get better insights on usage patterns, which helps me improve Hiveborn for everyone.
         <br /> More info:{" "}
-        <a href={LEARN_MORE_HREF} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4 hover:no-underline">
+        <a href={LEARN_MORE_HREF} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:no-underline">
             privacy policy
         </a>
         .
@@ -83,18 +83,20 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
         if (hide) return null
 
         const containerClasses = cn(
-            "fixed z-50 transition-[transform,opacity] duration-[180ms] ease-out",
-            !isOpen ? "translate-y-full opacity-0 ease-in" : "translate-y-0 opacity-100",
+            "fixed z-(--z-overlay) transition-[transform,opacity] duration-200",
+            !isOpen ? "translate-y-4 opacity-0 ease-in pointer-events-none" : "translate-y-0 opacity-100 ease-out",
             className,
         )
 
         const commonWrapperProps = {
             ref,
+            role: "region",
+            "aria-label": "Cookie consent",
             className: cn(
                 containerClasses,
                 variant === "mini"
-                    ? "left-0 right-0 sm:left-4 bottom-4 w-full sm:max-w-3xl"
-                    : "bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 w-full sm:max-w-md",
+                    ? "inset-x-3 bottom-safe sm:right-auto sm:left-4 sm:w-full sm:max-w-3xl"
+                    : "inset-x-3 bottom-safe sm:right-auto sm:left-4 sm:w-[24rem]",
             ),
             ...props,
         }
@@ -102,23 +104,23 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
         if (variant === "small") {
             return (
                 <div {...commonWrapperProps}>
-                    <Card className="m-3 shadow-lg">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 h-0 px-4">
-                            <CardTitle className="text-base">
+                    <Card variant="plate" className="gap-3 py-4">
+                        <CardHeader className="flex flex-row items-center justify-between gap-3 px-4">
+                            <CardTitle className="text-lg">
                                 <CookieHeader />
                             </CardTitle>
-                            <Cookie className="h-4 w-4" />
+                            <Cookie className="size-5 shrink-0 text-heart" aria-hidden="true" />
                         </CardHeader>
-                        <CardContent className="pt-0 pb-2 px-4">
-                            <CardDescription className="text-sm">
+                        <CardContent className="px-4">
+                            <CardDescription className="text-sm leading-relaxed">
                                 <CookieBody />
                             </CardDescription>
                         </CardContent>
-                        <CardFooter className="flex gap-2 h-0 py-2 px-4">
-                            <Button onClick={handleDecline} variant="outline" size="sm" className="flex-1 rounded-full">
+                        <CardFooter className="gap-2 px-4">
+                            <Button onClick={handleDecline} variant="secondary" size="sm" className="flex-1">
                                 Decline
                             </Button>
-                            <Button onClick={handleAccept} size="sm" className="flex-1 rounded-full">
+                            <Button onClick={handleAccept} size="sm" className="flex-1">
                                 Accept
                             </Button>
                         </CardFooter>
@@ -130,19 +132,17 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
         if (variant === "mini") {
             return (
                 <div {...commonWrapperProps}>
-                    <Card className="mx-3 p-0 py-3 shadow-lg">
-                        <CardContent className="sm:flex grid gap-4 p-0 px-3.5">
-                            <CardDescription className="text-xs sm:text-sm flex-1">
+                    <Card variant="plate" className="py-3">
+                        <CardContent className="grid gap-3 px-4 sm:flex sm:items-center">
+                            <CardDescription className="flex-1 text-xs sm:text-sm">
                                 <CookieBody />
                             </CardDescription>
-                            <div className="flex items-center gap-2 justify-end sm:gap-3">
-                                <Button onClick={handleDecline} size="sm" variant="outline" className="text-xs h-7">
+                            <div className="flex items-center justify-end gap-2">
+                                <Button onClick={handleDecline} size="xs" variant="secondary">
                                     Decline
-                                    <span className="sr-only sm:hidden">Decline</span>
                                 </Button>
-                                <Button onClick={handleAccept} size="sm" className="h-7 text-xs">
+                                <Button onClick={handleAccept} size="xs">
                                     Accept
-                                    <span className="sr-only sm:hidden">Accept</span>
                                 </Button>
                             </div>
                         </CardContent>

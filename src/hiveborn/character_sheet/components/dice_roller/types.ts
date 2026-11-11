@@ -14,3 +14,11 @@ export type RollResult = {
 }
 
 export type RollerTab = "skill-domain" | "free-roll"
+
+export type DieProps = {
+    die: DieRoll
+    rolling: boolean
+    index: number
+    /** The die whose face decides the outcome; it gets a heart-light pool under it once settled. */
+    featured?: boolean
+}

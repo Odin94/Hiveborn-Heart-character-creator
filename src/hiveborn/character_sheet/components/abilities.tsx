@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { Hint } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Markdown } from "@/components/ui/markdown"
 import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
@@ -8,33 +9,37 @@ import { CharacterClass } from "@/hiveborn/game_data/classes"
 import { iconByDomain } from "@/hiveborn/game_data/domains"
 import { iconBySkill } from "@/hiveborn/game_data/skills"
 import { formatRulesText, hasTitledEntry } from "@/hiveborn/character_sheet/markdown_formatting"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
+import { BicepsFlexed, Check, Map as MapIcon, Shield } from "lucide-react"
 import { Dispatch, SetStateAction, useState } from "react"
 import { MdOutlineShield } from "react-icons/md"
 import { useCharacterStore } from "../character_states"
 import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
+import { PickerEmpty, PickerList } from "./shared/picker"
+import { SheetSection } from "./shared/sheet_section"
 
 type PickingFromState = [Ability | undefined, Dispatch<SetStateAction<Ability | undefined>>]
 
-const Abilities = () => {
+const Abilities = ({ className }: { className?: string }) => {
     const abilities = useCharacterStore.use.abilities()
     const setAbilities = useCharacterStore.use.setAbilities()
     const characterClass = useCharacterStore.use.characterClass()
     const [pickingFromAbility, setPickingFromAbility] = useState<Ability>()
 
     return (
-        <div>
-            <div className="row-span-3 col-span-2 text-left mt-2">
-                <Dialog onOpenChange={(_open) => setPickingFromAbility(undefined)}>
-                    <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
-                        ABILITIES <DialogTriggerWrapper />
-                    </h2>
-                    <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
-                </Dialog>
-
-                <MarkdownTextarea value={abilities} onChange={(e) => setAbilities(e.target.value)} className="h-56 sm:h-142" />
-            </div>
-        </div>
+        <Dialog onOpenChange={(_open) => setPickingFromAbility(undefined)}>
+            <SheetSection title="Abilities" className={className} action={<DialogTriggerWrapper label="Choose abilities" />}>
+                {/* Fills whatever height its column gives it, never less than a comfortable reading block. */}
+                <MarkdownTextarea
+                    aria-label="Abilities"
+                    value={abilities}
+                    onChange={(e) => setAbilities(e.target.value)}
+                    className="h-72 md:h-0 md:min-h-72 md:flex-1 lg:min-h-80"
+                />
+            </SheetSection>
+            <AbilitiesDialog characterClass={characterClass} pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
+        </Dialog>
     )
 }
 
@@ -56,12 +61,10 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
                   .filter((ability) => ability.type === abilityType)
                   .filter((ability) => !ability.parentName)
                   .filter((ability) => !isAbilityPickedAlready(ability))
-    const selectedClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
-
     const getIcon = ({ staticBonuses, pickFrom }: Ability) => {
-        if (pickFrom.domains.length > 0) return "🗺️ "
-        if (pickFrom.skills.length > 0) return "💪 "
-        if (pickFrom.protections.length > 0) return "🛡️ "
+        if (pickFrom.domains.length > 0) return <MapIcon />
+        if (pickFrom.skills.length > 0) return <BicepsFlexed />
+        if (pickFrom.protections.length > 0) return <Shield />
 
         if (staticBonuses.protections.length > 0) return <MdOutlineShield />
 
@@ -81,82 +84,86 @@ const AbilitiesDialog = ({ characterClass, pickingFromState }: { characterClass:
     }
 
     const renderAbilities = () => (
-        <ScrollArea className="min-h-0 flex-1" style={{ borderColor: "red" }}>
-            {filteredAbilityOptions.map((ability) => {
-                const isAlreadyPickedMajor = ability.type === "major" && hasTitledEntry(abilities, ability.name)
-                return (
-                    <div
-                        key={ability.name}
-                        className={`sheet-choice border p-2 border-t-0
-                            ${ability.parentName ? "ml-6" : ""}
-                            ${isAlreadyPickedMajor ? "border-border bg-muted text-muted-foreground hover:bg-muted" : "cursor-pointer hover:bg-accent"}
-                        `}
-                        onClick={() => {
-                            if (isAlreadyPickedMajor) return
+        <ScrollArea className="min-h-0 flex-1">
+            {filteredAbilityOptions.length === 0 ? (
+                <PickerEmpty>Every ability here is already on your sheet.</PickerEmpty>
+            ) : (
+                <PickerList>
+                    {filteredAbilityOptions.map((ability) => {
+                        const isAlreadyPickedMajor = ability.type === "major" && hasTitledEntry(abilities, ability.name)
+                        return (
+                            <button
+                                key={ability.name}
+                                type="button"
+                                disabled={isAlreadyPickedMajor}
+                                data-nested={ability.parentName ? "" : undefined}
+                                className={cn("sheet-pick", ability.parentName && "ml-5 w-[calc(100%-1.25rem)]")}
+                                onClick={() => {
+                                    if (isAlreadyPickedMajor) return
 
-                            applyProgression({ type: "ability", ability })
+                                    applyProgression({ type: "ability", ability })
 
-                            if (comesWithPick(ability)) {
-                                setPickingFromAbility(ability)
-                            }
-                        }}
-                    >
-                        <h2 className="flex items-center">
-                            {getIcon(ability)}
-                            <span className={hasIcon(ability) ? "ml-2" : ""}>{`${ability.name}`}</span>
-                        </h2>
+                                    if (comesWithPick(ability)) {
+                                        setPickingFromAbility(ability)
+                                    }
+                                }}
+                            >
+                                <span className="flex items-center gap-2">
+                                    {hasIcon(ability) ? <span className="sheet-pick-icons">{getIcon(ability)}</span> : null}
+                                    <span className="font-display text-lg leading-tight font-bold">{ability.name}</span>
+                                    {isAlreadyPickedMajor ? (
+                                        <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                                            <Check className="size-3.5" /> On sheet
+                                        </span>
+                                    ) : null}
+                                </span>
 
-                        <Markdown className="text-muted-foreground text-sm">{formatRulesText(ability.description)}</Markdown>
-                    </div>
-                )
-            })}
+                                <Markdown className="mt-1 text-sm leading-relaxed text-muted-foreground">{formatRulesText(ability.description)}</Markdown>
+                            </button>
+                        )
+                    })}
+                </PickerList>
+            )}
         </ScrollArea>
     )
 
+    const hasOptions = abilityOptions.length > 0
+    const classLabel = characterClass.trim()
+
     return (
         <DialogContent
-            className={`flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:w-112 ${
-                abilityOptions.length === 0 ? "h-auto" : "h-[calc(100dvh-1rem)] sm:h-[min(50rem,calc(100dvh-2rem))]"
+            className={`flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:w-[34rem] sm:max-w-[min(34rem,calc(100vw-2rem))] ${
+                hasOptions ? "h-[calc(100dvh-1rem)] sm:h-[min(50rem,calc(100dvh-2rem))]" : "h-auto"
             }`}
         >
-            <DialogHeader className="min-h-0 flex-1 overflow-hidden">
-                <DialogTitle>{pickingFromAbility ? pickingFromAbility.name.toUpperCase() : `${characterClass.toUpperCase()} ABILITIES`}</DialogTitle>
-                <DialogDescription></DialogDescription>
-                {abilityOptions.length === 0 ? (
-                    <p>Pick a pre-defined class to select abilities</p>
-                ) : pickingFromAbility ? (
-                    <PickFrom pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
-                ) : (
-                    <Tabs
-                        defaultValue="minor"
-                        className="flex min-h-0 w-full flex-1 flex-col p-1 sm:w-[400px] sm:p-2"
-                        value={abilityType}
-                        onValueChange={setAbilityType}
-                    >
-                        <TabsList className="grid w-full shrink-0 grid-cols-3">
-                            <TabsTrigger value="minor" className={`border ${abilityType === "minor" ? selectedClassName : ""}`}>
-                                Minor
-                            </TabsTrigger>
-                            <TabsTrigger value="major" className={`border ${abilityType === "major" ? selectedClassName : ""}`}>
-                                Major
-                            </TabsTrigger>
-                            <TabsTrigger value="zenith" className={`border ${abilityType === "zenith" ? selectedClassName : ""}`}>
-                                Zenith
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="minor" className="flex min-h-0 flex-1 flex-col">
-                            {renderAbilities()}
-                        </TabsContent>
-                        <TabsContent value="major" className="flex min-h-0 flex-1 flex-col">
-                            {renderAbilities()}
-                        </TabsContent>
-                        <TabsContent value="zenith" className="flex min-h-0 flex-1 flex-col">
-                            {renderAbilities()}
-                        </TabsContent>
-                    </Tabs>
-                )}
+            <DialogHeader>
+                <p className="eyebrow">{pickingFromAbility ? "Choose one" : "Abilities"}</p>
+                <DialogTitle>{pickingFromAbility ? pickingFromAbility.name : classLabel ? `${classLabel} abilities` : "Abilities"}</DialogTitle>
+                <DialogDescription className={hasOptions ? "sr-only" : ""}>
+                    {hasOptions ? "Pick an ability to add it to your sheet." : "Pick one of the classes from the rulebook to choose abilities."}
+                </DialogDescription>
             </DialogHeader>
+            {!hasOptions ? null : pickingFromAbility ? (
+                <PickFrom pickingFromState={[pickingFromAbility, setPickingFromAbility]} />
+            ) : (
+                <Tabs value={abilityType} onValueChange={setAbilityType} className="min-h-0 flex-1">
+                    <TabsList variant="segmented" className="shrink-0">
+                        <TabsTrigger value="minor">Minor</TabsTrigger>
+                        <TabsTrigger value="major">Major</TabsTrigger>
+                        <TabsTrigger value="zenith">Zenith</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="minor" className="flex flex-col">
+                        {renderAbilities()}
+                    </TabsContent>
+                    <TabsContent value="major" className="flex flex-col">
+                        {renderAbilities()}
+                    </TabsContent>
+                    <TabsContent value="zenith" className="flex flex-col">
+                        {renderAbilities()}
+                    </TabsContent>
+                </Tabs>
+            )}
         </DialogContent>
     )
 }
@@ -178,29 +185,36 @@ const PickFrom = ({ pickingFromState }: { pickingFromState: PickingFromState }) 
         setPickingFromAbility(undefined)
     }
 
+    const options = [
+        ...pickingFromAbility.pickFrom.domains.map((domain) => ({ value: domain, label: domain, icon: iconByDomain[domain] })),
+        ...pickingFromAbility.pickFrom.skills.map((skill) => ({ value: skill, label: skill, icon: iconBySkill[skill] })),
+        ...pickingFromAbility.pickFrom.protections.map((prot) => ({ value: prot, label: `+1 ${prot}`, icon: <Shield /> })),
+    ]
+
     return (
-        <div className="flex min-h-[min(500px,calc(100dvh-12rem))] w-full flex-col items-center justify-center">
-            <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 sm:gap-4">
-                {pickingFromAbility.pickFrom.domains.map((domain) => (
-                    <Button variant={selection === domain ? "default" : "secondary"} onClick={() => setSelection(domain)} key={domain}>
-                        {domain.toUpperCase()}
-                    </Button>
-                ))}
-                {pickingFromAbility.pickFrom.skills.map((skill) => (
-                    <Button variant={selection === skill ? "default" : "secondary"} onClick={() => setSelection(skill)} key={skill}>
-                        {skill.toUpperCase()}
-                    </Button>
-                ))}
-                {pickingFromAbility.pickFrom.protections.map((prot) => (
-                    <Button variant={selection === prot ? "default" : "secondary"} onClick={() => setSelection(prot)} key={prot}>
-                        +1 {prot.toUpperCase()}
-                    </Button>
+        <div className="flex min-h-0 w-full flex-1 flex-col gap-5">
+            <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                {options.map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={selection === option.value}
+                        className="sheet-pick sheet-pick-option"
+                        onClick={() => setSelection(option.value as PickFromOption)}
+                    >
+                        <span className="sheet-pick-icons">{option.icon}</span>
+                        <span className="text-sm font-bold tracking-[0.08em] uppercase">{option.label}</span>
+                    </button>
                 ))}
             </div>
 
-            <Button disabled={!selection} variant={"outline"} onClick={confirmSelection} className="mt-12">
-                Confirm Selection
-            </Button>
+            <div className="mt-auto flex justify-end">
+                <Hint label="Pick one of the options first" wrap disabled={Boolean(selection)}>
+                    <Button disabled={!selection} onClick={confirmSelection}>
+                        Confirm selection
+                    </Button>
+                </Hint>
+            </div>
         </div>
     )
 }

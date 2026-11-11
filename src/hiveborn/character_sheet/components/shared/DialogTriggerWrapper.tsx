@@ -1,10 +1,16 @@
 import { DialogTrigger } from "@/components/ui/dialog"
-import { Hexagon } from "lucide-react"
+import { Hint } from "@/components/ui/tooltip"
+import { SectionAction, HiveCellPlus } from "./sheet_section"
 
-export const DialogTriggerWrapper = () => {
+/** The hive-cell "pick from the rulebook" button that sits in a section band. */
+export const DialogTriggerWrapper = ({ label = "Choose from the rulebook" }: { label?: string }) => {
     return (
-        <DialogTrigger className="absolute top-1/2 right-3 rounded-md p-1 -translate-y-1/2 transition-[background-color,transform] duration-150 hover:bg-white/15 active:scale-[.97] sm:right-7">
-            <Hexagon className="inline w-7 h-7 p-1" />
-        </DialogTrigger>
+        <SectionAction>
+            <Hint label={label}>
+                <DialogTrigger aria-label={label} className="sheet-band-action">
+                    <HiveCellPlus />
+                </DialogTrigger>
+            </Hint>
+        </SectionAction>
     )
 }

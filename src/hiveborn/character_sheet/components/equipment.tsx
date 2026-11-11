@@ -1,52 +1,43 @@
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
+import { Hint } from "@/components/ui/tooltip"
 import { equipmentTags } from "@/hiveborn/game_data/equipment_tags"
 import { BookOpen } from "lucide-react"
 import { useCharacterStore } from "../character_states"
+import { SectionAction, SheetSection } from "./shared/sheet_section"
 import { TagReferenceDialog } from "./shared/tag_reference_dialog"
 
-const Equipment = () => {
+const Equipment = ({ className }: { className?: string }) => {
     const equipment = useCharacterStore.use.equipment()
     const setEquipment = useCharacterStore.use.setEquipment()
     const abilities = useCharacterStore.use.abilities()
 
     return (
-        <div>
-            <div className="row-span-3 col-span-2 text-left mt-2">
-                <Dialog>
-                    <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
-                        EQUIPMENT
-                        <DialogTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-1/2 right-3 h-8 w-8 -translate-y-1/2 text-white transition-[background-color,transform] hover:translate-y-[-50%] active:translate-y-[-50%] hover:bg-white/15 hover:text-white sm:right-7"
-                                aria-label="Open equipment tag reference"
-                                title="Open equipment tag reference"
-                            >
-                                <BookOpen className="h-5 w-5" />
-                            </Button>
-                        </DialogTrigger>
-                    </h2>
-                    <EquipmentTagsDialog equipment={equipment} abilities={abilities} />
-                </Dialog>
-                <MarkdownTextarea value={equipment} onChange={(e) => setEquipment(e.target.value)} className="h-30" />
-            </div>
-        </div>
-    )
-}
-
-const EquipmentTagsDialog = ({ equipment, abilities }: { equipment: string; abilities: string }) => {
-    return (
-        <TagReferenceDialog
-            title="EQUIPMENT TAGS"
-            tags={equipmentTags}
-            primaryText={equipment}
-            primarySourceLabel="Equipment"
-            secondaryText={abilities}
-            secondarySourceLabel="Abilities"
-        />
+        <Dialog>
+            <SheetSection
+                title="Equipment"
+                className={className}
+                action={
+                    <SectionAction>
+                        <Hint label="Equipment tags">
+                            <DialogTrigger className="sheet-band-action" aria-label="Open equipment tag reference">
+                                <BookOpen className="size-[1.125rem]" />
+                            </DialogTrigger>
+                        </Hint>
+                    </SectionAction>
+                }
+            >
+                <MarkdownTextarea aria-label="Equipment" value={equipment} onChange={(e) => setEquipment(e.target.value)} className="h-36" />
+            </SheetSection>
+            <TagReferenceDialog
+                title="EQUIPMENT TAGS"
+                tags={equipmentTags}
+                primaryText={equipment}
+                primarySourceLabel="Equipment"
+                secondaryText={abilities}
+                secondarySourceLabel="Abilities"
+            />
+        </Dialog>
     )
 }
 
