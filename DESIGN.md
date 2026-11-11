@@ -171,9 +171,10 @@ Sizes: `xs` (28px), `sm` (32), `default` (40, matches inputs), `lg` (44), `icon`
 
 - `plate` = Vermissian iron plate (double inner rule) — featured / hero content.
 - CSS-only equivalents: `.panel`, `.panel-plate`.
-- Section header: `.ritual-band` (notched crimson band, display caps). The existing
-  `.sheet-section-heading`, `.sheet-shell`, `.sheet-choice`, `.segmented-control`,
-  `.form-select` classes are restyled onto the tokens and safe to keep using.
+- Section header: `.ritual-band` (notched crimson band, display caps, brass lozenge). On
+  the character sheet use `<SheetSection>` (`.sheet-section-heading`), which is the same
+  band with a field attached. `.segmented-control` and `.form-select` are restyled onto
+  the tokens and safe to keep using.
 - Ornament: `<SigilDivider />` and `<HeartSigil />` from `@/components/ui/sigil`.
 
 ### Form fields
@@ -298,8 +299,7 @@ skip-delay via the single app-wide `TooltipProvider` in `App.tsx`. Prefer `<Hint
 - `Kbd` — `<Kbd>⌘K</Kbd>`.
 - `Markdown` / `MarkdownTextarea` — unchanged API; markdown headings use the display face.
 - Toasts — `import { toast } from "sonner"`; skinned globally (left accent bar per type,
-  safe-area offsets, follows the app theme). `toast("Archived", { action: { label: "Undo", onClick } })`.
-- `.heart-loading-dots` — the bouncing blood-drop loader for full-panel loading.
+  safe-area offsets, follows the app theme, lifted above the dice dock on the sheet page). `toast("Archived", { action: { label: "Undo", onClick } })`.
 
 ## App shell (`src/components/`)
 

@@ -660,9 +660,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                                         placeholder="Group name"
                                         aria-label="Group name"
                                     />
-                                    <Button type="submit" disabled={!createName.trim()}>
-                                        Create
-                                    </Button>
+                                    <Hint label="Name the group first" wrap disabled={Boolean(createName.trim())}>
+                                        <Button type="submit" disabled={!createName.trim()}>
+                                            Create
+                                        </Button>
+                                    </Hint>
                                 </form>
                             }
                         />
@@ -805,9 +807,11 @@ export default function GroupOverview({ user, selectedGroupId, onClose, onSelect
                         <DialogClose asChild>
                             <Button variant="secondary">Cancel</Button>
                         </DialogClose>
-                        <Button disabled={!createName.trim()} onClick={() => void createGroup()}>
-                            <Plus /> Create group
-                        </Button>
+                        <Hint label="Name the group first" wrap disabled={Boolean(createName.trim())}>
+                            <Button disabled={!createName.trim()} onClick={() => void createGroup()}>
+                                <Plus /> Create group
+                            </Button>
+                        </Hint>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1616,7 +1620,7 @@ const CharacterSheetModal = memo(
                             event.preventDefault()
                             ;(event.currentTarget as HTMLElement | null)?.focus()
                         }}
-                        className="block max-h-[calc(100dvh-1.5rem-var(--safe-bottom))] max-w-[calc(100vw-1.5rem)] gap-0 p-0 sm:max-w-[min(72rem,calc(100vw-2rem))] sm:p-0"
+                        className="flex max-h-[calc(100dvh-1.5rem-var(--safe-bottom))] max-w-[calc(100vw-1.5rem)] flex-col gap-0 p-0 sm:max-w-[min(72rem,calc(100vw-2rem))] sm:p-0 [&>*]:shrink-0 [&>:has(>[data-slot=dialog-close-button])]:mb-0 [&_[data-slot=dialog-close-button]]:top-3 [&_[data-slot=dialog-close-button]]:right-3"
                     >
                         <DialogHeader className="play-sheet-header" style={{ "--class-accent": classAccent(character.data.characterClass) } as CSSProperties}>
                             <p className="eyebrow">{[character.data.characterClass, character.data.calling].filter(Boolean).join(" · ") || "Hiveborn"}</p>
@@ -1695,8 +1699,8 @@ type TagReference = {
 
 function SheetSection({ title, children, tagReference }: { title: string; children: ReactNode; tagReference?: TagReference }) {
     const heading = (
-        <h3 className="ritual-band justify-between">
-            {title}
+        <h3 className="ritual-band">
+            <span className="min-w-0 flex-1">{title}</span>
             {tagReference && (
                 <Hint label={`View ${title.toLowerCase()} tags in use`}>
                     <DialogTrigger asChild>

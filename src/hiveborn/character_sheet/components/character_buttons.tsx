@@ -58,7 +58,6 @@ export const JSONDownloadButton = ({ className }: { className?: string }) => {
 
 export const ResetButton = () => {
     const resetCharacter = useCharacterStore.use.resetCharacter()
-    const restoreCharacter = useCharacterStore.use.restoreCharacter()
 
     return (
         <ConfirmDialog
@@ -72,12 +71,8 @@ export const ResetButton = () => {
             confirmLabel="Reset"
             onConfirm={() => {
                 resetCharacter()
-                const archived = useCharacterStore.getState().archivedCharacters
-                const archiveId = archived[archived.length - 1]?.archiveId
-                toast("Started a fresh sheet", {
-                    description: "The old one is under Deleted characters.",
-                    action: archiveId ? { label: "Undo", onClick: () => restoreCharacter(archiveId) } : undefined,
-                })
+                // No Undo here: restoring would leave the fresh blank sheet behind as a second tab.
+                toast("Started a fresh sheet", { description: "The old one is under Deleted characters." })
             }}
         />
     )

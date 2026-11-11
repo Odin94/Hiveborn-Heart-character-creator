@@ -424,8 +424,7 @@
         text-wrap: pretty;
     }
 
-    a,
-    .link-like {
+    a {
         font-weight: 500;
         color: var(--heart);
         text-decoration: inherit;
@@ -433,8 +432,7 @@
     }
 
     @media (hover: hover) and (pointer: fine) {
-        a:hover,
-        .link-like:hover {
+        a:hover {
             color: color-mix(in oklab, var(--heart) 75%, var(--foreground));
         }
     }
@@ -601,7 +599,7 @@
         font-family: var(--font-display-stack);
         font-weight: 700;
         font-size: 1.05rem;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.1em;
         line-height: 1;
         text-transform: uppercase;
         background: linear-gradient(100deg, var(--hb-crimson-700), color-mix(in oklab, var(--hb-crimson-800) 85%, var(--hb-bone-950)));
@@ -610,6 +608,17 @@
             inset 0 -1px oklch(0 0 0 / 0.25);
         clip-path: polygon(0 0, 100% 0, calc(100% - 0.6rem) 50%, 100% 100%, 0 100%);
         padding-right: 1.5rem;
+    }
+
+    /* Same brass lozenge as the sheet's section bands. */
+    .ritual-band::before {
+        content: "";
+        flex-shrink: 0;
+        width: 0.4rem;
+        height: 0.4rem;
+        rotate: 45deg;
+        background: var(--hb-honey-400);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--hb-honey-400) 25%, transparent);
     }
 
     .dark .ritual-band {
@@ -674,16 +683,7 @@
         bottom: max(1rem, calc(var(--safe-bottom) + 1rem));
     }
 
-    /* ---- Legacy sheet classes, restyled onto the tokens -------------------- */
-
-    .sheet-shell {
-        background: color-mix(in oklab, var(--card) 88%, transparent);
-        border-color: var(--border-strong);
-        box-shadow:
-            inset 0 0 0 4px color-mix(in oklab, var(--card) 70%, transparent),
-            inset 0 0 0 5px color-mix(in oklab, var(--border) 70%, transparent),
-            0 1.25rem 3.5rem var(--paper-shadow);
-    }
+    /* ---- Sheet section band -------------------------------------------------- */
 
     .sheet-section-heading {
         font-family: var(--font-display-stack);
@@ -705,27 +705,6 @@
         box-shadow:
             inset 0 1px oklch(1 0 0 / 0.14),
             inset 0 -2px color-mix(in oklab, var(--hb-honey-400) 70%, transparent);
-    }
-
-    .sheet-choice {
-        transition:
-            background-color var(--duration-fast) var(--ease-out),
-            border-color var(--duration-fast) var(--ease-out),
-            box-shadow var(--duration-fast) var(--ease-out);
-    }
-
-    .sheet-choice[data-state="checked"],
-    .sheet-choice[aria-pressed="true"],
-    .sheet-choice[aria-selected="true"] {
-        background: color-mix(in oklab, var(--primary) 10%, var(--card));
-        border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-        .sheet-choice:hover {
-            background: color-mix(in oklab, var(--accent) 70%, var(--card));
-            box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 18%, transparent);
-        }
     }
 
     .segmented-control {
@@ -892,45 +871,6 @@
         font-weight: 700;
     }
 
-    @keyframes heart-loading-bounce {
-        0%,
-        80%,
-        100% {
-            opacity: 0.42;
-            transform: translateY(0) scale(0.82);
-        }
-        40% {
-            opacity: 1;
-            transform: translateY(-12px) scale(1.08);
-        }
-    }
-
-    .heart-loading-dots {
-        align-items: center;
-        display: flex;
-        gap: 12px;
-        height: 80px;
-        justify-content: center;
-    }
-
-    .heart-loading-dots span {
-        animation: heart-loading-bounce 0.86s ease-in-out infinite;
-        background: var(--primary);
-        border-radius: 9999px;
-        box-shadow: 0 8px 14px color-mix(in oklab, var(--primary) 25%, transparent);
-        display: block;
-        height: 14px;
-        width: 14px;
-    }
-
-    .heart-loading-dots span:nth-child(2) {
-        animation-delay: 0.12s;
-    }
-
-    .heart-loading-dots span:nth-child(3) {
-        animation-delay: 0.24s;
-    }
-
     @keyframes tag-reference-enter {
         0% {
             opacity: 0;
@@ -963,7 +903,7 @@
     }
 
     .tag-reference-card {
-        animation: tag-reference-enter 105ms cubic-bezier(0.16, 0.86, 0.24, 1) both;
+        animation: tag-reference-enter 105ms var(--ease-out) both;
         animation-delay: var(--tag-delay, 0ms);
         transition:
             background-color 180ms var(--ease-out),
@@ -989,7 +929,7 @@
     }
 
     .tag-reference-search-wrap:focus-within .tag-reference-search-icon {
-        animation: tag-reference-search-wiggle 420ms ease-in-out;
+        animation: tag-reference-search-wiggle 420ms var(--ease-in-out);
     }
 
     .tag-reference-empty {
@@ -1295,7 +1235,7 @@
     border-left-color: var(--success);
 }
 
-[data-sonner-toaster] [data-sonner-toast] [data-button] {
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] {
     height: 1.75rem;
     border-radius: var(--radius);
     background: var(--primary);
@@ -1304,21 +1244,28 @@
     padding: 0 0.65rem;
 }
 
-[data-sonner-toaster] [data-sonner-toast] [data-cancel] {
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-cancel] {
     height: 1.75rem;
     border-radius: var(--radius);
     background: var(--secondary);
     color: var(--secondary-foreground);
 }
 
-[data-sonner-toaster] [data-sonner-toast] [data-close-button] {
+/* Close button sits on the trailing corner, away from the type accent bar. */
+[data-sonner-toaster] [data-sonner-toast] {
+    --toast-close-button-start: auto;
+    --toast-close-button-end: 0;
+    --toast-close-button-transform: translate(35%, -35%);
+}
+
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-styled="true"] [data-close-button] {
     background: var(--popover);
     color: var(--muted-foreground);
     border-color: var(--border);
 }
 
 @media (hover: hover) and (pointer: fine) {
-    [data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover {
+    [data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-styled="true"] [data-close-button]:hover {
         background: var(--accent);
         color: var(--foreground);
     }
@@ -1371,10 +1318,6 @@
     [data-slot="skeleton"]::after,
     .hb-heartbeat {
         animation: none;
-    }
-
-    .heart-loading-dots span {
-        animation-duration: 1.6s;
     }
 
     .tag-reference-card,

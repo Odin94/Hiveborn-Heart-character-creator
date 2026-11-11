@@ -228,9 +228,11 @@ function AccountDialog({
                     <Button variant="ghost" className="text-destructive" onClick={() => void onLogout()}>
                         Sign out
                     </Button>
-                    <Button disabled={!value.trim()} onClick={() => void save()}>
-                        Save nickname
-                    </Button>
+                    <Hint label="Type a nickname first" wrap disabled={Boolean(value.trim())}>
+                        <Button disabled={!value.trim()} onClick={() => void save()}>
+                            Save nickname
+                        </Button>
+                    </Hint>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

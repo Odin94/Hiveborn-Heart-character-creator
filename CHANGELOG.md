@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Redesign the whole app around a crimson-on-bone ("Heartlight") look with a dark
+  soot-and-iron theme: a top bar with page links, account and theme toggle; a
+  Cmd/Ctrl+K quick navigator; folder tabs for characters; notched section bands on the
+  sheet; a reworked dice roller with an outcome ladder; and a three-column play table
+  with a live roll feed, roster and loading skeletons. Destructive actions now use
+  in-app confirmation dialogs, deleting a character offers Undo, and lists gain
+  right-click menus.
+
 - Connect a signed-in Hiveborn account to Stage through a browser consent page,
   preserving the connection request across WorkOS login and using a private
   loopback handoff without putting session tokens into URLs.

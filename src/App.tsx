@@ -47,7 +47,7 @@ function App() {
     return (
         <AuthContext.Provider value={auth}>
             <TooltipProvider>
-                <Toaster closeButton />
+                <Toaster closeButton aboveDock={pathname === "/"} />
                 {showChrome ? <AppBar auth={auth} /> : null}
                 <QuickNavigator auth={auth} enabled={showChrome} />
                 <Outlet />

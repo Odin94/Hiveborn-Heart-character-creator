@@ -23,11 +23,11 @@ const capitalize = (value: string) => `${value.slice(0, 1).toUpperCase()}${value
 
 // Centre each mini die in its tray; the shapes sit differently inside their CSS boxes.
 const previewTransforms: Record<DieSize, string> = {
-    4: "translate(-50%, -50%) translate(10px, 2px) scale(0.32)",
-    6: "translate(-50%, -50%) scale(0.3)",
-    8: "translate(-50%, -50%) scale(0.32)",
-    10: "translate(-50%, -50%) translate(0, 8px) scale(0.4)",
-    12: "translate(-50%, -50%) scale(0.32)",
+    4: "translate(-50%, -50%) translate(4px, 2px) scale(0.3)",
+    6: "translate(-50%, -50%) scale(0.28)",
+    8: "translate(-50%, -50%) scale(0.29)",
+    10: "translate(-50%, -50%) translate(0, 6px) scale(0.36)",
+    12: "translate(-50%, -50%) scale(0.27)",
 }
 
 const StressDieButton = ({ size, onClick }: { size: DieSize; onClick: () => void }) => (
