@@ -1,19 +1,17 @@
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Markdown } from "@/components/ui/markdown"
 import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatFalloutEntry, formatRulesText, hasTitledEntry } from "@/hiveborn/character_sheet/markdown_formatting"
 import { falloutOptions, falloutSeverities, type Fallout as FalloutOption, type FalloutSeverity } from "@/hiveborn/game_data/fallout"
 import { resistances, type Resistance } from "@/hiveborn/game_data/resistances"
-import { Plus } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { useState } from "react"
 import { useCharacterStore } from "../character_states"
 import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
-import { SheetSection } from "./shared/sheet_section"
 
-const Fallout = ({ className }: { className?: string }) => {
+const Fallout = () => {
     const fallout = useCharacterStore.use.fallout()
     const setFallout = useCharacterStore.use.setFallout()
     const stress = useCharacterStore.use.stress()
@@ -45,34 +43,38 @@ const Fallout = ({ className }: { className?: string }) => {
     }
 
     return (
-        <>
-            <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-                <SheetSection title="Fallout" className={className} action={<DialogTriggerWrapper label="Choose fallout" />}>
-                    <MarkdownTextarea aria-label="Fallout" value={fallout} onChange={(e) => setFallout(e.target.value)} className="h-70" />
-                </SheetSection>
-                {pickerOpen ? (
-                    <FalloutDialog
-                        onSelect={(selectedFallout) => {
-                            const newFallout = formatFalloutEntry(selectedFallout)
-                            if (fallout.trim() === "") setFallout(newFallout)
-                            else setFallout(`${fallout}\n\n${newFallout}`)
+        <div>
+            <div className="row-span-3 col-span-2 text-left mt-2">
+                <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+                    <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
+                        FALLOUT <DialogTriggerWrapper />
+                    </h2>
+                    {pickerOpen ? (
+                        <FalloutDialog
+                            onSelect={(selectedFallout) => {
+                                const newFallout = formatFalloutEntry(selectedFallout)
+                                if (fallout.trim() === "") setFallout(newFallout)
+                                else setFallout(`${fallout}\n\n${newFallout}`)
 
-                            setPickerOpen(false)
-                            if (hasStressToClear(selectedFallout)) setPendingStressClear(selectedFallout)
-                        }}
-                    />
-                ) : null}
-            </Dialog>
+                                setPickerOpen(false)
+                                if (hasStressToClear(selectedFallout)) setPendingStressClear(selectedFallout)
+                            }}
+                        />
+                    ) : null}
+                </Dialog>
 
-            <ClearStressDialog
-                pendingStressClear={pendingStressClear}
-                onCancel={() => setPendingStressClear(undefined)}
-                onConfirm={() => {
-                    if (pendingStressClear) clearStressForFallout(pendingStressClear)
-                    setPendingStressClear(undefined)
-                }}
-            />
-        </>
+                <ClearStressDialog
+                    pendingStressClear={pendingStressClear}
+                    onCancel={() => setPendingStressClear(undefined)}
+                    onConfirm={() => {
+                        if (pendingStressClear) clearStressForFallout(pendingStressClear)
+                        setPendingStressClear(undefined)
+                    }}
+                />
+
+                <MarkdownTextarea value={fallout} onChange={(e) => setFallout(e.target.value)} className="h-70" />
+            </div>
+        </div>
     )
 }
 
@@ -80,91 +82,88 @@ const FalloutDialog = ({ onSelect }: { onSelect: (fallout: FalloutOption) => voi
     const fallout = useCharacterStore.use.fallout()
     const [falloutSeverity, setFalloutSeverity] = useState<FalloutSeverity>("minor")
     const [resistance, setResistance] = useState<Resistance>("blood")
+    const selectedSeverityClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
+    const selectedResistanceClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
     const isFalloutPickedAlready = (falloutOption: FalloutOption) =>
         hasTitledEntry(fallout, falloutOption.name) ||
         hasTitledEntry(fallout, `${falloutOption.name} (${falloutOption.severity})`) ||
         hasTitledEntry(fallout, `${falloutOption.name} (${falloutOption.severity}, ${falloutOption.resistance})`)
-    const availableForSeverity = falloutOptions
+    const filteredFalloutOptions = falloutOptions
         .filter((falloutOption) => falloutOption.severity === falloutSeverity)
+        .filter((falloutOption) => falloutOption.resistance === resistance)
         .filter((falloutOption) => !isFalloutPickedAlready(falloutOption))
-    const filteredFalloutOptions = availableForSeverity.filter((falloutOption) => falloutOption.resistance === resistance)
+
+    const renderFalloutOptions = () => (
+        <ScrollArea className="min-h-0 flex-1" style={{ borderColor: "red" }}>
+            {filteredFalloutOptions.length === 0 ? (
+                <p className="p-4 text-muted-foreground text-sm">No available fallout in this section.</p>
+            ) : (
+                filteredFalloutOptions.map((falloutOption) => (
+                    <button
+                        key={`${falloutOption.severity}-${falloutOption.resistance}-${falloutOption.name}`}
+                        type="button"
+                        className="sheet-choice w-full border border-t-0 p-3 text-left"
+                        onClick={() => onSelect(falloutOption)}
+                    >
+                        <h2 className="flex items-center justify-between gap-3">
+                            <span>{falloutOption.name}</span>
+                            <span className="text-xs text-muted-foreground">{falloutOption.effects.join(", ")}</span>
+                        </h2>
+                        <Markdown className="text-muted-foreground text-sm">{formatRulesText(falloutOption.description)}</Markdown>
+                    </button>
+                ))
+            )}
+        </ScrollArea>
+    )
 
     return (
-        <DialogContent className="flex h-[min(46rem,calc(100dvh-1.5rem-var(--safe-bottom)))] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl sm:p-0 [&_[data-slot=dialog-close-button]]:top-3 [&_[data-slot=dialog-close-button]]:right-3">
-            <DialogHeader className="px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-                <DialogTitle>Fallout</DialogTitle>
-                <DialogDescription>Choose fallout to add to this sheet.</DialogDescription>
-            </DialogHeader>
-
-            <Tabs
-                value={falloutSeverity}
-                onValueChange={(newSeverity) => setFalloutSeverity(newSeverity as FalloutSeverity)}
-                className="flex min-h-0 flex-1 flex-col gap-0"
-            >
-                <div className="px-5 pb-1 sm:px-6">
-                    <TabsList aria-label="Severity" className="grid grid-cols-3">
+        <DialogContent className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-h-[calc(100dvh-2rem)] sm:w-176 sm:max-w-[min(44rem,calc(100vw-2rem))]">
+            <DialogHeader className="min-h-0 flex-1 overflow-hidden">
+                <DialogTitle>FALLOUT</DialogTitle>
+                <DialogDescription></DialogDescription>
+                <Tabs
+                    defaultValue="minor"
+                    className="flex min-h-0 w-full flex-1 flex-col p-1 sm:p-2"
+                    value={falloutSeverity}
+                    onValueChange={(newSeverity) => setFalloutSeverity(newSeverity as FalloutSeverity)}
+                >
+                    <TabsList className="grid w-full shrink-0 grid-cols-3">
                         {falloutSeverities.map((severity) => (
-                            <TabsTrigger key={severity} value={severity}>
+                            <TabsTrigger key={severity} value={severity} className={`border ${falloutSeverity === severity ? selectedSeverityClassName : ""}`}>
                                 {capitalize(severity)}
                             </TabsTrigger>
                         ))}
                     </TabsList>
-                </div>
 
-                <TabsContent value={falloutSeverity} className="flex min-h-0 flex-1 flex-col">
-                    <Tabs
-                        value={resistance}
-                        onValueChange={(newResistance) => setResistance(newResistance as Resistance)}
-                        className="flex min-h-0 flex-1 flex-col gap-0"
-                    >
-                        <TabsList variant="underline" aria-label="Resistance" className="shrink-0 px-2 sm:px-4">
-                            {resistances.map((resistanceOption) => {
-                                const available = availableForSeverity.filter((falloutOption) => falloutOption.resistance === resistanceOption).length
-                                return (
-                                    <TabsTrigger key={resistanceOption} value={resistanceOption} className="gap-1.5 px-2 sm:px-3">
-                                        {capitalize(resistanceOption)}
-                                        <span className="hidden text-xs font-semibold text-muted-foreground tabular-nums sm:inline">{available}</span>
-                                    </TabsTrigger>
-                                )
-                            })}
-                        </TabsList>
+                    {falloutSeverities.map((severity) => (
+                        <TabsContent key={severity} value={severity} className="flex min-h-0 flex-1 flex-col">
+                            <Tabs
+                                value={resistance}
+                                onValueChange={(newResistance) => setResistance(newResistance as Resistance)}
+                                className="relative flex h-full min-h-0 flex-col before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-0 before:h-2 before:border-x before:border-border"
+                            >
+                                <TabsList className="mt-2 grid w-full shrink-0 grid-cols-2 sm:grid-cols-5">
+                                    {resistances.map((resistanceOption) => (
+                                        <TabsTrigger
+                                            key={resistanceOption}
+                                            value={resistanceOption}
+                                            className={`border text-xs sm:text-sm ${resistance === resistanceOption ? selectedResistanceClassName : ""}`}
+                                        >
+                                            {capitalize(resistanceOption)}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
 
-                        <TabsContent value={resistance} className="min-h-0 flex-1 bg-sunken/60">
-                            <ScrollArea className="h-full">
-                                {filteredFalloutOptions.length === 0 ? (
-                                    <p className="px-6 py-10 text-center text-sm text-muted-foreground">No available fallout in this section.</p>
-                                ) : (
-                                    <ul className="grid gap-2 p-3 pb-[max(0.75rem,var(--safe-bottom))] sm:p-4">
-                                        {filteredFalloutOptions.map((falloutOption) => (
-                                            <li key={`${falloutOption.severity}-${falloutOption.resistance}-${falloutOption.name}`}>
-                                                <button
-                                                    type="button"
-                                                    className="sheet-pick fallout-option group/option grid! grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1"
-                                                    onClick={() => onSelect(falloutOption)}
-                                                >
-                                                    <span className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                                                        <span className="font-display text-lg leading-tight font-bold">{falloutOption.name}</span>
-                                                        <span className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                                                            {falloutOption.effects.join(" · ")}
-                                                        </span>
-                                                    </span>
-                                                    <span
-                                                        className="row-span-2 grid size-8 place-items-center self-center rounded-md text-muted-foreground transition-colors duration-150 ease-out group-hover/option:bg-primary group-hover/option:text-primary-foreground"
-                                                        aria-hidden="true"
-                                                    >
-                                                        <Plus className="size-4" />
-                                                    </span>
-                                                    <Markdown className="text-sm text-muted-foreground">{formatRulesText(falloutOption.description)}</Markdown>
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </ScrollArea>
+                                {resistances.map((resistanceOption) => (
+                                    <TabsContent key={resistanceOption} value={resistanceOption} className="flex min-h-0 flex-1 flex-col">
+                                        {renderFalloutOptions()}
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
                         </TabsContent>
-                    </Tabs>
-                </TabsContent>
-            </Tabs>
+                    ))}
+                </Tabs>
+            </DialogHeader>
         </DialogContent>
     )
 }
@@ -182,16 +181,31 @@ const ClearStressDialog = ({
     const resistanceLabel = pendingStressClear ? capitalize(pendingStressClear.resistance) : ""
 
     return (
-        <ConfirmDialog
-            open={!!pendingStressClear}
-            onOpenChange={(open) => !open && onCancel()}
-            title={`Clear ${isMajor ? "all" : resistanceLabel} stress for '${pendingStressClear?.name ?? ""}'?`}
-            description={isMajor ? "Major fallout clears stress from every resistance." : `Minor fallout clears stress from ${resistanceLabel}.`}
-            cancelLabel="Keep Stress"
-            confirmLabel="Clear Stress"
-            destructive={false}
-            onConfirm={onConfirm}
-        />
+        <Dialog open={!!pendingStressClear} onOpenChange={(open) => !open && onCancel()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>
+                        Clear {isMajor ? "all" : resistanceLabel} stress for '{pendingStressClear?.name}'?
+                    </DialogTitle>
+                    <DialogDescription></DialogDescription>
+                    <p className="text-muted-foreground text-md my-2">
+                        {isMajor ? "Major fallout clears stress from every resistance." : `Minor fallout clears stress from ${resistanceLabel}.`}
+                    </p>
+                    <div className="mt-2 flex justify-end">
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary" onClick={onCancel}>
+                                Keep Stress
+                            </Button>
+                        </DialogClose>
+                        <DialogClose asChild>
+                            <Button className="ml-3" type="button" onClick={onConfirm}>
+                                Clear Stress
+                            </Button>
+                        </DialogClose>
+                    </div>
+                </DialogHeader>
+            </DialogContent>
+        </Dialog>
     )
 }
 

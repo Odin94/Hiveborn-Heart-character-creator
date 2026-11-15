@@ -1,13 +1,11 @@
 import { Button } from "@/components/ui/button"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Hint } from "@/components/ui/tooltip"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Character, characterSchema } from "@/hiveborn/game_data/character"
 import { useUserUuid } from "@/lib/analytics"
 import { useThemeStore } from "@/lib/theme"
+import { cn } from "@/lib/utils"
 import { Buffer } from "buffer"
-import { ArchiveRestore, FileDown, FileJson, FileUp, History, RotateCcw, Upload } from "lucide-react"
+import { FileDown, Upload } from "lucide-react"
 import { useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { toast } from "sonner"
@@ -36,6 +34,8 @@ export const getUploadFile = async (file: File): Promise<string> => {
     })
 }
 
+const growDownClass = "transition-all duration-200 ease-in-out sm:hover:h-[calc(2rem+15px)]"
+
 export const JSONDownloadButton = ({ className }: { className?: string }) => {
     const posthog = usePostHog()
     const getCharacterData = useCharacterStore.use.getCharacterData()
@@ -50,8 +50,8 @@ export const JSONDownloadButton = ({ className }: { className?: string }) => {
     }
 
     return (
-        <Button variant="outline" className={className} onClick={handleDownload}>
-            <FileJson /> Download JSON
+        <Button className={cn("rounded-t-none", growDownClass, className)} onClick={handleDownload}>
+            Download JSON
         </Button>
     )
 }
@@ -60,21 +60,32 @@ export const ResetButton = () => {
     const resetCharacter = useCharacterStore.use.resetCharacter()
 
     return (
-        <ConfirmDialog
-            trigger={
-                <Button variant="ghost" className="text-muted-foreground hover:text-destructive">
-                    <RotateCcw /> Reset Character
-                </Button>
-            }
-            title="Reset character?"
-            description="Your current character will be archived and a new empty sheet created. You can restore it from Deleted characters."
-            confirmLabel="Reset"
-            onConfirm={() => {
-                resetCharacter()
-                // No Undo here: restoring would leave the fresh blank sheet behind as a second tab.
-                toast("Started a fresh sheet", { description: "The old one is under Deleted characters." })
-            }}
-        />
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button className={cn("rounded-t-none", growDownClass)}>🔥 Reset Character</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Reset Character?</DialogTitle>
+                    <DialogDescription>
+                        Your current character will be archived and a new empty sheet created. You can restore it from Deleted characters.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-2 flex justify-end">
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary" onClick={() => {}}>
+                            Cancel
+                        </Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                        <Button className="ml-3" type="button" onClick={resetCharacter}>
+                            Reset Character
+                        </Button>
+                    </DialogClose>
+                </div>
+            </DialogContent>
+        </Dialog>
     )
 }
 
@@ -97,28 +108,30 @@ export const JSONUploadButton = () => {
         },
     })
 
-    const dropzoneState = isDragReject ? "reject" : isDragActive ? "active" : file ? "ready" : "idle"
+    const getDropzoneClassName = () => {
+        if (isDragReject) {
+            return "border-red-500 bg-red-50"
+        }
+        if (isDragActive) {
+            return "border-blue-500 bg-blue-50"
+        }
+        if (file) {
+            return "border-green-500 bg-green-50"
+        }
+        return "border-gray-300 hover:border-gray-400"
+    }
 
     const getDropzoneText = () => {
         if (isDragReject) {
-            return <p className="text-center font-semibold text-destructive">Only JSON files are accepted</p>
+            return <p className="text-center text-red-500">Only JSON files are accepted</p>
         }
         if (isDragActive) {
-            return <p className="text-center font-semibold text-heart">Drop the JSON file here…</p>
+            return <p className="text-center">Drop the JSON file here...</p>
         }
         if (file) {
-            return (
-                <p className="text-center">
-                    <span className="text-muted-foreground">Selected</span> <span className="font-semibold">{file.name}</span>
-                </p>
-            )
+            return <p className="text-center">Selected: {file.name}</p>
         }
-        return (
-            <p className="text-center">
-                <span className="font-semibold">Drop a JSON file here</span>
-                <span className="block text-muted-foreground">or click to choose one</span>
-            </p>
-        )
+        return <p className="text-center">Drag & drop a JSON file here, or click to select</p>
     }
 
     const { userUuid } = useUserUuid()
@@ -174,41 +187,38 @@ export const JSONUploadButton = () => {
             }}
         >
             <DialogTrigger asChild>
-                <Button variant="outline">
-                    <Upload />
+                <Button className={cn("rounded-t-none", growDownClass)}>
+                    <Upload className="mr-2 h-4 w-4" />
                     Load Character
                 </Button>
             </DialogTrigger>
-            <DialogContent
-                onPaste={(event) => {
-                    const pasted = Array.from(event.clipboardData.files).find((entry) => entry.name.toLowerCase().endsWith(".json"))
-                    if (pasted) setFile(pasted)
-                }}
-            >
+            <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Load from JSON file</DialogTitle>
+                    <DialogTitle>Load from json file</DialogTitle>
                     <DialogDescription>This adds the imported character. If its saved version differs, both copies are kept.</DialogDescription>
                 </DialogHeader>
-                <div {...getRootProps()} className="sheet-dropzone" data-state={dropzoneState}>
-                    <input {...getInputProps()} accept=".json" />
-                    <FileUp className="size-6 text-heart" aria-hidden="true" />
-                    <div className="text-sm">{getDropzoneText()}</div>
+                <div>
+                    <div
+                        {...getRootProps()}
+                        className={`text-sm w-full sm:w-[70%] border-2 border-dashed rounded-md p-2 cursor-pointer transition-colors ${getDropzoneClassName()}`}
+                    >
+                        <input {...getInputProps()} accept=".json" />
+                        {getDropzoneText()}
+                    </div>
                 </div>
 
-                <DialogFooter>
+                <div className="mt-2 gap-3 flex justify-end">
                     <DialogClose asChild>
                         <Button type="button" variant="secondary" onClick={() => setFile(undefined)}>
                             Cancel
                         </Button>
                     </DialogClose>
-                    <Hint label="Choose a JSON file first" wrap disabled={Boolean(file)}>
-                        <DialogClose asChild>
-                            <Button onClick={() => loadCharacter(file)} disabled={!file}>
-                                Load file
-                            </Button>
-                        </DialogClose>
-                    </Hint>
-                </DialogFooter>
+                    <DialogClose asChild>
+                        <Button onClick={() => loadCharacter(file)} disabled={!file}>
+                            Load file
+                        </Button>
+                    </DialogClose>
+                </div>
             </DialogContent>
         </Dialog>
     )
@@ -254,8 +264,8 @@ export const PDFDownloadButton = ({ className }: { className?: string }) => {
     }
 
     return (
-        <Button className={className} onClick={handleDownload} disabled={exporting} aria-busy={exporting}>
-            <FileDown />
+        <Button className={cn("rounded-t-none", growDownClass, className)} onClick={handleDownload} disabled={exporting}>
+            <FileDown className="mr-2 h-4 w-4" />
             {exporting ? "Generating PDF…" : "Download PDF"}
         </Button>
     )
@@ -264,60 +274,41 @@ export const PDFDownloadButton = ({ className }: { className?: string }) => {
 export const DeletedCharactersButton = () => {
     const archived = useCharacterStore.use.archivedCharacters()
     const restore = useCharacterStore.use.restoreCharacter()
-    const newestFirst = [...archived].reverse()
-    const restoreEntry = (archiveId: string) => {
-        restore(archiveId)
-        toast.success("Restored as a new character")
-    }
-
     return (
         <Dialog>
-            <Hint label="No deleted characters yet" wrap disabled={archived.length > 0}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" disabled={!archived.length}>
-                        <History /> Deleted characters <span className="text-muted-foreground tabular-nums">({archived.length})</span>
-                    </Button>
-                </DialogTrigger>
-            </Hint>
-            <DialogContent className="sm:max-w-xl">
+            <DialogTrigger asChild>
+                <Button variant="secondary" className="rounded-t-none" disabled={!archived.length}>
+                    Deleted characters ({archived.length})
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Deleted characters</DialogTitle>
                     <DialogDescription>Deleted and reset sheets stay saved. Restore creates a separate active copy.</DialogDescription>
                 </DialogHeader>
-                <ul className="-mx-2 max-h-[min(28rem,60dvh)] overflow-y-auto">
-                    {newestFirst.map((entry) => (
-                        <ContextMenu key={entry.archiveId}>
-                            <ContextMenuTrigger asChild>
-                                <li className="flex flex-col gap-3 rounded-md px-2 py-3 transition-colors duration-150 hover:bg-accent/60 sm:flex-row sm:items-center sm:justify-between [&+li]:border-t [&+li]:border-border/70">
-                                    <div className="min-w-0 text-left">
-                                        <p className="truncate font-display text-lg leading-tight font-bold">{entry.character.name || "Unnamed hiveborn"}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {[entry.character.characterClass, entry.character.calling].filter(Boolean).join(" · ")}
-                                            {entry.character.characterClass || entry.character.calling ? " — " : ""}
-                                            {new Date(entry.deletedAt).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="flex shrink-0 gap-2">
-                                        <Button variant="secondary" size="sm" onClick={() => void downloadJson(entry.character)}>
-                                            <FileJson /> Download JSON
-                                        </Button>
-                                        <Button size="sm" onClick={() => restoreEntry(entry.archiveId)}>
-                                            <ArchiveRestore /> Restore
-                                        </Button>
-                                    </div>
-                                </li>
-                            </ContextMenuTrigger>
-                            <ContextMenuContent>
-                                <ContextMenuItem onSelect={() => restoreEntry(entry.archiveId)}>
-                                    <ArchiveRestore /> Restore
-                                </ContextMenuItem>
-                                <ContextMenuItem onSelect={() => void downloadJson(entry.character)}>
-                                    <FileJson /> Download JSON
-                                </ContextMenuItem>
-                            </ContextMenuContent>
-                        </ContextMenu>
+                <div className="max-h-96 space-y-3 overflow-y-auto">
+                    {archived.map((entry) => (
+                        <div key={entry.archiveId} className="flex items-center justify-between gap-3 border-b pb-3">
+                            <div>
+                                <p>{entry.character.name || "Unnamed hiveborn"}</p>
+                                <p className="text-sm text-muted-foreground">{new Date(entry.deletedAt).toLocaleString()}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="secondary" onClick={() => void downloadJson(entry.character)}>
+                                    Download JSON
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        restore(entry.archiveId)
+                                        toast.success("Restored as a new character")
+                                    }}
+                                >
+                                    Restore
+                                </Button>
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
             </DialogContent>
         </Dialog>
     )

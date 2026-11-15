@@ -1,21 +1,13 @@
 import { cn } from "@/lib/utils"
 import { type CSSProperties } from "react"
-import { type DieProps } from "../types"
+import { DieRoll } from "../types"
 import { getD12DieTransform, getD12RollTransform } from "./transforms"
 
-const D12Die = ({ die, rolling, index, featured = false }: DieProps) => {
+const D12Die = ({ die, rolling, index }: { die: DieRoll; rolling: boolean; index: number }) => {
     const isRemoved = !rolling && die.removed
 
     return (
-        <div
-            className={cn(
-                "heart-die-shell heart-d12-shell",
-                rolling && "heart-die-shell-rolling",
-                isRemoved && "heart-d12-shell-removed heart-die-shell-removed",
-                featured && !rolling && !isRemoved && "heart-die-shell-featured",
-            )}
-            style={{ "--die-delay": `${index * 90}ms` } as CSSProperties}
-        >
+        <div className={cn("heart-d12-shell", isRemoved && "heart-d12-shell-removed")} style={{ "--die-delay": `${index * 90}ms` } as CSSProperties}>
             <div
                 className={cn("heart-d12", rolling && "heart-d12-rolling")}
                 style={

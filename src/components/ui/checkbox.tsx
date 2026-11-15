@@ -1,29 +1,23 @@
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-/**
- * Ink-box checkbox: checked state is a solid crimson box (like a filled stress
- * track on the printed sheet). The hit area extends 6px beyond the visual box.
- */
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
     return (
         <CheckboxPrimitive.Root
             data-slot="checkbox"
             className={cn(
-                "peer relative size-4 shrink-0 rounded-[3px] border border-border-strong bg-sunken shadow-xs outline-none",
-                "transition-[background-color,border-color,box-shadow] duration-120 ease-out",
-                "before:absolute before:-inset-1.5 before:content-['']",
-                "hover:border-primary/70",
-                "data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:[box-shadow:inset_0_1px_0_oklch(1_0_0/0.18)]",
-                "data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary/40",
-                "disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive",
+                "peer border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
                 className,
             )}
             {...props}
         >
-            <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="pointer-events-none absolute inset-0 animate-hb-fade-in" />
+            <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex items-center justify-center bg-primary text-primary transition-none">
+                {/* Icon needs to be here, otherwise background is just black. To hide it, we set its color to the same as background */}
+                <XIcon className="size-3.5" />
+            </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
     )
 }

@@ -1,34 +1,9 @@
 import { useState } from "react"
-import { AppWindow, ArrowLeft, Check, LogIn, RotateCw } from "lucide-react"
+import { Heart, ArrowLeft } from "lucide-react"
 import { useAppAuth } from "@/App"
 import { api, tokenStorage } from "@/lib/api"
 import { clearStageConnection, parseStageConnection, readStageConnection, saveStageConnection } from "@/lib/stageConnection"
 import { Button } from "@/components/ui/button"
-import { HeartSigil } from "@/components/ui/sigil"
-
-/** Hiveborn ⟷ Stage: two seals joined by a thread that pulses while connecting and closes once linked. */
-function ConnectionMark({ state }: { state: "idle" | "busy" | "connected" }) {
-    return (
-        <div className="handoff-mark" data-state={state} aria-hidden="true">
-            <span className="handoff-seal" data-tone="heart">
-                <HeartSigil className="size-7" />
-            </span>
-            <span className="handoff-thread">
-                <span />
-                <span />
-                <span />
-                {state === "connected" && (
-                    <span className="handoff-check">
-                        <Check className="size-3.5" strokeWidth={3} />
-                    </span>
-                )}
-            </span>
-            <span className="handoff-seal">
-                <AppWindow className="size-6" />
-            </span>
-        </div>
-    )
-}
 
 export function StageConnectPage() {
     const auth = useAppAuth()
@@ -85,14 +60,11 @@ export function StageConnectPage() {
         api.login()
     }
     return (
-        <main className="handoff-page">
-            <p className="flex items-center gap-2 font-display text-xl font-bold text-foreground">
-                <HeartSigil className="size-5 text-heart" /> Hiveborn
-            </p>
-            <section className="panel-plate flex w-full max-w-md flex-col gap-6 px-6 py-8 sm:px-8" aria-live="polite">
-                <ConnectionMark state={connected ? "connected" : busy ? "busy" : "idle"} />
-                <div className="text-center">
-                    <h1 className="title-display">{connected ? "Connected to Stage" : "Connect Hiveborn to Stage"}</h1>
+        <main className="grid min-h-dvh place-items-center bg-background px-5 py-10 text-foreground">
+            <section className="w-full max-w-md space-y-5 rounded-xl border border-border bg-card p-6 shadow-lg">
+                <Heart className="size-7 text-primary" />
+                <div>
+                    <h1 className="text-2xl font-semibold">{connected ? "Connected to Stage" : "Connect Hiveborn to Stage"}</h1>
                     <p className="mt-2 text-sm text-muted-foreground">
                         {connected
                             ? "Return to Stage to choose your characters or a shared play group."
@@ -100,47 +72,46 @@ export function StageConnectPage() {
                     </p>
                 </div>
                 {!connected && !connection ? (
-                    <p role="alert" className="handoff-alert">
+                    <p role="alert" className="text-sm text-destructive">
                         Open Settings → Integrations in Stage and choose Sign in with WorkOS to start a connection.
                     </p>
                 ) : (
                     !connected && (
-                        <div className="flex flex-col gap-3">
+                        <>
                             {auth.loading ? (
-                                <>
-                                    <p role="status" className="text-center text-sm text-muted-foreground">
-                                        Checking your account…
-                                    </p>
-                                    <div className="h-10 rounded-md bg-foreground/8" aria-hidden="true" />
-                                </>
+                                <p role="status" className="text-sm text-muted-foreground">
+                                    Checking your account…
+                                </p>
                             ) : auth.user ? (
                                 <>
-                                    <p className="handoff-account">
-                                        <span className="text-muted-foreground">Connect as</span>
-                                        <strong className="truncate">{auth.user.nickname || auth.user.email}</strong>
+                                    <p className="text-sm">
+                                        Connect as <strong>{auth.user.nickname || auth.user.email}</strong>
                                     </p>
-                                    <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>
-                                        {error && !busy ? <RotateCw /> : null}
+                                    <Button className="cursor-pointer" disabled={busy} onClick={() => void connect()}>
                                         {busy ? "Connecting…" : error ? "Retry connection" : "Connect to Stage"}
                                     </Button>
                                 </>
                             ) : (
-                                <Button size="lg" className="w-full" onClick={login}>
-                                    <LogIn /> Sign in with WorkOS
+                                <Button className="cursor-pointer" onClick={login}>
+                                    Sign in with WorkOS
                                 </Button>
                             )}
                             {error && (
-                                <p role="alert" className="handoff-alert">
+                                <p role="alert" className="text-sm text-destructive">
                                     {error}
                                 </p>
                             )}
-                        </div>
+                        </>
                     )
                 )}
+                <a
+                    className="flex w-fit items-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground"
+                    href="/"
+                    onClick={clearStageConnection}
+                >
+                    <ArrowLeft className="size-4" /> Return to Hiveborn
+                </a>
             </section>
-            <a className="handoff-back" href="/" onClick={clearStageConnection}>
-                <ArrowLeft className="size-4" /> Return to Hiveborn
-            </a>
         </main>
     )
 }

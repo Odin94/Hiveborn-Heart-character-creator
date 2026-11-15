@@ -81,9 +81,8 @@ const d12LowerFaceYaw: Record<number, number> = {
 }
 
 export const getD12DieTransform = (face: number) => {
-    // Face 1 sits on the rotateX(90deg) cap and face 7 on the opposite one (see .heart-d12-face-1/-7).
-    if (face === 1) return "rotateX(90deg)"
-    if (face === 7) return "rotateX(-90deg)"
+    if (face === 1) return "rotateX(-90deg)"
+    if (face === 7) return "rotateX(90deg)"
 
     if (face in d12UpperFaceYaw) {
         return `rotateX(${-d12CoDihedral}deg) rotateY(${-d12UpperFaceYaw[face]}deg)`
@@ -95,8 +94,8 @@ export const getD12DieTransform = (face: number) => {
 }
 
 export const getD12RollTransform = (face: number) => {
-    if (face === 1) return "rotateX(810deg) rotateY(720deg) rotateZ(720deg)"
-    if (face === 7) return "rotateX(630deg) rotateY(720deg) rotateZ(720deg)"
+    if (face === 1) return "rotateX(630deg) rotateY(720deg) rotateZ(720deg)"
+    if (face === 7) return "rotateX(810deg) rotateY(720deg) rotateZ(720deg)"
 
     if (face in d12UpperFaceYaw) {
         return `rotateX(${720 - d12CoDihedral}deg) rotateY(${1080 - d12UpperFaceYaw[face]}deg) rotateZ(720deg)`

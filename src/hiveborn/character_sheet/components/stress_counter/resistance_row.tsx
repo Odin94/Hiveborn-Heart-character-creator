@@ -1,7 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox"
 import { NumberBy } from "@/hiveborn/utils"
-import { type CSSProperties } from "react"
-import { useFillCascade } from "./use_fill_cascade"
 
 type StressRowNumber = NumberBy<["s"]>["s"]
 
@@ -12,15 +10,12 @@ export type ResistanceRowProps = Omit<StressRowNumber, "setN"> & {
 }
 
 const ResistanceRow = ({ n, setN, readOnly = false, label = "stress" }: ResistanceRowProps) => {
-    const fillDelay = useFillCascade(n)
-
     return (
-        <div className="stress-track" data-readonly={readOnly || undefined}>
+        <div className="flex min-w-0 flex-wrap gap-1 sm:block">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                 <Checkbox
                     key={i}
-                    className="stress-cell p-0 disabled:cursor-default disabled:opacity-100"
-                    style={{ "--fill-delay": `${fillDelay(i)}ms` } as CSSProperties}
+                    className="p-0 disabled:opacity-100 sm:mx-0.5"
                     aria-label={`${label}: ${i} stress`}
                     checked={i <= n}
                     disabled={readOnly}

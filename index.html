@@ -3,13 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/heart-illustration-1-svgrepo-com.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <meta name="theme-color" content="#f6efe4" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Hiveborn</title>
         <script>
             ;(() => {
-                const darkBackground = "#090f17"
-                const lightBackground = "#f6efe4"
+                const darkBackground = "#0d1e26"
+                const lightBackground = "#fbf7ef"
                 let theme = "light"
 
                 try {
@@ -22,7 +21,6 @@
                 document.documentElement.classList.toggle("dark", theme === "dark")
                 document.documentElement.style.colorScheme = theme
                 document.documentElement.style.backgroundColor = theme === "dark" ? darkBackground : lightBackground
-                document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? darkBackground : lightBackground)
             })()
         </script>
     </head>

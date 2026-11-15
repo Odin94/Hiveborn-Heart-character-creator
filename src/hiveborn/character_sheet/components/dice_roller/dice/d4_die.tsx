@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import { type CSSProperties } from "react"
-import { type DieProps } from "../types"
+import { DieRoll } from "../types"
 import { d4Transforms } from "./transforms"
 
 const d4OriginX = "105%"
@@ -18,21 +18,13 @@ const getD4FaceNumbers = (topValue: number) => {
     ]
 }
 
-const D4Die = ({ die, rolling, index, featured = false }: DieProps) => {
+const D4Die = ({ die, rolling, index }: { die: DieRoll; rolling: boolean; index: number }) => {
     const isRemoved = !rolling && die.removed
     const finalYaw = die.value === 1 ? 0 : die.value === 2 ? 120 : die.value === 3 ? 240 : 0
     const faceNumbers = getD4FaceNumbers(die.value)
 
     return (
-        <div
-            className={cn(
-                "heart-die-shell heart-d4-shell",
-                rolling && "heart-die-shell-rolling",
-                isRemoved && "heart-d4-shell-removed heart-die-shell-removed",
-                featured && !rolling && !isRemoved && "heart-die-shell-featured",
-            )}
-            style={{ "--die-delay": `${index * 90}ms` } as CSSProperties}
-        >
+        <div className={cn("heart-d4-shell", isRemoved && "heart-d4-shell-removed")} style={{ "--die-delay": `${index * 90}ms` } as CSSProperties}>
             <div className="heart-d4-positioner">
                 <div
                     className={cn("heart-d4", rolling && "heart-d4-rolling")}

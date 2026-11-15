@@ -14,7 +14,6 @@ type OnPageRollOverlayProps = Omit<ComponentProps<"div">, "children" | "classNam
     blockInteraction?: boolean
 }
 
-/** Full-viewport layer for dice that land on the page itself; fades out after the result has been held. */
 export const OnPageRollOverlay = ({
     children,
     className,
@@ -25,7 +24,7 @@ export const OnPageRollOverlay = ({
 }: OnPageRollOverlayProps) => (
     <div
         {...props}
-        className={cn("fixed inset-0 z-(--z-roll) heart-roll-fade-out", !blockInteraction && "pointer-events-none", className)}
+        className={cn("fixed inset-0 heart-roll-fade-out", !blockInteraction && "pointer-events-none", className)}
         style={{ "--roll-fade-delay": `${fadeDelayMs}ms`, "--roll-fade-duration": `${fadeDurationMs}ms` } as CSSProperties}
     >
         {children}

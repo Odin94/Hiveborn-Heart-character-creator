@@ -1,10 +1,7 @@
 import "./App.css"
 import { createContext, useContext, useEffect } from "react"
-import { Outlet, useRouterState } from "@tanstack/react-router"
+import { Outlet } from "@tanstack/react-router"
 import { Toaster } from "@/components/ui/sonner"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { AppBar } from "@/components/app-bar"
-import { QuickNavigator } from "@/components/quick-navigator"
 import { useUserUuid } from "@/lib/analytics"
 import { usePostHog } from "posthog-js/react"
 import { useAuth } from "@/hooks/useAuth"
@@ -23,9 +20,6 @@ function App() {
     const posthog = usePostHog()
     const { userUuid, setUserUuid } = useUserUuid()
     const auth = useAuth()
-    // Focused hand-off flows (OAuth callback, Stage connect) render without the app chrome.
-    const pathname = useRouterState({ select: (state) => state.location.pathname })
-    const showChrome = !pathname.startsWith("/auth/") && pathname !== "/stage-connect"
     useEffect(() => {
         if (!userUuid) {
             setUserUuid()
@@ -46,12 +40,8 @@ function App() {
 
     return (
         <AuthContext.Provider value={auth}>
-            <TooltipProvider>
-                <Toaster closeButton aboveDock={pathname === "/"} />
-                {showChrome ? <AppBar auth={auth} /> : null}
-                <QuickNavigator auth={auth} enabled={showChrome} />
-                <Outlet />
-            </TooltipProvider>
+            <Toaster closeButton />
+            <Outlet />
         </AuthContext.Provider>
     )
 }

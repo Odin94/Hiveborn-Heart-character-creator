@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { ArrowLeft } from "lucide-react"
 import { api, tokenStorage } from "@/lib/api"
 import { useAppAuth } from "@/App"
 import { readStageConnection } from "@/lib/stageConnection"
-import { HeartSigil } from "@/components/ui/sigil"
 
 export function AuthCallbackPage() {
     const { refresh } = useAppAuth()
@@ -29,24 +27,10 @@ export function AuthCallbackPage() {
             .catch((reason: Error) => setError(reason.message))
     }, [refresh, navigate])
     return (
-        <main className="handoff-page">
-            <div className="flex flex-col items-center gap-5 text-center" aria-live="polite">
-                <span className="handoff-seal handoff-seal-lg" data-tone="heart" data-error={error ? "" : undefined} aria-hidden="true">
-                    <HeartSigil className={error ? "size-9" : "hb-heartbeat size-9"} />
-                </span>
-                <div className="space-y-2">
-                    <h1 className="title-display">{error ? "Sign-in didn’t finish" : "Signing you in…"}</h1>
-                    {error ? (
-                        <p role="alert" className="max-w-sm text-sm text-muted-foreground">
-                            {error}
-                        </p>
-                    ) : null}
-                </div>
-                {error && (
-                    <a className="handoff-back" href="/">
-                        <ArrowLeft className="size-4" /> Return to Hiveborn
-                    </a>
-                )}
+        <main className="grid min-h-screen place-items-center bg-background p-6">
+            <div className="text-center">
+                <h1 className="text-2xl font-bold">Signing you in…</h1>
+                {error && <p className="mt-3 text-destructive">{error}</p>}
             </div>
         </main>
     )

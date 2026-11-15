@@ -2,17 +2,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Markdown } from "@/components/ui/markdown"
 import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { beatTypes, beatsByCalling, type Beat, type BeatType } from "@/hiveborn/game_data/beats"
 import { isCalling } from "@/hiveborn/game_data/callings"
 import { formatBeatEntry, formatRulesText, normalizeMarkdownText } from "@/hiveborn/character_sheet/markdown_formatting"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { useState } from "react"
 import { useCharacterStore } from "../character_states"
 import { DialogTriggerWrapper } from "./shared/DialogTriggerWrapper"
-import { SheetSection } from "./shared/sheet_section"
-import { PickerEmpty, PickerList } from "./shared/picker"
 
-const ActiveBeats = ({ className }: { className?: string }) => {
+const ActiveBeats = () => {
     const activeBeats = useCharacterStore.use.activeBeats()
     const setActiveBeats = useCharacterStore.use.setActiveBeats()
     const calling = useCharacterStore.use.calling()
@@ -21,33 +19,34 @@ const ActiveBeats = ({ className }: { className?: string }) => {
     // TODOdin: Make beats line-by-line with a checkbox and store completed beats in a history somewhere
     // TODOdin: Add MAJOR/MINOR badge to beats
     return (
-        <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-            <SheetSection
-                title="Active beats"
-                className={`sheet-section-active-focus ${className ?? ""}`}
-                action={<DialogTriggerWrapper label="Choose beats" />}
-            >
-                <MarkdownTextarea aria-label="Active beats" value={activeBeats} onChange={(e) => setActiveBeats(e.target.value)} className="h-28" />
-            </SheetSection>
-            {pickerOpen ? (
-                <BeatsDialog
-                    calling={calling}
-                    onSelect={(beat) => {
-                        const newBeat = formatBeatEntry(beat)
-                        if (activeBeats.trim() === "") setActiveBeats(newBeat)
-                        else setActiveBeats(`${activeBeats}\n\n${newBeat}`)
+        <div className="sheet-section-active-focus row-span-3 col-span-2 mt-5 text-left">
+            <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+                <h2 className="sheet-section-heading relative py-2 pl-3 font-bold text-white">
+                    ACTIVE BEATS <DialogTriggerWrapper />
+                </h2>
+                {pickerOpen ? (
+                    <BeatsDialog
+                        calling={calling}
+                        onSelect={(beat) => {
+                            const newBeat = formatBeatEntry(beat)
+                            if (activeBeats.trim() === "") setActiveBeats(newBeat)
+                            else setActiveBeats(`${activeBeats}\n\n${newBeat}`)
 
-                        setPickerOpen(false)
-                    }}
-                />
-            ) : null}
-        </Dialog>
+                            setPickerOpen(false)
+                        }}
+                    />
+                ) : null}
+            </Dialog>
+
+            <MarkdownTextarea value={activeBeats} onChange={(e) => setActiveBeats(e.target.value)} className="h-25" />
+        </div>
     )
 }
 
 const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: Beat) => void }) => {
     const activeBeats = useCharacterStore.use.activeBeats()
     const [beatType, setBeatType] = useState<BeatType>("minor")
+    const selectedBeatTypeClassName = "border-primary bg-primary text-primary-foreground shadow-sm"
     const beatOptions = isCalling(calling) ? beatsByCalling[calling] : []
     const normalizedActiveBeats = normalizeMarkdownText(activeBeats)
     const isBeatPickedAlready = (beat: Beat) => {
@@ -59,51 +58,58 @@ const BeatsDialog = ({ calling, onSelect }: { calling: string; onSelect: (beat: 
     const filteredBeatOptions = beatOptions.filter((beat) => beat.type === beatType).filter((beat) => !isBeatPickedAlready(beat))
 
     const renderBeats = () => (
-        <ScrollArea className="min-h-0 flex-1">
+        <ScrollArea className="min-h-0 flex-1" style={{ borderColor: "red" }}>
             {filteredBeatOptions.length === 0 ? (
-                <PickerEmpty>No beats left in this section.</PickerEmpty>
+                <p className="p-4 text-muted-foreground text-sm">No available beats in this section.</p>
             ) : (
-                <PickerList>
-                    {filteredBeatOptions.map((beat) => (
-                        <button key={`${beat.type}-${beat.description}`} type="button" className="sheet-pick" onClick={() => onSelect(beat)}>
-                            <Markdown className="text-sm leading-relaxed">{formatRulesText(beat.description)}</Markdown>
-                        </button>
-                    ))}
-                </PickerList>
+                filteredBeatOptions.map((beat) => (
+                    <button
+                        key={`${beat.type}-${beat.description}`}
+                        type="button"
+                        className="sheet-choice w-full border border-t-0 px-4 py-3 text-left"
+                        onClick={() => onSelect(beat)}
+                    >
+                        <Markdown className="text-sm">{formatRulesText(beat.description)}</Markdown>
+                    </button>
+                ))
             )}
         </ScrollArea>
     )
 
     return (
         <DialogContent
-            className={`flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:w-[40rem] sm:max-w-[min(40rem,calc(100vw-2rem))] ${
-                beatOptions.length === 0 ? "h-auto" : "h-[calc(100dvh-1rem)] sm:h-[min(46rem,calc(100dvh-2rem))]"
+            className={`flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:w-[44rem] sm:max-w-[min(44rem,calc(100vw-2rem))] ${
+                beatOptions.length === 0 ? "h-auto" : "h-[calc(100dvh-1rem)] sm:h-[min(50rem,calc(100dvh-2rem))]"
             }`}
         >
-            <DialogHeader>
-                <p className="eyebrow">Active beats</p>
-                <DialogTitle>{isCalling(calling) ? `${calling} beats` : "Beats"}</DialogTitle>
-                <DialogDescription className={beatOptions.length === 0 ? "" : "sr-only"}>
-                    {beatOptions.length === 0 ? "Pick one of the callings from the rulebook to choose beats." : "Pick a beat to add it to your sheet."}
-                </DialogDescription>
-            </DialogHeader>
-            {beatOptions.length > 0 ? (
-                <Tabs value={beatType} onValueChange={(newBeatType) => setBeatType(newBeatType as BeatType)} className="min-h-0 flex-1">
-                    <TabsList variant="segmented" className="shrink-0">
-                        {beatTypes.map((type) => (
-                            <TabsTrigger key={type} value={type}>
-                                {capitalize(type)}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
+            <DialogHeader className="min-h-0 flex-1 overflow-hidden">
+                <DialogTitle>{isCalling(calling) ? `${calling.toUpperCase()} BEATS` : "ACTIVE BEATS"}</DialogTitle>
+                <DialogDescription></DialogDescription>
+                {beatOptions.length === 0 ? (
+                    <p>Pick a pre-defined calling to select beats</p>
+                ) : (
+                    <Tabs
+                        defaultValue="minor"
+                        className="flex min-h-0 w-full flex-1 flex-col p-1 sm:p-2"
+                        value={beatType}
+                        onValueChange={(newBeatType) => setBeatType(newBeatType as BeatType)}
+                    >
+                        <TabsList className="grid w-full shrink-0 grid-cols-3">
+                            {beatTypes.map((type) => (
+                                <TabsTrigger key={type} value={type} className={`border ${beatType === type ? selectedBeatTypeClassName : ""}`}>
+                                    {capitalize(type)}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
 
-                    {beatTypes.map((type) => (
-                        <TabsContent key={type} value={type} className="flex flex-col">
-                            {renderBeats()}
-                        </TabsContent>
-                    ))}
-                </Tabs>
-            ) : null}
+                        {beatTypes.map((type) => (
+                            <TabsContent key={type} value={type} className="flex min-h-0 flex-1 flex-col">
+                                {renderBeats()}
+                            </TabsContent>
+                        ))}
+                    </Tabs>
+                )}
+            </DialogHeader>
         </DialogContent>
     )
 }

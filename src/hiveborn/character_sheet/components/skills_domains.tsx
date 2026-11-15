@@ -1,41 +1,11 @@
 import { Checkbox } from "@/components/ui/checkbox"
-import { domainDescriptions, domains, iconByDomain } from "@/hiveborn/game_data/domains"
-import { iconBySkill, skillDescriptions, skills } from "@/hiveborn/game_data/skills"
-import type { ReactNode } from "react"
+import { Input } from "@/components/ui/input"
+import { domainDescriptions, domains } from "@/hiveborn/game_data/domains"
+import { skillDescriptions, skills } from "@/hiveborn/game_data/skills"
 import { useCharacterStore } from "../character_states"
 import { Domain, Skill } from "../../game_data/character"
 import { useDiceRollerStore } from "../dice_roller_state"
-import { SheetSection } from "./shared/sheet_section"
 import SkillDomainTooltip from "./skill_domain_tooltip"
-
-type TraitRowProps = {
-    name: string
-    icon: ReactNode
-    description: string
-    trained: boolean
-    knacks: string
-    isSelected: boolean
-    onTrainedChange: (trained: boolean) => void
-    onKnacksChange: (knacks: string) => void
-    onSelect: () => void
-}
-
-/** One line of the track: ink box, the rollable name, and a ruled line for knacks. */
-const TraitRow = ({ name, icon, description, trained, knacks, isSelected, onTrainedChange, onKnacksChange, onSelect }: TraitRowProps) => {
-    const label = name.toUpperCase()
-    return (
-        <li className="trait-row" data-trained={trained ? "" : undefined} data-selected={isSelected ? "" : undefined}>
-            <Checkbox checked={trained} aria-label={`${capitalize(name)}: trained`} onCheckedChange={(checked) => onTrainedChange(checked === true)} />
-            <span className="flex min-w-0 items-center gap-1.5">
-                <span className="trait-icon" aria-hidden="true">
-                    {icon}
-                </span>
-                <SkillDomainTooltip description={description} isSelected={isSelected} label={label} onSelect={onSelect} />
-            </span>
-            <input className="trait-knack" aria-label={`${capitalize(name)} knacks`} value={knacks} onChange={(e) => onKnacksChange(e.target.value)} />
-        </li>
-    )
-}
 
 const SkillsDomains = () => {
     const existingSkills = useCharacterStore.use.skills()
@@ -47,55 +17,149 @@ const SkillsDomains = () => {
     const pickSkill = useDiceRollerStore.use.pickSkill()
     const pickDomain = useDiceRollerStore.use.pickDomain()
 
-    return (
-        <div className="grid gap-5 sm:grid-cols-2 sm:gap-4">
-            <SheetSection title="Skills" aside="Knacks">
-                <ul className="trait-track">
-                    {skills.map((skill) => {
-                        const { hasSkill, knacks } = existingSkills[skill] ?? { hasSkill: false, knacks: "" }
-                        return (
-                            <TraitRow
-                                key={skill}
-                                name={skill}
-                                icon={iconBySkill[skill]}
-                                description={skillDescriptions[skill]}
-                                trained={hasSkill}
-                                knacks={knacks}
-                                isSelected={selectedSkill === skill}
-                                onSelect={() => pickSkill(skill)}
-                                onTrainedChange={(checked) => setSkills({ ...existingSkills, [skill]: { hasSkill: checked, knacks } as Skill })}
-                                onKnacksChange={(newKnacks) => setSkills({ ...existingSkills, [skill]: { hasSkill, knacks: newKnacks } as Skill })}
-                            />
-                        )
-                    })}
-                </ul>
-            </SheetSection>
+    const rowCount = Math.max(skills.length, domains.length)
 
-            <SheetSection title="Domains" aside="Knacks">
-                <ul className="trait-track">
-                    {domains.map((domain) => {
-                        const { hasDomain, knacks } = existingDomains[domain] ?? { hasDomain: false, knacks: "" }
-                        return (
-                            <TraitRow
-                                key={domain}
-                                name={domain}
-                                icon={iconByDomain[domain]}
-                                description={domainDescriptions[domain]}
-                                trained={hasDomain}
-                                knacks={knacks}
-                                isSelected={selectedDomain === domain}
-                                onSelect={() => pickDomain(domain)}
-                                onTrainedChange={(checked) => setDomains({ ...existingDomains, [domain]: { hasDomain: checked, knacks } as Domain })}
-                                onKnacksChange={(newKnacks) => setDomains({ ...existingDomains, [domain]: { hasDomain, knacks: newKnacks } as Domain })}
-                            />
-                        )
-                    })}
-                </ul>
-            </SheetSection>
+    const mobileGridClass = "grid grid-cols-[minmax(0,1fr)_7rem] gap-2 text-left"
+    const desktopGridClass = "hidden text-left sm:grid sm:grid-cols-4 sm:gap-2"
+    const desktopColClass = "flex items-center h-8"
+    const mobileColClass = "flex h-8 min-w-0 items-center"
+
+    const renderSkill = (skill: (typeof skills)[number], colClass: string) => {
+        const { hasSkill, knacks: skillKnacks } = existingSkills[skill] ?? { hasSkill: false, knacks: [] }
+
+        return (
+            <>
+                <div className={`font-bold text-md text-left ${colClass}`}>
+                    <Checkbox
+                        checked={hasSkill}
+                        onCheckedChange={(checked) => {
+                            setSkills({
+                                ...existingSkills,
+                                [skill]: { hasSkill: checked, knacks: skillKnacks } as Skill,
+                            })
+                        }}
+                        className="mr-3"
+                    />
+                    <SkillDomainTooltip
+                        description={skillDescriptions[skill]}
+                        isSelected={selectedSkill === skill}
+                        label={skill.toUpperCase()}
+                        onSelect={() => pickSkill(skill)}
+                    />
+                </div>
+                <div className={`ml-2 ${colClass} sm:ml-4`}>
+                    <Input
+                        className="h-8 w-full rounded-none border-x-0 border-t-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 sm:w-28"
+                        value={skillKnacks}
+                        onChange={(e) => {
+                            const newKnacks = e.target.value
+                            setSkills({
+                                ...existingSkills,
+                                [skill]: { hasSkill, knacks: newKnacks } as Skill,
+                            })
+                        }}
+                    />
+                </div>
+            </>
+        )
+    }
+
+    const renderDomain = (domain: (typeof domains)[number], colClass: string) => {
+        const { hasDomain, knacks: domainKnacks } = existingDomains[domain] ?? { hasDomain: false, knacks: [] }
+
+        return (
+            <>
+                <div className={`font-bold text-md text-left ${colClass}`}>
+                    <Checkbox
+                        checked={hasDomain}
+                        onCheckedChange={(checked) => {
+                            setDomains({
+                                ...existingDomains,
+                                [domain]: { hasDomain: checked, knacks: domainKnacks } as Domain,
+                            })
+                        }}
+                        className="mr-3"
+                    />
+                    <SkillDomainTooltip
+                        description={domainDescriptions[domain]}
+                        isSelected={selectedDomain === domain}
+                        label={domain.toUpperCase()}
+                        onSelect={() => pickDomain(domain)}
+                    />
+                </div>
+                <div className={`ml-2 ${colClass} sm:ml-4`}>
+                    <Input
+                        className="h-8 w-full rounded-none border-x-0 border-t-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 sm:w-28"
+                        value={domainKnacks}
+                        onChange={(e) => {
+                            const newKnacks = e.target.value
+                            setDomains({
+                                ...existingDomains,
+                                [domain]: { hasDomain, knacks: newKnacks } as Domain,
+                            })
+                        }}
+                    />
+                </div>
+            </>
+        )
+    }
+
+    return (
+        <div className="space-y-2">
+            <div className="space-y-6 sm:hidden">
+                <div className="space-y-2">
+                    <div className={mobileGridClass}>
+                        <h2 className="font-serif text-base font-bold tracking-wide">SKILLS</h2>
+                        <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
+                    </div>
+                    <div className={`${mobileGridClass} gap-y-2 text-foreground`}>
+                        {skills.map((skill) => (
+                            <div key={skill} className="contents">
+                                {renderSkill(skill, mobileColClass)}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <div className={mobileGridClass}>
+                        <h2 className="font-serif text-base font-bold tracking-wide">DOMAINS</h2>
+                        <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
+                    </div>
+                    <div className={`${mobileGridClass} gap-y-2 text-foreground`}>
+                        {domains.map((domain) => (
+                            <div key={domain} className="contents">
+                                {renderDomain(domain, mobileColClass)}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className={desktopGridClass}>
+                <h2 className="font-serif text-base font-bold tracking-wide">SKILLS</h2>
+                <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
+                <h2 className="font-serif text-base font-bold tracking-wide">DOMAINS</h2>
+                <h2 className="ml-4 font-serif text-base font-bold tracking-wide text-red-900/60">KNACKS</h2>
+            </div>
+            <div className={`hidden text-foreground sm:grid sm:grid-cols-4 sm:gap-1 sm:gap-y-0 grid-rows-${rowCount} size-full`}>
+                {Array.from({ length: rowCount }).map((_, i) => {
+                    const skill = skills[i]
+                    const domain = domains[i]
+
+                    return (
+                        <div key={skill + domain} className="contents">
+                            {/* Skill + Knack */}
+                            {skill ? renderSkill(skill, desktopColClass) : <div />}
+
+                            {/* Domain + Knack */}
+                            {domain ? renderDomain(domain, desktopColClass) : <div />}
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }
-
-const capitalize = (text: string) => `${text.slice(0, 1).toUpperCase()}${text.slice(1)}`
 
 export default SkillsDomains

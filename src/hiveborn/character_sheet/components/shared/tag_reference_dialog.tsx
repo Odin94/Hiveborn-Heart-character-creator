@@ -79,25 +79,24 @@ export const TagReferenceDialog = ({
             onKeyDownCapture={redirectTypingToSearch}
         >
             <DialogHeader className="shrink-0">
-                <p className="eyebrow">Reference</p>
-                <DialogTitle>{toTitleCase(title)}</DialogTitle>
+                <DialogTitle>{title}</DialogTitle>
             </DialogHeader>
 
             <div className="tag-reference-search-wrap relative shrink-0">
-                <Search className="tag-reference-search-icon pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-heart/70" />
+                <Search className="tag-reference-search-icon pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-red-900/65" />
                 <Input
                     ref={searchInputRef}
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search tags or meanings..."
-                    className="h-11 pr-3 pl-12 text-base font-medium sm:text-base"
+                    className="h-11 rounded-md border border-red-900/30 pr-3 pl-12 text-base font-semibold"
                     aria-label={`Search ${title.toLowerCase()}`}
                 />
             </div>
 
             <ScrollArea className="min-h-0 flex-1 pr-3">
                 {filteredRows.length === 0 ? (
-                    <div className="tag-reference-empty animate-in fade-in zoom-in-90 rounded-md border border-dashed border-border-strong/60 p-6 text-center text-sm text-muted-foreground duration-150">
+                    <div className="tag-reference-empty animate-in fade-in zoom-in-90 rounded-md border border-dashed border-red-900/30 p-6 text-center text-sm text-muted-foreground duration-150">
                         {relevantOnly && !normalizedSearch ? "This character has no matching tags." : `No tags match "${search}".`}
                     </div>
                 ) : (
@@ -107,23 +106,22 @@ export const TagReferenceDialog = ({
                                 key={tag.name}
                                 className={cn(
                                     "tag-reference-card animate-in fade-in zoom-in-90 rounded-md border p-3 text-left duration-150",
-                                    isRelevant ? "border-primary/50 bg-primary/8" : "border-border bg-card",
+                                    isRelevant
+                                        ? "border-red-900/60 bg-red-900/10 shadow-[0_0_0_1px_rgba(127,29,29,0.18),0_0_22px_rgba(127,29,29,0.13)]"
+                                        : "border-red-900/15 bg-background",
                                 )}
                                 data-relevant={isRelevant}
                                 style={{ "--tag-delay": `${120 + Math.min(index, 8) * 7}ms` } as CSSProperties}
                             >
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="font-display text-lg leading-tight font-bold text-heart">{tag.name}</h3>
+                                    <h3 className="text-sm font-black tracking-wide text-red-900">{tag.name.toUpperCase()}</h3>
                                     {relevantSources.map((source) => (
-                                        <span
-                                            key={source}
-                                            className="rounded-xs bg-primary px-1.5 py-0.5 text-[0.6875rem] font-bold tracking-wide text-primary-foreground"
-                                        >
+                                        <span key={source} className="rounded-sm bg-red-900 px-2 py-0.5 text-[0.68rem] font-bold text-white">
                                             {source}
                                         </span>
                                     ))}
                                 </div>
-                                <p className="mt-1 text-sm leading-snug text-foreground/90">{tag.meaning}</p>
+                                <p className="mt-1 text-sm leading-snug text-red-950 dark:text-foreground">{tag.meaning}</p>
                             </article>
                         ))}
                     </div>
@@ -166,5 +164,3 @@ const tagAliasToPattern = (alias: string) =>
         .join("[\\s\\-–—]+")
 
 const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-
-const toTitleCase = (text: string) => text.toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase())
